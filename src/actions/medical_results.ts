@@ -46,6 +46,7 @@ export async function uploadMedicalResult(formData: FormData) {
 
     const appointmentId = formData.get("appointment_id") as string;
     const patientId = formData.get("patient_id") as string;
+    if (!patientId || patientId === 'undefined') throw new Error("ID de paciente no válido");
     const type = formData.get("type") as 'pdf' | 'image' | 'note';
     const noteContent = formData.get("note_content") as string;
     const files = formData.getAll("files") as File[];
@@ -83,8 +84,8 @@ export async function uploadMedicalResult(formData: FormData) {
     const pInfo = pRes.rows[0];
 
     await logAction("UPLOAD_MEDICAL_RESULT", { 
-      patient_name: pInfo?.name, 
-      patient_dni: pInfo?.dni,
+      patient_name: pInfo?.name || 'Paciente', 
+      patient_dni: pInfo?.dni || '-',
       type 
     });
     

@@ -163,7 +163,7 @@ export default function ResultadoPortal() {
                         <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>{res.analysis_type || "Informe Médico"}</h4>
                         {res.report_id && (
                           <span style={{ fontSize: '0.75rem', background: 'rgba(14, 165, 233, 0.1)', color: 'var(--primary)', padding: '0.1rem 0.5rem', borderRadius: '4px', fontWeight: 800, marginTop: '0.25rem', display: 'inline-block' }}>
-                            PROTOCOLO N° {res.report_id}
+                            INFORME N° {res.report_id}
                           </span>
                         )}
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem', fontWeight: 600 }}>

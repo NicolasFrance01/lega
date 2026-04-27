@@ -91,16 +91,18 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <div style={{ position: 'relative' }}>
-        <Search style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} size={20} />
-        <input 
-          type="text" 
-          placeholder="Buscar paciente por nombre o DNI..." 
-          style={{ ...inputStyle, paddingLeft: '3rem' }}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+      <div>
+        <h2 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: '0.5rem', color: 'var(--text-main)' }}>ENTREGAR RESULTADO MEDICO</h2>
+        <div style={{ position: 'relative' }}>
+          <Search style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} size={20} />
+          <input 
+            type="text" 
+            placeholder="Buscar paciente por nombre o DNI..." 
+            style={{ ...inputStyle, paddingLeft: '3rem' }}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
@@ -111,7 +113,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
             onClick={() => handleSelectPatient(p)}
             style={{ 
               padding: '1.5rem', 
-              background: 'white', 
+              background: 'var(--glass-bg)', 
               borderRadius: '16px', 
               border: '1px solid var(--glass-border)',
               cursor: 'pointer',
@@ -121,12 +123,12 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
               transition: 'all 0.2s'
             }}
           >
-            <div style={{ background: 'var(--primary-light)', padding: '0.75rem', borderRadius: '12px' }}>
+            <div style={{ background: 'rgba(14, 165, 233, 0.1)', padding: '0.75rem', borderRadius: '12px' }}>
               <User color="var(--primary)" size={24} />
             </div>
             <div>
-              <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{p.name}</h4>
-              <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>DNI: {p.dni}</p>
+              <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)' }}>{p.name}</h4>
+              <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>DNI: {p.dni}</p>
             </div>
           </div>
         ))}
@@ -174,17 +176,17 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                         <div 
                           key={apt.id} 
                           style={{ 
-                            padding: '1.2rem', border: '1px solid #e2e8f0', borderRadius: '16px',
+                            padding: '1.2rem', border: '1px solid var(--glass-border)', borderRadius: '16px',
                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                            transition: 'all 0.2s', background: 'white',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                            transition: 'all 0.2s', background: 'var(--glass-bg)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                           }}
                         >
                           <div style={{ flex: 1 }}>
                             <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-main)' }}>{format(new Date(apt.appointment_date), "EEEE d 'de' MMMM, yyyy", { locale: es })}</div>
                             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
                               <Clock size={14} /> {format(new Date(apt.appointment_date), "HH:mm")} hs — {apt.analysis_type}
-                              {apt.report_id && <span style={{ color: 'var(--primary)', fontWeight: 800 }}>• Protocolo {apt.report_id}</span>}
+                              {apt.report_id && <span style={{ color: 'var(--primary)', fontWeight: 900 }}>• INFORME {apt.report_id}</span>}
                             </div>
                           </div>
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -196,7 +198,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                             </button>
                             <button 
                               onClick={() => {
-                                const msg = `Hola ${selectedPatient.name}, tu resultado médico del día ${format(new Date(apt.appointment_date), "dd/MM")} ya está disponible en: https://legalaboratorio.vercel.app/resultado`;
+                                const msg = `Hola ${selectedPatient.name}, tu INFORME MÉDICO N° ${apt.report_id || '-'} del día ${format(new Date(apt.appointment_date), "dd/MM")} ya está disponible en: https://legalaboratorio.vercel.app/resultado`;
                                 window.open(`https://wa.me/${selectedPatient.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
                               }}
                               style={{ padding: '0.5rem', borderRadius: '10px', background: '#25D366', color: 'white', display: 'flex', alignItems: 'center' }}
@@ -216,9 +218,9 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                     </div>
                 ) : (
                   <form id="upload-form" onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                      <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 700, color: '#64748b' }}>TURNO SELECCIONADO</p>
-                      <p style={{ margin: '0.2rem 0 0', fontWeight: 600 }}>{format(new Date(selectedApt.appointment_date), "dd/MM/yyyy")} - {selectedApt.analysis_type}</p>
+                    <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                      <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>TURNO SELECCIONADO</p>
+                      <p style={{ margin: '0.2rem 0 0', fontWeight: 600, color: 'var(--text-main)' }}>{format(new Date(selectedApt.appointment_date), "dd/MM/yyyy")} - {selectedApt.analysis_type}</p>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -231,7 +233,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                         </select>
                       </div>
                       <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>N° Informe / Protocolo</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 700, color: 'var(--text-main)' }}>N° INFORME</label>
                         <input name="report_id" defaultValue={selectedApt.report_id} placeholder="Ej: 94113" style={inputStyle} />
                       </div>
                     </div>
@@ -283,7 +285,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                     </div>
 
                     <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                      <button type="button" onClick={() => setModalStep(1)} style={{ flex: 1, padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer' }}>Atrás</button>
+                      <button type="button" onClick={() => setModalStep(1)} style={{ flex: 1, padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-main)', cursor: 'pointer', fontWeight: 600 }}>Atrás</button>
                       <button type="submit" disabled={uploading} style={{ flex: 2, padding: '0.75rem', borderRadius: '10px', border: 'none', background: 'var(--primary)', color: 'white', fontWeight: 700, cursor: uploading ? 'wait' : 'pointer' }}>
                         {uploading ? 'Cargando...' : 'Guardar Resultado'}
                       </button>
@@ -305,7 +307,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
             <Search style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} size={18} />
             <input 
               type="text" 
-              placeholder="Filtrar por paciente, DNI o Protocolo..." 
+              placeholder="Filtrar por paciente, DNI o INFORME..." 
               style={{ ...inputStyle, padding: '0.6rem 1rem 0.6rem 2.8rem', fontSize: '0.9rem' }}
               value={historySearch}
               onChange={(e) => setHistorySearch(e.target.value)}
@@ -318,7 +320,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)', fontSize: '0.85rem', background: 'rgba(255,255,255,0.02)' }}>
                   <th style={{ padding: '1.25rem 1rem' }}>Fecha Carga</th>
-                  <th style={{ padding: '1.25rem 1rem' }}>Protocolo</th>
+                  <th style={{ padding: '1.25rem 1rem' }}>INFORME</th>
                   <th style={{ padding: '1.25rem 1rem' }}>Paciente</th>
                   <th style={{ padding: '1.25rem 1rem' }}>Turno</th>
                   <th style={{ padding: '1.25rem 1rem' }}>Tipo</th>
@@ -378,7 +380,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                         <button 
                           onClick={async () => {
-                            const msg = `Hola ${res.patient_name}, tu resultado médico del día ${format(new Date(res.appointment_date), "dd/MM")} ya está disponible en: https://laboratoriolega.vercel.app/resultado`;
+                            const msg = `Hola ${res.patient_name}, tu INFORME MÉDICO N° ${res.report_id || '-'} del día ${format(new Date(res.appointment_date), "dd/MM")} ya está disponible en: https://laboratoriolega.vercel.app/resultado`;
                             window.open(`https://wa.me/${res.patient_phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
                             await markAsNotified(res.id);
                             loadAllResults();

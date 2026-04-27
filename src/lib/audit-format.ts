@@ -39,11 +39,11 @@ export function formatAuditLog(log: any) {
     
     // Resultados Médicos
     case 'UPLOAD_MEDICAL_RESULT':
-      return `Subió un resultado (${d.type}) para ${d.patient_name} (DNI: ${d.patient_dni})`;
+      return `Subió un resultado (${d.type || 'Archivo'}) para ${d.patient_name || 'Paciente'} (DNI: ${d.patient_dni || '-'})`;
     case 'DELETE_MEDICAL_RESULT':
-      return `Eliminó un resultado de ${d.patient_name} (${d.result_type})`;
+      return `Eliminó un resultado de ${d.patient_name || 'Paciente'} (${d.result_type || 'Archivo'})`;
     case 'NOTIFIED_PATIENT':
-      return `Avisó por WhatsApp a ${d.patient_name} sobre su resultado`;
+      return `Avisó por WhatsApp a ${d.patient_name || 'Paciente'} sobre su resultado`;
     
     // Prestaciones
     case 'ADD_PRESTACION':

@@ -179,7 +179,7 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
                       >
                         <div>
                           <div style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '1rem' }}>{apt.name}</div>
-                          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>{apt.analysis_type} — DNI: {apt.dni}</div>
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem', fontWeight: 600 }}>{apt.analysis_type} — DNI: {apt.dni}</div>
                         </div>
                         <ChevronRight size={20} color="var(--primary)" />
                       </div>
@@ -260,7 +260,7 @@ function IngresoForm({
               {searchResults.map((p: any) => (
                 <div key={p.id} onClick={() => autofillPatient(p)} style={{ padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid var(--glass-border)' }}>
                   <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{p.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>DNI: {p.dni} — {p.health_insurance}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>DNI: {p.dni} — {p.health_insurance}</div>
                 </div>
               ))}
             </div>
@@ -315,7 +315,7 @@ function IngresoForm({
           <input name="health_insurance" defaultValue={selectedPatient?.health_insurance} style={inputStyle} placeholder="Ej: PAMI" />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>N° Informe</label>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>N° INFORME</label>
           <input name="report_id" defaultValue={selectedPatient?.report_id} style={inputStyle} placeholder="Ej: 94113" />
         </div>
         <div>
@@ -365,8 +365,8 @@ function IngresoForm({
             <div style={{ marginBottom: '1rem', color: 'var(--primary)' }}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
             </div>
-            <div style={{ fontWeight: 800, fontSize: '1.1rem', marginBottom: '0.25rem' }}>Subir Pedidos Médicos</div>
-            <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Hacé clic aquí para seleccionar uno o varios archivos (PDF/Imagen)</div>
+            <div style={{ fontWeight: 800, fontSize: '1.1rem', marginBottom: '0.25rem', color: 'var(--text-main)' }}>Subir Pedidos Médicos</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Hacé clic aquí para seleccionar uno o varios archivos (PDF/Imagen)</div>
             <input 
               id="file-upload"
               name="document" 

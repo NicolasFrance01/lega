@@ -117,7 +117,7 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
               <th style={{ padding: '0.75rem 1rem' }}>COSEGURO</th>
               <th style={{ padding: '0.75rem 1rem' }}>PARTICULAR</th>
               <th style={{ padding: '0.75rem 1rem' }}>PAGO</th>
-              <th style={{ padding: '0.75rem 1rem', textAlign: 'right', position: 'sticky', right: 0, background: 'var(--glass-bg)', zIndex: 10, borderLeft: '1px solid #e2e8f0', borderBottom: '2px solid var(--glass-border)' }}>ACCIONES</th>
+              <th style={{ padding: '0.75rem 1rem', textAlign: 'right', position: 'sticky', right: 0, background: 'var(--glass-bg)', zIndex: 10, borderLeft: '1px solid var(--glass-border)', borderBottom: '2px solid var(--glass-border)' }}>ACCIONES</th>
             </tr>
           </thead>
           <tbody>
@@ -165,10 +165,10 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
                       {ing.checkbox_checked && <Check size={14} strokeWidth={3} />}
                     </button>
                   </td>
-                  <td style={{ padding: '0.75rem 1rem', color: '#64748b', fontWeight: 500 }}>
+                  <td style={{ padding: '0.75rem 1rem', color: 'var(--text-main)', fontWeight: 600 }}>
                     <EditableCell id={ing.id} field="report_id" value={ing.report_id} />
                   </td>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-main)' }}>
                     {ing.name}
                   </td>
                   <td style={{ padding: '0.75rem 1rem' }}>
@@ -186,7 +186,7 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
                   <td style={{ padding: '0.75rem 1rem' }}>
                     {ing.phone || '-'}
                   </td>
-                  <td style={{ padding: '0.75rem 1rem' }}>
+                  <td style={{ padding: '0.75rem 1rem', color: 'var(--text-main)' }}>
                     <EditableCell id={ing.id} field="professional_name" value={ing.professional_name} />
                   </td>
                   <td style={{ padding: '0.75rem 1rem', color: 'var(--primary)', fontWeight: 700 }}>
@@ -263,7 +263,7 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
             title={isAtToday ? "Ir al Inicio" : "Ir a Hoy"}
           >
             {isAtToday ? <ArrowUp size={28} strokeWidth={3} /> : <ArrowDown size={28} strokeWidth={3} />}
-            <span style={{ fontSize: '0.8rem', fontWeight: 900, letterSpacing: '0.5px' }}>{isAtToday ? 'INICIO' : 'HOY'}</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 900, letterSpacing: '1px' }}>{isAtToday ? 'INICIO' : 'HOY'}</span>
           </button>
         </div>
       )}
