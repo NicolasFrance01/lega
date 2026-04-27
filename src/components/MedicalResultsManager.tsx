@@ -419,8 +419,6 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
           </div>
         </div>
       </div>
-
-    </div>
   );
 }
 
