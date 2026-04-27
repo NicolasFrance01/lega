@@ -18,7 +18,7 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
   const [dragOverRowId, setDragOverRowId] = useState<number | null>(null);
 
   
-  const isExcelSheet = activeSheet === "Panel BioM. Int.Panel" || activeSheet === "O. Sociales";
+  const isExcelSheet = activeSheet === "Panel BioM. Int.Panel" || activeSheet === "O. Sociales" || activeSheet === "Delgado";
 
   const isStructuredSheet = useMemo(() => {
     if (activeSheet === "Convenios Particulares" || activeSheet === "Dra. Selva" || activeSheet === "Lab Clínico Noelia Dutto" || isExcelSheet) return true;
@@ -389,6 +389,8 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
                priceCols = ["__EMPTY_1", "__EMPTY_3", "__EMPTY_4", "__EMPTY_5", "__EMPTY_6", "__EMPTY_7", "__EMPTY_8", "__EMPTY_9", "__EMPTY_10"];
              } else if (activeSheet === "O. Sociales") {
                priceCols = ["__EMPTY_2", "__EMPTY_4", "__EMPTY_6", "__EMPTY_7"];
+             } else if (activeSheet === "Delgado") {
+               priceCols = ["__EMPTY_1", "__EMPTY_3", "__EMPTY_4", "__EMPTY_5", "__EMPTY_6", "__EMPTY_7", "__EMPTY_8", "__EMPTY_9"];
              }
              priceCols.forEach(c => currentSection.types[c] = "price");
              currentSection.rows.push(row);
@@ -446,10 +448,10 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
               </div>
             </div>
 
-            <div style={{ overflowX: 'auto', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9' }}>
+            <div className="custom-scrollbar" style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '70vh', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9', position: 'relative' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
                 <thead>
-                  <tr style={{ background: '#244c7d' }}>
+                  <tr style={{ background: '#244c7d', position: 'sticky', top: 0, zIndex: 10 }}>
                     {isExcelSheet && <th style={{width: '40px', background: '#1e3a8a', border: '1px solid #0f172a'}}></th>}
                     {(section.headers.length > 0 ? section.headers : columns).map((h: any, colIdx: number) => {
                       const isDesc = h === section.headers[0] || h === columns[0] || h === "__EMPTY";
@@ -510,7 +512,7 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
                                     autoFocus
                                     style={{ flex: 1 }}
                                   />
-                                  {activeSheet === 'Panel BioM. Int.Panel' && (
+                                  {isExcelSheet && (
                                     <div style={{display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', paddingTop: '4px'}}>
                                       <input 
                                         type="color" 
@@ -533,7 +535,7 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
                                 <div style={{display: 'flex', flexDirection: 'column'}}>
                                   <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
                                     <input type={activeSheet === 'Panel BioM. Int.Panel' || (!isPrice || (editData[h] && String(editData[h]).startsWith('='))) ? 'text' : 'number'} step="0.01" className="input-inline" style={{ flex: 1 }} value={editData[h] || ""} onChange={(e) => handleValueChange(h, e.target.value)} autoFocus={!isDescriptionCol && h === section.headers[0]} />
-                                    {activeSheet === 'Panel BioM. Int.Panel' && (
+                                    {isExcelSheet && (
                                       <div style={{display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center'}}>
                                         <input 
                                           type="color" 
@@ -552,7 +554,7 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
                                       </div>
                                     )}
                                   </div>
-                                  {activeSheet === 'Panel BioM. Int.Panel' && (
+                                  {isExcelSheet && (
                                     <span style={{fontSize: '0.75rem', color: '#10b981', marginTop: '4px', fontWeight: 600, textAlign: 'right'}}>
                                       Calculado: {formatWithTypes(evaluateFormula(String(editData[h] || "0"), (cIdx, rIdx) => {
                                          if (evaluatedData[rIdx]?.id === row.id) {
@@ -662,6 +664,20 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
         .btn-action.delete { color: var(--danger); }
         .glass-panel { background: white; border-radius: 16px; border: 1px solid var(--glass-border); }
         .table-row-hover:hover { background: #f8fafc; }
+        .custom-scrollbar::-webkit-scrollbar {
+          height: 12px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 6px;
+          border: 3px solid #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
       `}</style>
     </div>
   );
