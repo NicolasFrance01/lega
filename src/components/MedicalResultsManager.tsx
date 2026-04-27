@@ -420,13 +420,6 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
         </div>
       </div>
 
-      <style jsx>{`
-        .hoverable-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-          border-color: var(--primary) !important;
-        }
-      `}</style>
     </div>
   );
 }
