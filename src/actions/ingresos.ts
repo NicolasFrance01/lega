@@ -15,11 +15,13 @@ export async function getIngresos(period: 'day' | 'week' | 'month' = 'day', date
       params.push(baseDate);
       dateCondition = `DATE(a.appointment_date) = $${params.length}`;
     } else if (period === 'week') {
+      // 7 days back, 2 days forward
       params.push(baseDate);
-      dateCondition = `a.appointment_date >= DATE_TRUNC('week', $${params.length}::date) AND a.appointment_date < DATE_TRUNC('week', $${params.length}::date) + INTERVAL '1 week'`;
+      dateCondition = `a.appointment_date >= ($${params.length}::date - INTERVAL '7 days') AND a.appointment_date <= ($${params.length}::date + INTERVAL '2 days')`;
     } else if (period === 'month') {
+      // 1 month back, 1 week forward
       params.push(baseDate);
-      dateCondition = `a.appointment_date >= DATE_TRUNC('month', $${params.length}::date) AND a.appointment_date < DATE_TRUNC('month', $${params.length}::date) + INTERVAL '1 month'`;
+      dateCondition = `a.appointment_date >= ($${params.length}::date - INTERVAL '1 month') AND a.appointment_date <= ($${params.length}::date + INTERVAL '1 week')`;
     }
 
     const res = await pool.query(`
@@ -27,7 +29,7 @@ export async function getIngresos(period: 'day' | 'week' | 'month' = 'day', date
       FROM appointments a
       JOIN patients p ON a.patient_id = p.id
       WHERE ${dateCondition}
-      ORDER BY a.appointment_date DESC
+      ORDER BY a.appointment_date ASC
     `, params);
 
     return { 

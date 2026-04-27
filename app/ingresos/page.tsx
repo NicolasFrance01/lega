@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { getIngresos } from "@/actions/ingresos";
 import IngresosTable from "@/components/IngresosTable";
 import NewIngresoModal from "@/components/NewIngresoModal";
-import { Plus, Calendar, Filter, Download } from "lucide-react";
+import { Plus, Calendar, Filter, Download, Activity, Clock, FileText, X, Car, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -32,6 +32,16 @@ export default function IngresosPage() {
     setIsModalOpen(true);
   }
 
+  // Calculate Stats
+  const stats = {
+    total: ingresos.length,
+    confirmados: ingresos.filter(i => i.checkbox_checked).length,
+    pendientes: ingresos.filter(i => !i.checkbox_checked).length,
+    indicaciones: ingresos.filter(i => i.analysis_type?.toLowerCase().includes('aire')).length,
+    cancelados: ingresos.filter(i => i.status === 'CANCELADO').length,
+    domicilio: ingresos.filter(i => i.is_domicilio).length
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', padding: '1rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
@@ -46,6 +56,69 @@ export default function IngresosPage() {
         >
           <Plus size={22} /> NUEVO INGRESO
         </button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid-mobile-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '1rem' }}>
+        <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ background: 'rgba(14, 165, 233, 0.1)', padding: '0.75rem', borderRadius: '12px' }}>
+            <Activity color="var(--primary)" size={24} />
+          </div>
+          <div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, margin: 0 }}>Total General</p>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>{stats.total}</h3>
+          </div>
+        </div>
+
+        <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '0.75rem', borderRadius: '12px' }}>
+            <CheckCircle color="var(--success)" size={24} />
+          </div>
+          <div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, margin: 0 }}>Confirmados</p>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>{stats.confirmados}</h3>
+          </div>
+        </div>
+
+        <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '0.75rem', borderRadius: '12px' }}>
+            <Clock color="#f59e0b" size={24} />
+          </div>
+          <div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, margin: 0 }}>Pendientes</p>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>{stats.pendientes}</h3>
+          </div>
+        </div>
+
+        <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ background: 'rgba(139, 92, 246, 0.1)', padding: '0.75rem', borderRadius: '12px' }}>
+            <FileText color="#8b5cf6" size={24} />
+          </div>
+          <div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, margin: 0 }}>Indicaciones</p>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>{stats.indicaciones}</h3>
+          </div>
+        </div>
+
+        <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: '12px' }}>
+            <X color="var(--danger)" size={24} />
+          </div>
+          <div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, margin: 0 }}>Cancelados</p>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>{stats.cancelados}</h3>
+          </div>
+        </div>
+
+        <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ background: 'rgba(100, 116, 139, 0.1)', padding: '0.75rem', borderRadius: '12px' }}>
+            <Car color="#64748b" size={24} />
+          </div>
+          <div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, margin: 0 }}>Domicilio</p>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>{stats.domicilio}</h3>
+          </div>
+        </div>
       </div>
 
       <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>

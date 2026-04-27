@@ -158,171 +158,226 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
 
           {mode === "con_turno" && !editingIngreso ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h4 style={{ fontSize: '0.9rem', color: '#64748b' }}>Seleccioná el turno de hoy:</h4>
-              {loadingToday ? <p>Cargando turnos...</p> : (
-                todayAppointments.map(apt => (
-                  <div 
-                    key={apt.id} 
-                    onClick={() => {
-                      setSelectedPatient(apt);
-                      setMode("sin_turno");
-                    }}
-                    style={{ 
-                      padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '12px',
-                      cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 700 }}>{apt.name}</div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{apt.analysis_type} — {apt.dni}</div>
-                    </div>
-                    <ChevronRight size={20} color="var(--primary)" />
-                  </div>
-                ))
+              {!selectedPatient ? (
+                <>
+                  <h4 style={{ fontSize: '0.9rem', color: '#64748b' }}>Seleccioná el turno de hoy:</h4>
+                  {loadingToday ? <p>Cargando turnos...</p> : (
+                    todayAppointments.map(apt => (
+                      <div 
+                        key={apt.id} 
+                        onClick={() => setSelectedPatient(apt)}
+                        style={{ 
+                          padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '12px',
+                          cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 700 }}>{apt.name}</div>
+                          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{apt.analysis_type} — {apt.dni}</div>
+                        </div>
+                        <ChevronRight size={20} color="var(--primary)" />
+                      </div>
+                    ))
+                  )}
+                  {todayAppointments.length === 0 && !loadingToday && <p>No hay turnos agendados para hoy.</p>}
+                </>
+              ) : (
+                <IngresoForm 
+                  selectedPatient={selectedPatient} 
+                  editingIngreso={editingIngreso} 
+                  setSelectedPatient={setSelectedPatient} 
+                  handleSubmit={handleSubmit}
+                  loading={loading}
+                  error={error}
+                  inputStyle={inputStyle}
+                  searchResults={searchResults}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  autofillPatient={autofillPatient}
+                />
               )}
-              {todayAppointments.length === 0 && !loadingToday && <p>No hay turnos agendados para hoy.</p>}
             </div>
           ) : (
-            <form 
-              key={selectedPatient?.id || 'new'} 
-              onSubmit={handleSubmit} 
-              style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
-            >
-              {editingIngreso && <input type="hidden" name="id" value={editingIngreso.id} />}
-              {selectedPatient?.id && !editingIngreso && <input type="hidden" name="id" value={selectedPatient.id} />}
-              
-              {error && <div style={{ color: 'var(--danger)', padding: '0.75rem', background: '#fef2f2', borderRadius: '8px', fontSize: '0.85rem' }}>{error}</div>}
-
-              {/* Patient Search / Autofill */}
-              {!selectedPatient && !editingIngreso && (
-                <div style={{ position: 'relative' }}>
-                  <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '1.2rem', color: '#94a3b8' }} />
-                  <input 
-                    type="text" 
-                    placeholder="Buscá por nombre o DNI para autocompletar..." 
-                    className="input-field" 
-                    style={{ paddingLeft: '2.5rem' }}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                  {searchResults.length > 0 && (
-                    <div style={{ 
-                      position: 'absolute', top: '100%', left: 0, right: 0, 
-                      background: 'white', borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                      zIndex: 20, marginTop: '0.5rem', border: '1px solid #e2e8f0'
-                    }}>
-                      {searchResults.map(p => (
-                        <div key={p.id} onClick={() => autofillPatient(p)} style={{ padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}>
-                          <div style={{ fontWeight: 600 }}>{p.name}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>DNI: {p.dni} — {p.health_insurance}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {selectedPatient && (
-                <div style={{ padding: '1rem', background: '#f0f9ff', borderRadius: '12px', border: '1px solid #bae6fd', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, color: '#0369a1' }}>PACIENTE SELECCIONADO</p>
-                    <p style={{ margin: 0, fontWeight: 700 }}>{selectedPatient.name} ({selectedPatient.dni})</p>
-                  </div>
-                  <button onClick={() => setSelectedPatient(null)} style={{ fontSize: '0.8rem', color: '#0369a1', fontWeight: 600 }}>Cambiar</button>
-                </div>
-              )}
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div style={{ gridColumn: 'span 2' }}>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Nombre Completo</label>
-                  <input name="name" required defaultValue={selectedPatient?.name} style={inputStyle} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>DNI</label>
-                  <input name="dni" required defaultValue={selectedPatient?.dni} style={inputStyle} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Nacimiento</label>
-                  <input name="birth_date" type="date" defaultValue={selectedPatient?.birth_date ? new Date(selectedPatient.birth_date).toISOString().split('T')[0] : ''} style={inputStyle} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Teléfono</label>
-                  <input name="phone" defaultValue={selectedPatient?.phone} style={inputStyle} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Email</label>
-                  <input name="email" type="email" defaultValue={selectedPatient?.email} style={inputStyle} />
-                </div>
-                <div style={{ gridColumn: 'span 2' }}>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Dirección</label>
-                  <input name="address" defaultValue={selectedPatient?.address} style={inputStyle} />
-                </div>
-
-                <div style={{ gridColumn: 'span 2', height: '1px', background: '#f1f5f9', margin: '0.5rem 0' }} />
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Tipo de Estudio/Análisis</label>
-                  <input name="analysis_type" required defaultValue={selectedPatient?.analysis_type} style={inputStyle} placeholder="Ej: EXTRACCION" />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Obra Social</label>
-                  <input name="health_insurance" defaultValue={selectedPatient?.health_insurance} style={inputStyle} placeholder="Ej: PAMI" />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>N° Informe</label>
-                  <input name="report_id" defaultValue={selectedPatient?.report_id} style={inputStyle} placeholder="Ej: 94113" />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Fecha de Resultado</label>
-                  <input name="result_date" type="date" defaultValue={selectedPatient?.result_date ? new Date(selectedPatient.result_date).toISOString().split('T')[0] : ''} style={inputStyle} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Profesional</label>
-                  <input name="professional_name" defaultValue={selectedPatient?.professional_name} style={inputStyle} placeholder="Nombre del médico" />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Medio de Pago</label>
-                  <select name="payment_method" defaultValue={selectedPatient?.payment_method || 'EFECTIVO'} style={inputStyle}>
-                    <option value="EFECTIVO">Efectivo</option>
-                    <option value="TRANSFERENCIA">Transferencia</option>
-                    <option value="TARJETA">Tarjeta</option>
-                    <option value="COSEGURO">Coseguro</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Coseguro O.Soc</label>
-                  <input name="coseguro" type="number" step="0.01" defaultValue={selectedPatient?.coseguro} style={inputStyle} placeholder="$ 0.00" />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Particular</label>
-                  <input name="particular_price" type="number" step="0.01" defaultValue={selectedPatient?.particular_price} style={inputStyle} placeholder="$ 0.00" />
-                </div>
-                
-                <div style={{ gridColumn: 'span 2' }}>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>
-                    Adjuntar Archivos (PDF o Imágenes)
-                  </label>
-                  <input 
-                    name="document" 
-                    type="file" 
-                    multiple 
-                    accept="image/*,application/pdf" 
-                    style={{ ...inputStyle, padding: '0.5rem' }} 
-                  />
-                  <p style={{ margin: '0.3rem 0 0', fontSize: '0.75rem', color: '#64748b' }}>Podés seleccionar varios archivos a la vez.</p>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button type="button" onClick={onClose} style={{ flex: 1, padding: '1rem', borderRadius: '12px', background: '#f1f5f9', fontWeight: 700 }}>Cancelar</button>
-                <button type="submit" disabled={loading} className="btn-primary" style={{ flex: 1, padding: '1rem', borderRadius: '12px', fontWeight: 700 }}>
-                  {loading ? 'Cargando...' : 'Confirmar Ingreso'}
-                </button>
-              </div>
-            </form>
+            <IngresoForm 
+              selectedPatient={selectedPatient} 
+              editingIngreso={editingIngreso} 
+              setSelectedPatient={setSelectedPatient} 
+              handleSubmit={handleSubmit}
+              loading={loading}
+              error={error}
+              inputStyle={inputStyle}
+              searchResults={searchResults}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              autofillPatient={autofillPatient}
+            />
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+function IngresoForm({ 
+  selectedPatient, editingIngreso, setSelectedPatient, handleSubmit, loading, error, inputStyle, searchResults, searchQuery, setSearchQuery, autofillPatient 
+}: any) {
+  return (
+    <form 
+      key={selectedPatient?.id || 'new'} 
+      onSubmit={handleSubmit} 
+      style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+    >
+      {editingIngreso && <input type="hidden" name="id" value={editingIngreso.id} />}
+      {selectedPatient?.id && !editingIngreso && <input type="hidden" name="id" value={selectedPatient.id} />}
+      
+      {error && <div style={{ color: 'var(--danger)', padding: '0.75rem', background: '#fef2f2', borderRadius: '8px', fontSize: '0.85rem' }}>{error}</div>}
+
+      {/* Patient Search / Autofill */}
+      {!selectedPatient && !editingIngreso && (
+        <div style={{ position: 'relative' }}>
+          <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '1.2rem', color: '#94a3b8' }} />
+          <input 
+            type="text" 
+            placeholder="Buscá por nombre o DNI para autocompletar..." 
+            className="input-field" 
+            style={{ paddingLeft: '2.5rem' }}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchResults.length > 0 && (
+            <div style={{ 
+              position: 'absolute', top: '100%', left: 0, right: 0, 
+              background: 'white', borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+              zIndex: 20, marginTop: '0.5rem', border: '1px solid #e2e8f0'
+            }}>
+              {searchResults.map((p: any) => (
+                <div key={p.id} onClick={() => autofillPatient(p)} style={{ padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ fontWeight: 600 }}>{p.name}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>DNI: {p.dni} — {p.health_insurance}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {selectedPatient && (
+        <div style={{ padding: '1rem', background: '#f0f9ff', borderRadius: '12px', border: '1px solid #bae6fd', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, color: '#0369a1' }}>PACIENTE SELECCIONADO</p>
+            <p style={{ margin: 0, fontWeight: 700 }}>{selectedPatient.name} ({selectedPatient.dni})</p>
+          </div>
+          {!editingIngreso && <button type="button" onClick={() => setSelectedPatient(null)} style={{ fontSize: '0.8rem', color: '#0369a1', fontWeight: 600 }}>Cambiar</button>}
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div style={{ gridColumn: 'span 2' }}>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Nombre Completo</label>
+          <input name="name" required defaultValue={selectedPatient?.name} style={inputStyle} />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>DNI</label>
+          <input name="dni" required defaultValue={selectedPatient?.dni} style={inputStyle} />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Nacimiento</label>
+          <input name="birth_date" type="date" defaultValue={selectedPatient?.birth_date ? new Date(selectedPatient.birth_date).toISOString().split('T')[0] : ''} style={inputStyle} />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Teléfono</label>
+          <input name="phone" defaultValue={selectedPatient?.phone} style={inputStyle} />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Email</label>
+          <input name="email" type="email" defaultValue={selectedPatient?.email} style={inputStyle} />
+        </div>
+        <div style={{ gridColumn: 'span 2' }}>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Dirección</label>
+          <input name="address" defaultValue={selectedPatient?.address} style={inputStyle} />
+        </div>
+
+        <div style={{ gridColumn: 'span 2', height: '1px', background: '#f1f5f9', margin: '0.5rem 0' }} />
+
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Tipo de Estudio/Análisis</label>
+          <input name="analysis_type" required defaultValue={selectedPatient?.analysis_type} style={inputStyle} placeholder="Ej: EXTRACCION" />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Obra Social</label>
+          <input name="health_insurance" defaultValue={selectedPatient?.health_insurance} style={inputStyle} placeholder="Ej: PAMI" />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>N° Informe</label>
+          <input name="report_id" defaultValue={selectedPatient?.report_id} style={inputStyle} placeholder="Ej: 94113" />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Fecha de Resultado</label>
+          <input name="result_date" type="date" defaultValue={selectedPatient?.result_date ? new Date(selectedPatient.result_date).toISOString().split('T')[0] : ''} style={inputStyle} />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Profesional</label>
+          <input name="professional_name" defaultValue={selectedPatient?.professional_name} style={inputStyle} placeholder="Nombre del médico" />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Medio de Pago</label>
+          <select name="payment_method" defaultValue={selectedPatient?.payment_method || 'EFECTIVO'} style={inputStyle}>
+            <option value="EFECTIVO">Efectivo</option>
+            <option value="TRANSFERENCIA">Transferencia</option>
+            <option value="TARJETA">Tarjeta</option>
+            <option value="COSEGURO">Coseguro</option>
+          </select>
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Coseguro O.Soc</label>
+          <input name="coseguro" type="number" step="0.01" defaultValue={selectedPatient?.coseguro} style={inputStyle} placeholder="$ 0.00" />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Particular</label>
+          <input name="particular_price" type="number" step="0.01" defaultValue={selectedPatient?.particular_price} style={inputStyle} placeholder="$ 0.00" />
+        </div>
+        
+        <div style={{ gridColumn: 'span 2' }}>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>
+            Documentación Médica (Podés seleccionar varios)
+          </label>
+          <div 
+            onClick={() => document.getElementById('file-upload')?.click()}
+            style={{
+              border: '2px dashed var(--primary)',
+              borderRadius: '16px',
+              padding: '2rem',
+              textAlign: 'center',
+              background: 'rgba(14, 165, 233, 0.02)',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(14, 165, 233, 0.05)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(14, 165, 233, 0.02)'}
+          >
+            <div style={{ marginBottom: '1rem', color: 'var(--primary)' }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+            </div>
+            <div style={{ fontWeight: 800, fontSize: '1.1rem', marginBottom: '0.25rem' }}>Subir Pedidos Médicos</div>
+            <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Hacé clic aquí para seleccionar uno o varios archivos (PDF/Imagen)</div>
+            <input 
+              id="file-upload"
+              name="document" 
+              type="file" 
+              multiple 
+              accept="image/*,application/pdf" 
+              style={{ display: 'none' }} 
+            />
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+        <button type="button" onClick={() => setSelectedPatient(null)} style={{ flex: 1, padding: '1rem', borderRadius: '12px', background: '#f1f5f9', fontWeight: 700 }}>Cancelar</button>
+        <button type="submit" disabled={loading} className="btn-primary" style={{ flex: 1, padding: '1rem', borderRadius: '12px', fontWeight: 700 }}>
+          {loading ? 'Cargando...' : 'Confirmar Ingreso'}
+        </button>
+      </div>
+    </form>
   );
 }
