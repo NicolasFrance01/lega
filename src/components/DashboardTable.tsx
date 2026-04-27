@@ -127,7 +127,10 @@ export default function DashboardTable({ appointments, currentFilter }: { appoin
               </td>
               <td style={{ padding: '1rem' }}>
                 <p style={{ fontWeight: 600 }}>{apt.name}</p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>DNI: {apt.dni}</p>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', gap: '0.5rem' }}>
+                  <span>DNI: {apt.dni}</span>
+                  {apt.report_id && <span style={{ color: 'var(--primary)', fontWeight: 800 }}>• INF: {apt.report_id}</span>}
+                </div>
               </td>
               <td style={{ padding: '1rem' }}>
                 <span style={{ background: 'var(--glass-bg)', padding: '0.25rem 0.75rem', borderRadius: '12px', fontSize: '0.875rem', fontWeight: 500, border: '1px solid var(--glass-border)' }}>

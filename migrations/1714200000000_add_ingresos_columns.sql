@@ -1,0 +1,11 @@
+-- Migration to support "Ingresos" module
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS address TEXT;
+
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS report_id VARCHAR(50);
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS result_date TIMESTAMP;
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS checkbox_checked BOOLEAN DEFAULT FALSE;
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS coseguro NUMERIC;
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS particular_price NUMERIC;
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS professional_name VARCHAR(255);
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS is_ingreso BOOLEAN DEFAULT FALSE;

@@ -7,10 +7,26 @@ import { put } from '@vercel/blob';
 import { getSession } from '@/lib/auth';
 import { format } from 'date-fns';
 
+export async function getTodayAppointments() {
+  try {
+    const res = await pool.query(`
+      SELECT a.id, a.appointment_date, a.analysis_type, p.name, p.dni, p.health_insurance, p.phone, p.email, p.birth_date, p.address
+      FROM appointments a
+      JOIN patients p ON a.patient_id = p.id
+      WHERE DATE(a.appointment_date) = CURRENT_DATE
+      ORDER BY a.appointment_date ASC
+    `);
+    return { data: res.rows, error: null };
+  } catch (error: any) {
+    return { data: null, error: error.message };
+  }
+}
+
 export async function getAppointments() {
   try {
     const res = await pool.query(`
       SELECT a.id, a.appointment_date, a.status, a.analysis_type, a.aire_test_type, a.observations, a.evolution_notes, a.is_domicilio, a.domicilio_address, a.google_maps_link,
+             a.report_id, a.result_date, a.coseguro, a.particular_price, a.payment_method, a.professional_name, a.checkbox_checked,
              json_agg(json_build_object('id', ad.id, 'url', ad.document_url, 'filename', ad.filename)) 
              FILTER (WHERE ad.id IS NOT NULL) as documents,
              p.name, p.dni, p.phone, p.health_insurance, a.indications_sent 
