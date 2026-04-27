@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { getPatientPortalData } from "@/actions/medical_results";
-import { FileText, Download, MessageSquare, Calendar, History, Search, User, LogOut, ExternalLink, ChevronRight, CheckCircle, Info } from "lucide-react";
+import { FileText, Download, MessageSquare, Calendar, History, Search, User, LogOut, ExternalLink, ChevronRight, CheckCircle, Info, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
