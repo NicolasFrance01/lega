@@ -3,13 +3,24 @@
 import { useState, useRef, useEffect } from "react";
 import { format, isToday } from "date-fns";
 import { es } from "date-fns/locale";
-import { Check, Edit2, Trash2, Search, Filter, Calendar as CalendarIcon, Clock, User, Shield, CreditCard, DollarSign, Mail, MapPin, ArrowDown } from "lucide-react";
+import { Check, Edit2, Trash2, Search, Filter, Calendar as CalendarIcon, Clock, User, Shield, CreditCard, DollarSign, Mail, MapPin, ArrowDown, ArrowUp } from "lucide-react";
 import { updateIngresoField, deleteIngreso } from "@/actions/ingresos";
 
-export default function IngresosTable({ ingresos, onEdit }: { ingresos: any[], onEdit: (ingreso: any) => void }) {
+export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: any[], onEdit: (ingreso: any) => void, period: string }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const todayRef = useRef<HTMLTableRowElement>(null);
   const [editingCell, setEditingCell] = useState<{ id: string, field: string } | null>(null);
+  const [isAtToday, setIsAtToday] = useState(false);
+
+  const handleJump = () => {
+    if (!isAtToday) {
+      todayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setIsAtToday(true);
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setIsAtToday(false);
+    }
+  };
 
   // Auto-scroll removed as per request
 
@@ -42,21 +53,21 @@ export default function IngresosTable({ ingresos, onEdit }: { ingresos: any[], o
             value={localValue}
             onChange={(e) => setLocalValue(e.target.value)}
             onBlur={() => handleCellEdit(id, field, localValue)}
-            style={{ padding: '0.2rem', borderRadius: '4px', border: '1px solid var(--primary)', fontSize: '0.85rem', width: '100%' }}
+            style={{ padding: '0.2rem', borderRadius: '4px', border: '1px solid var(--primary)', fontSize: '0.85rem', width: '100%', background: 'var(--glass-bg)', color: 'var(--text-main)' }}
           >
-            {options.map((opt: any) => <option key={opt} value={opt}>{opt}</option>)}
+            {options.map((opt: any) => <option key={opt} value={opt} style={{ background: '#1e293b', color: 'white' }}>{opt}</option>)}
           </select>
         );
       }
       return (
-        <input 
+          <input 
           autoFocus
           type={type}
           value={localValue || ""}
           onChange={(e) => setLocalValue(e.target.value)}
           onBlur={() => handleCellEdit(id, field, localValue)}
           onKeyDown={(e) => e.key === 'Enter' && handleCellEdit(id, field, localValue)}
-          style={{ padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid var(--primary)', fontSize: '0.85rem', width: '100%' }}
+          style={{ padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid var(--primary)', fontSize: '0.85rem', width: '100%', background: 'var(--glass-bg)', color: 'var(--text-main)' }}
         />
       );
     }
@@ -83,12 +94,12 @@ export default function IngresosTable({ ingresos, onEdit }: { ingresos: any[], o
   let lastDate = "";
 
   return (
-    <div style={{ background: 'white', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'hidden', position: 'relative' }}>
+    <div style={{ background: 'var(--glass-bg)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'hidden', position: 'relative', backdropFilter: 'blur(10px)' }}>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, textAlign: 'left', fontSize: '0.85rem' }}>
           <thead>
-            <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0', color: '#64748b' }}>
-              <th style={{ padding: '0.75rem 1rem', position: 'sticky', left: 0, background: '#f8fafc', zIndex: 5 }}>FECHA</th>
+            <tr style={{ background: 'rgba(248, 250, 252, 0.05)', borderBottom: '2px solid var(--glass-border)', color: 'var(--text-muted)' }}>
+              <th style={{ padding: '0.75rem 1rem', position: 'sticky', left: 0, background: 'var(--glass-bg)', zIndex: 5 }}>FECHA</th>
               <th style={{ padding: '0.75rem 1rem' }}>RESULTADO</th>
               <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
                 <Check size={16} />
@@ -121,8 +132,8 @@ export default function IngresosTable({ ingresos, onEdit }: { ingresos: any[], o
                   key={ing.id} 
                   ref={isTodayRow ? todayRef : null}
                   style={{ 
-                    borderBottom: '1px solid #f1f5f9', 
-                    background: isTodayRow ? '#e0f2fe' : (ing.checkbox_checked ? '#f0fdf4' : 'transparent'),
+                    borderBottom: '1px solid var(--glass-border)', 
+                    background: isTodayRow ? 'rgba(14, 165, 233, 0.15)' : (ing.checkbox_checked ? 'rgba(16, 185, 129, 0.1)' : 'transparent'),
                     transition: 'all 0.2s'
                   }}
                 >
@@ -131,9 +142,9 @@ export default function IngresosTable({ ingresos, onEdit }: { ingresos: any[], o
                     fontWeight: 700, 
                     position: 'sticky', 
                     left: 0, 
-                    background: isTodayRow ? '#e0f2fe' : (ing.checkbox_checked ? '#f0fdf4' : 'white'),
+                    background: isTodayRow ? 'rgba(14, 165, 233, 0.15)' : (ing.checkbox_checked ? 'rgba(16, 185, 129, 0.1)' : 'var(--glass-bg)'),
                     zIndex: 2,
-                    borderBottom: '1px solid #f1f5f9'
+                    borderBottom: '1px solid var(--glass-border)'
                   }}>
                     {showDate ? currentDate : ""}
                   </td>
@@ -144,9 +155,9 @@ export default function IngresosTable({ ingresos, onEdit }: { ingresos: any[], o
                     <button 
                       onClick={() => handleToggleCheck(ing.id, ing.checkbox_checked)}
                       style={{ 
-                        width: '20px', height: '20px', borderRadius: '4px', border: '2px solid #cbd5e1',
-                        background: ing.checkbox_checked ? 'var(--success)' : 'white',
-                        borderColor: ing.checkbox_checked ? 'var(--success)' : '#cbd5e1',
+                        width: '20px', height: '20px', borderRadius: '4px', border: '2px solid var(--glass-border)',
+                        background: ing.checkbox_checked ? 'var(--success)' : 'transparent',
+                        borderColor: ing.checkbox_checked ? 'var(--success)' : 'var(--glass-border)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                         color: 'white'
                       }}
@@ -206,22 +217,22 @@ export default function IngresosTable({ ingresos, onEdit }: { ingresos: any[], o
                     textAlign: 'right', 
                     position: 'sticky', 
                     right: 0, 
-                    background: isTodayRow ? '#e0f2fe' : (ing.checkbox_checked ? '#f0fdf4' : 'white'),
+                    background: isTodayRow ? 'rgba(14, 165, 233, 0.15)' : (ing.checkbox_checked ? 'rgba(16, 185, 129, 0.1)' : 'var(--glass-bg)'),
                     zIndex: 2,
-                    borderLeft: '1px solid #e2e8f0',
-                    borderBottom: '1px solid #f1f5f9'
+                    borderLeft: '1px solid var(--glass-border)',
+                    borderBottom: '1px solid var(--glass-border)'
                   }}>
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                       <button 
                         onClick={() => onEdit(ing)}
-                        style={{ padding: '0.4rem', borderRadius: '8px', background: 'white', color: 'var(--primary)', border: '1px solid #e2e8f0', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                        style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(14, 165, 233, 0.1)', color: 'var(--primary)', border: 'none', cursor: 'pointer' }}
                         title="Editar"
                       >
                         <Edit2 size={14} />
                       </button>
                       <button 
                         onClick={() => handleDelete(ing.id)}
-                        style={{ padding: '0.4rem', borderRadius: '8px', background: 'white', color: 'var(--danger)', border: '1px solid #e2e8f0', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                        style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: 'none', cursor: 'pointer' }}
                         title="Eliminar"
                       >
                         <Trash2 size={14} />
@@ -236,19 +247,21 @@ export default function IngresosTable({ ingresos, onEdit }: { ingresos: any[], o
       </div>
       
       {/* Scroll to Today floating button */}
-      <button 
-        onClick={() => todayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-        style={{ 
-          position: 'fixed', bottom: '2rem', right: '2rem', background: 'var(--primary)', color: 'white',
-          width: '56px', height: '64px', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: 'none', cursor: 'pointer', zIndex: 100,
-          gap: '2px'
-        }}
-        title="Ir a Hoy"
-      >
-        <ArrowDown size={22} />
-        <span style={{ fontSize: '0.7rem', fontWeight: 800 }}>HOY</span>
-      </button>
+      {period !== 'day' && (
+        <button 
+          onClick={handleJump}
+          style={{ 
+            position: 'fixed', bottom: '2rem', right: '2rem', background: 'var(--primary)', color: 'white',
+            width: '64px', height: '72px', borderRadius: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 8px 16px rgba(14, 165, 233, 0.3)', border: 'none', cursor: 'pointer', zIndex: 100,
+            gap: '4px', transition: 'all 0.3s'
+          }}
+          title={isAtToday ? "Ir al Inicio" : "Ir a Hoy"}
+        >
+          {isAtToday ? <ArrowUp size={24} /> : <ArrowDown size={24} />}
+          <span style={{ fontSize: '0.75rem', fontWeight: 900 }}>{isAtToday ? 'INICIO' : 'HOY'}</span>
+        </button>
+      )}
     </div>
   );
 }

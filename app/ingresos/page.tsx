@@ -66,7 +66,7 @@ export default function IngresosPage() {
           </div>
           <div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, margin: 0 }}>Total General</p>
-            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>{stats.total}</h3>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>{stats.total}</h3>
           </div>
         </div>
 
@@ -76,7 +76,7 @@ export default function IngresosPage() {
           </div>
           <div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, margin: 0 }}>Confirmados</p>
-            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>{stats.confirmados}</h3>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>{stats.confirmados}</h3>
           </div>
         </div>
 
@@ -86,7 +86,7 @@ export default function IngresosPage() {
           </div>
           <div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, margin: 0 }}>Pendientes</p>
-            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>{stats.pendientes}</h3>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>{stats.pendientes}</h3>
           </div>
         </div>
 
@@ -96,7 +96,7 @@ export default function IngresosPage() {
           </div>
           <div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, margin: 0 }}>Indicaciones</p>
-            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>{stats.indicaciones}</h3>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>{stats.indicaciones}</h3>
           </div>
         </div>
 
@@ -106,7 +106,7 @@ export default function IngresosPage() {
           </div>
           <div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, margin: 0 }}>Cancelados</p>
-            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>{stats.cancelados}</h3>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>{stats.cancelados}</h3>
           </div>
         </div>
 
@@ -116,23 +116,25 @@ export default function IngresosPage() {
           </div>
           <div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, margin: 0 }}>Domicilio</p>
-            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>{stats.domicilio}</h3>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>{stats.domicilio}</h3>
           </div>
         </div>
       </div>
 
       <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', gap: '0.5rem', background: '#f1f5f9', padding: '0.4rem', borderRadius: '12px' }}>
+        <div style={{ display: 'flex', gap: '0.4rem', background: 'rgba(0,0,0,0.1)', padding: '0.4rem', borderRadius: '14px', border: '1px solid var(--glass-border)' }}>
           {(['day', 'week', 'month'] as const).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
               style={{
                 padding: '0.6rem 1.2rem', borderRadius: '10px', fontSize: '0.9rem', fontWeight: 700,
-                background: period === p ? 'white' : 'transparent',
-                color: period === p ? 'var(--primary)' : '#64748b',
-                boxShadow: period === p ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
-                transition: 'all 0.2s'
+                background: period === p ? 'var(--primary)' : 'transparent',
+                color: period === p ? 'white' : 'var(--text-muted)',
+                boxShadow: period === p ? '0 4px 12px rgba(14, 165, 233, 0.3)' : 'none',
+                transition: 'all 0.2s',
+                border: 'none',
+                cursor: 'pointer'
               }}
             >
               {p === 'day' ? 'Día' : p === 'week' ? 'Semana' : 'Mes'}
@@ -149,15 +151,15 @@ export default function IngresosPage() {
               onChange={(e) => setSelectedDate(e.target.value)}
               style={{ 
                 padding: '0.75rem 1rem 0.75rem 2.8rem', borderRadius: '12px', border: '1px solid var(--glass-border)',
-                background: 'white', fontWeight: 600, fontSize: '0.95rem', outline: 'none'
+                background: 'var(--glass-bg)', fontWeight: 600, fontSize: '0.95rem', outline: 'none', color: 'var(--text-main)'
               }}
             />
           </div>
           <button 
             style={{ 
               display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', 
-              borderRadius: '12px', border: '1px solid var(--glass-border)', background: 'white',
-              fontWeight: 700, fontSize: '0.9rem', color: '#64748b'
+              borderRadius: '12px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)',
+              fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-muted)', cursor: 'pointer'
             }}
           >
             <Download size={18} /> Exportar
@@ -166,9 +168,9 @@ export default function IngresosPage() {
       </div>
 
       {loading ? (
-        <div style={{ padding: '4rem', textAlign: 'center' }}>Cargando ingresos...</div>
+        <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>Cargando ingresos...</div>
       ) : (
-        <IngresosTable ingresos={ingresos} onEdit={handleEdit} />
+        <IngresosTable ingresos={ingresos} onEdit={handleEdit} period={period} />
       )}
 
       <NewIngresoModal 
