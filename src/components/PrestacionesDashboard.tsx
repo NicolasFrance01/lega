@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { getPrestacionesBySheet, updatePrestacion, addPrestacion, deletePrestacion, reorderPrestaciones } from "@/actions/prestaciones";
-import { Search, Plus, Save, Trash2, Edit2, Loader2, FileSpreadsheet, Settings } from "lucide-react";
+import { FileSpreadsheet, Plus, Save, Trash2, Edit3, Search, ChevronDown, ChevronRight, X, GripVertical, Palette, Info } from "lucide-react";
+import { PrestacionesIcon } from "./icons/PrestacionesIcon";
 import CreateSectionModal from "./CreateSectionModal";
 import { evaluateGrid, evaluateFormula, parseNumberValue, indexToCol } from "@/lib/formulas";
 
@@ -615,7 +616,7 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
       <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2 style={{ fontSize: '1.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0 }}>
-            <FileSpreadsheet size={32} color="var(--primary)" /> Módulo de Prestaciones
+            <PrestacionesIcon size={32} style={{ stroke: 'var(--primary)' }} /> Módulo de Prestaciones
             <span style={{ fontSize: '0.7rem', opacity: 0.3, fontWeight: 400 }}>v1.7.0</span>
           </h2>
         </div>
