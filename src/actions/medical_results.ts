@@ -161,9 +161,67 @@ export async function getAllMedicalResults() {
 
 export async function markAsNotified(id: string) {
   try {
+    const res = await pool.query(`
+      SELECT mr.*, p.name 
+      FROM medical_results mr 
+      JOIN patients p ON mr.patient_id = p.id 
+      WHERE mr.id = $1
+    `, [id]);
+    const details = res.rows[0];
+
     await pool.query('UPDATE medical_results SET notified_at = NOW() WHERE id = $1', [id]);
+    
+    await logAction("NOTIFIED_PATIENT", { 
+      patient_name: details?.name, 
+      result_id: id 
+    });
+
     return { success: true };
   } catch (error: any) {
     return { error: error.message };
+  }
+}
+export async function deleteMedicalResult(resultId: string) {
+  const session = await getSession() as any;
+  if (!session) throw new Error("No autorizado");
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Get details for logging before deleting
+    const resultRes = await client.query(`
+      SELECT mr.*, p.name as patient_name 
+      FROM medical_results mr 
+      JOIN patients p ON mr.patient_id = p.id 
+      WHERE mr.id = $1
+    `, [resultId]);
+
+    if (resultRes.rows.length === 0) throw new Error("Resultado no encontrado");
+    const result = resultRes.rows[0];
+
+    // Delete from DB
+    await client.query('DELETE FROM medical_results WHERE id = $1', [resultId]);
+
+    // Log the action
+    await pool.query(
+      "INSERT INTO audit_logs (user_id, action, details) VALUES ($1, $2, $3)",
+      [session.id, "DELETE_MEDICAL_RESULT", JSON.stringify({ 
+        result_id: resultId, 
+        patient_name: result.patient_name,
+        result_type: result.result_type,
+        content: result.content
+      })]
+    );
+
+    await client.query('COMMIT');
+    revalidatePath("/resumen-medico");
+    return { success: true };
+  } catch (error: any) {
+    await client.query('ROLLBACK');
+    console.error("Error deleting medical result:", error);
+    return { error: error.message };
+  } finally {
+    client.release();
   }
 }

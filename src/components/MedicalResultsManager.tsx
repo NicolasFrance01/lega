@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, User, Calendar, FileText, Plus, Send, CheckCircle, Clock, Trash2, Eye, Download, MessageSquare } from "lucide-react";
-import { searchPatients, getPatientAppointments, uploadMedicalResult, getAllMedicalResults, markAsNotified } from "@/actions/medical_results";
+import { Search, User, Calendar, FileText, Plus, Send, CheckCircle, Clock, Trash2, Eye, Download, MessageSquare, FilePlus, X } from "lucide-react";
+import { searchPatients, getPatientAppointments, uploadMedicalResult, getAllMedicalResults, markAsNotified, deleteMedicalResult } from "@/actions/medical_results";
 import Portal from "./Portal";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -321,6 +321,20 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                         >
                           <Eye size={14} />
                         </a>
+                        <button 
+                          onClick={async () => {
+                            if (confirm(`¿Estás seguro de eliminar el resultado de ${res.patient_name}?`)) {
+                              setLoading(true);
+                              await deleteMedicalResult(res.id);
+                              loadAllResults();
+                              setLoading(false);
+                            }
+                          }}
+                          style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: 'none', cursor: 'pointer' }}
+                          title="Eliminar resultado"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </td>
                   </tr>

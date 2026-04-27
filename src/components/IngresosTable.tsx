@@ -99,7 +99,7 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, textAlign: 'left', fontSize: '0.85rem' }}>
           <thead>
             <tr style={{ background: 'rgba(248, 250, 252, 0.05)', borderBottom: '2px solid var(--glass-border)', color: 'var(--text-muted)' }}>
-              <th style={{ padding: '0.75rem 1rem', position: 'sticky', left: 0, background: 'var(--glass-bg)', zIndex: 5 }}>FECHA</th>
+              <th style={{ padding: '0.75rem 1rem', position: 'sticky', left: 0, background: 'var(--glass-bg)', zIndex: 10, borderBottom: '2px solid var(--glass-border)' }}>FECHA</th>
               <th style={{ padding: '0.75rem 1rem' }}>RESULTADO</th>
               <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
                 <Check size={16} />
@@ -117,7 +117,7 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
               <th style={{ padding: '0.75rem 1rem' }}>COSEGURO</th>
               <th style={{ padding: '0.75rem 1rem' }}>PARTICULAR</th>
               <th style={{ padding: '0.75rem 1rem' }}>PAGO</th>
-              <th style={{ padding: '0.75rem 1rem', textAlign: 'right', position: 'sticky', right: 0, background: '#f8fafc', zIndex: 5, borderLeft: '1px solid #e2e8f0' }}>ACCIONES</th>
+              <th style={{ padding: '0.75rem 1rem', textAlign: 'right', position: 'sticky', right: 0, background: 'var(--glass-bg)', zIndex: 10, borderLeft: '1px solid #e2e8f0', borderBottom: '2px solid var(--glass-border)' }}>ACCIONES</th>
             </tr>
           </thead>
           <tbody>
@@ -142,7 +142,7 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
                     fontWeight: 700, 
                     position: 'sticky', 
                     left: 0, 
-                    background: isTodayRow ? 'rgba(14, 165, 233, 0.15)' : (ing.checkbox_checked ? 'rgba(16, 185, 129, 0.1)' : 'var(--glass-bg)'),
+                    background: isTodayRow ? '#1a2e3b' : (ing.checkbox_checked ? '#1a3028' : 'var(--bg-main, #0f172a)'),
                     zIndex: 2,
                     borderBottom: '1px solid var(--glass-border)'
                   }}>
@@ -217,7 +217,7 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
                     textAlign: 'right', 
                     position: 'sticky', 
                     right: 0, 
-                    background: isTodayRow ? 'rgba(14, 165, 233, 0.15)' : (ing.checkbox_checked ? 'rgba(16, 185, 129, 0.1)' : 'var(--glass-bg)'),
+                    background: isTodayRow ? '#1a2e3b' : (ing.checkbox_checked ? '#1a3028' : 'var(--bg-main, #0f172a)'),
                     zIndex: 2,
                     borderLeft: '1px solid var(--glass-border)',
                     borderBottom: '1px solid var(--glass-border)'
@@ -248,19 +248,24 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
       
       {/* Scroll to Today floating button */}
       {period !== 'day' && (
-        <button 
-          onClick={handleJump}
-          style={{ 
-            position: 'fixed', bottom: '2rem', right: '2rem', background: 'var(--primary)', color: 'white',
-            width: '64px', height: '72px', borderRadius: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 8px 16px rgba(14, 165, 233, 0.3)', border: 'none', cursor: 'pointer', zIndex: 100,
-            gap: '4px', transition: 'all 0.3s'
-          }}
-          title={isAtToday ? "Ir al Inicio" : "Ir a Hoy"}
-        >
-          {isAtToday ? <ArrowUp size={24} /> : <ArrowDown size={24} />}
-          <span style={{ fontSize: '0.75rem', fontWeight: 900 }}>{isAtToday ? 'INICIO' : 'HOY'}</span>
-        </button>
+        <div style={{ position: 'fixed', bottom: '2.5rem', right: '2.5rem', zIndex: 9999 }}>
+          <button 
+            onClick={handleJump}
+            style={{ 
+              background: 'var(--primary)', color: 'white',
+              width: '72px', height: '80px', borderRadius: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 12px 24px -4px rgba(14, 165, 233, 0.4)', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer',
+              gap: '4px', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              transform: 'scale(1)',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05) translateY(-4px)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
+            title={isAtToday ? "Ir al Inicio" : "Ir a Hoy"}
+          >
+            {isAtToday ? <ArrowUp size={28} strokeWidth={3} /> : <ArrowDown size={28} strokeWidth={3} />}
+            <span style={{ fontSize: '0.8rem', fontWeight: 900, letterSpacing: '0.5px' }}>{isAtToday ? 'INICIO' : 'HOY'}</span>
+          </button>
+        </div>
       )}
     </div>
   );

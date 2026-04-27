@@ -26,6 +26,32 @@ export function formatAuditLog(log: any) {
       return `Actualizó su nombre en el perfil`;
     case 'UPDATE_PROFILE_WITH_PASSWORD':
       return `Cambió su contraseña y datos de perfil`;
+    
+    // Ingresos
+    case 'CREATE_INGRESO':
+      return `Registró un nuevo ingreso: ${d.patient_name} - ${d.analysis} (Prot. ${d.report_id})`;
+    case 'UPDATE_INGRESO':
+      return `Actualizó datos del ingreso de ${d.patient_name} (Prot. ${d.report_id})`;
+    case 'DELETE_INGRESO':
+      return `Eliminó el ingreso de ${d.patient_name} (Prot. ${d.report_id})`;
+    case 'UPDATE_INGRESO_FIELD':
+      return `Modificó '${d.field}' de ${d.patient_name} (Prot. ${d.report_id}): de '${d.old_value || '-'}' a '${d.new_value}'`;
+    
+    // Resultados Médicos
+    case 'UPLOAD_MEDICAL_RESULT':
+      return `Subió un resultado (${d.type}) para el paciente ID: ${d.patient_id}`;
+    case 'DELETE_MEDICAL_RESULT':
+      return `Eliminó un resultado de ${d.patient_name} (${d.result_type})`;
+    case 'NOTIFIED_PATIENT':
+      return `Avisó por WhatsApp a ${d.patient_name} sobre su resultado`;
+    
+    // Prestaciones
+    case 'ADD_PRESTACION':
+      return `Agregó una nueva prestación en '${d.sheet_name}'`;
+    case 'UPDATE_PRESTACION':
+      return `Editó una prestación en '${d.sheet_name}'`;
+    case 'DELETE_PRESTACION':
+      return `Eliminó una prestación de '${d.sheet_name}'`;
     default:
       if (typeof action === 'string') {
         return action.replace(/_/g, ' ').toLowerCase();

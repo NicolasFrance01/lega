@@ -130,6 +130,17 @@ export async function createIngreso(formData: FormData) {
     }
 
     await client.query('COMMIT');
+
+    // Log action
+    await logAction(existingId ? "UPDATE_INGRESO" : "CREATE_INGRESO", {
+      patient_name: name,
+      dni: dni,
+      analysis: analysis_type,
+      report_id: report_id,
+      payment: payment_method,
+      amount: (parseFloat(coseguro || "0") + parseFloat(particular_price || "0")).toFixed(2)
+    });
+
     revalidatePath("/ingresos");
     revalidatePath("/");
     return { success: true };
@@ -143,8 +154,17 @@ export async function createIngreso(formData: FormData) {
 }
 
 export async function deleteIngreso(id: string) {
-  try {
+    const res = await pool.query('SELECT a.*, p.name FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = $1', [id]);
+    const details = res.rows[0];
+
     await pool.query('DELETE FROM appointments WHERE id = $1', [id]);
+
+    await logAction("DELETE_INGRESO", {
+      patient_name: details?.name,
+      analysis: details?.analysis_type,
+      report_id: details?.report_id
+    });
+
     revalidatePath("/ingresos");
     return { success: true };
   } catch (error: any) {
@@ -154,7 +174,19 @@ export async function deleteIngreso(id: string) {
 
 export async function updateIngresoField(id: string, field: string, value: any) {
   try {
+    const res = await pool.query('SELECT a.*, p.name FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = $1', [id]);
+    const details = res.rows[0];
+
     await pool.query(`UPDATE appointments SET ${field} = $1 WHERE id = $2`, [value, id]);
+
+    await logAction("UPDATE_INGRESO_FIELD", {
+      patient_name: details?.name,
+      field: field,
+      old_value: details?.[field],
+      new_value: value,
+      report_id: details?.report_id
+    });
+
     revalidatePath("/ingresos");
     return { success: true };
   } catch (error: any) {

@@ -2,6 +2,7 @@
 
 import { query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { logAction } from "./audit";
 
 export async function getPrestacionesSheets() {
   try {
@@ -34,7 +35,9 @@ export async function updatePrestacion(id: number, rowData: any) {
       "UPDATE prestaciones_data SET row_data = $1, updated_at = NOW() WHERE id = $2",
       [JSON.stringify(rowData), id]
     );
-    // revalidatePath("/prestaciones");
+
+    await logAction("UPDATE_PRESTACION", { id, row_data: rowData });
+
     return { success: true };
   } catch (error: any) {
     console.error("Error updating prestacion:", error);
@@ -69,6 +72,9 @@ export async function addPrestacion(sheetName: string, rowData: any, afterId?: n
       "INSERT INTO prestaciones_data (sheet_name, row_data, row_index) VALUES ($1, $2, $3) RETURNING *",
       [sheetName, JSON.stringify(rowData), nextIndex]
     );
+
+    await logAction("ADD_PRESTACION", { sheet_name: sheetName, row_data: rowData });
+
     return { success: true, data: insertRes.rows[0] };
   } catch (error: any) {
     console.error("Error adding prestacion:", error);
@@ -78,7 +84,13 @@ export async function addPrestacion(sheetName: string, rowData: any, afterId?: n
 
 export async function deletePrestacion(id: number) {
   try {
+    const res = await query("SELECT * FROM prestaciones_data WHERE id = $1", [id]);
+    const details = res.rows[0];
+
     await query("DELETE FROM prestaciones_data WHERE id = $1", [id]);
+
+    await logAction("DELETE_PRESTACION", { sheet_name: details?.sheet_name, row_data: details?.row_data });
+
     return { success: true };
   } catch (error: any) {
     console.error("Error deleting prestacion:", error);
