@@ -54,7 +54,7 @@ export async function uploadMedicalResult(formData: FormData) {
       await client.query(`
         INSERT INTO medical_results (appointment_id, patient_id, result_type, content, uploaded_by)
         VALUES ($1, $2, $3, $4, $5)
-      `, [appointmentId, patientId, type, noteContent, session.user.id]);
+      `, [appointmentId, patientId, type, noteContent, session.id]);
     } else {
       for (const file of files) {
         if (file && file.size > 0) {
@@ -65,7 +65,7 @@ export async function uploadMedicalResult(formData: FormData) {
           await client.query(`
             INSERT INTO medical_results (appointment_id, patient_id, result_type, content, filename, uploaded_by)
             VALUES ($1, $2, $3, $4, $5, $6)
-          `, [appointmentId, patientId, type, blob.url, file.name, session.user.id]);
+          `, [appointmentId, patientId, type, blob.url, file.name, session.id]);
         }
       }
     }
