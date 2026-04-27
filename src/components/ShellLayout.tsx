@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import SidebarNav from "./SidebarNav";
 import ThemeToggle from "./ThemeToggle";
@@ -14,6 +15,12 @@ interface ShellLayoutProps {
 
 export default function ShellLayout({ children, session, userData }: ShellLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const pathname = usePathname();
+  const isPortal = pathname?.startsWith('/resultado');
+
+  if (isPortal) {
+    return <>{children}</>;
+  }
 
   const userDisplayName = userData?.full_name || session?.username || 'Usuario';
   const userRole = userData?.role || session?.role || 'staff';
