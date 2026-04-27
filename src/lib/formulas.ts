@@ -90,8 +90,12 @@ export function evaluateFormula(formula: string, getCellValue: (colIdx: number, 
       return `(${cells.join('+')})`;
     });
 
-    // SUMA(x) -> (x)
-    expression = expression.replace(/(SUMA|SUM)\(([^)]+)\)/g, '($2)');
+    // SUMA(x) o SUM(x) -> (x)
+    // También soporta múltiples argumentos separados por ; o ,
+    expression = expression.replace(/(SUMA|SUM)\(([^)]+)\)/g, (match, fn, args) => {
+      const parts = args.split(/[;,]/).map((a: string) => a.trim());
+      return `(${parts.join('+')})`;
+    });
 
     // Reemplazar celdas A1 -> getCellValue
     let hasUnresolved = false;
@@ -141,13 +145,30 @@ export function parseNumberValue(val: any): number {
     s = s.slice(0, -1).trim();
   }
   
-  s = s.replace(/\$/g, '').trim();
-  if (/^-?\d+(\.\d+)?$/.test(s)) {
-     const n = parseFloat(s);
-     return isPercent ? n / 100 : n;
+  s = s.replace(/\$/g, '').replace(/ARS/g, '').trim();
+  
+  // Si no tiene comas ni puntos, o solo tiene uno de los dos de forma "simple"
+  if (/^-?\d+([.,]\d+)?$/.test(s)) {
+    const clean = s.replace(',', '.');
+    const n = parseFloat(clean);
+    return isPercent ? n / 100 : n;
   }
   
-  s = s.replace(/\./g, '').replace(/,/g, '.');
+  // Caso complejo: miles y decimales
+  // Heurística: el último separador suele ser el decimal si tiene 1 o 2 dígitos después
+  const lastDot = s.lastIndexOf('.');
+  const lastComma = s.lastIndexOf(',');
+  
+  if (lastComma > lastDot) {
+    // Formato español: 1.234,56
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (lastDot > lastComma) {
+    // Formato inglés: 1,234.56
+    s = s.replace(/,/g, '');
+  } else if (lastDot === -1 && lastComma === -1) {
+    // Ya lo manejó el regex de arriba, pero por si acaso
+  }
+  
   const num = parseFloat(s);
   if (isNaN(num)) return 0;
   return isPercent ? num / 100 : num;
