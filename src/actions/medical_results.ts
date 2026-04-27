@@ -60,7 +60,7 @@ export async function uploadMedicalResult(formData: FormData) {
         if (file && file.size > 0) {
           const ext = file.name.split('.').pop() || (type === 'pdf' ? 'pdf' : 'jpg');
           const path = `medical-results/${Date.now()}-${patientId}-${Math.random().toString(36).substring(7)}.${ext}`;
-          const blob = await put(path, file, { access: 'public' });
+          const blob = await put(path, file, { access: 'private' });
           
           await client.query(`
             INSERT INTO medical_results (appointment_id, patient_id, result_type, content, filename, uploaded_by)
