@@ -13,6 +13,7 @@ export default function IngresosPage() {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [ingresos, setIngresos] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingIngreso, setEditingIngreso] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,6 +25,11 @@ export default function IngresosPage() {
     const res = await getIngresos(period, selectedDate);
     if (res.data) setIngresos(res.data);
     setLoading(false);
+  }
+
+  function handleEdit(ingreso: any) {
+    setEditingIngreso(ingreso);
+    setIsModalOpen(true);
   }
 
   return (
@@ -89,10 +95,18 @@ export default function IngresosPage() {
       {loading ? (
         <div style={{ padding: '4rem', textAlign: 'center' }}>Cargando ingresos...</div>
       ) : (
-        <IngresosTable ingresos={ingresos} />
+        <IngresosTable ingresos={ingresos} onEdit={handleEdit} />
       )}
 
-      <NewIngresoModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); fetchData(); }} />
+      <NewIngresoModal 
+        isOpen={isModalOpen} 
+        editingIngreso={editingIngreso}
+        onClose={() => { 
+          setIsModalOpen(false); 
+          setEditingIngreso(null);
+          fetchData(); 
+        }} 
+      />
     </div>
   );
 }

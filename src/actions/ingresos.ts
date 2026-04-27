@@ -9,13 +9,17 @@ export async function getIngresos(period: 'day' | 'week' | 'month' = 'day', date
     let dateCondition = "DATE(a.appointment_date) = CURRENT_DATE";
     const params: any[] = [];
 
-    if (date) {
-      params.push(date);
+    const baseDate = date || format(new Date(), 'yyyy-MM-dd');
+
+    if (period === 'day') {
+      params.push(baseDate);
       dateCondition = `DATE(a.appointment_date) = $${params.length}`;
     } else if (period === 'week') {
-      dateCondition = "a.appointment_date >= DATE_TRUNC('week', CURRENT_DATE) AND a.appointment_date < DATE_TRUNC('week', CURRENT_DATE) + INTERVAL '1 week'";
+      params.push(baseDate);
+      dateCondition = `a.appointment_date >= DATE_TRUNC('week', $${params.length}::date) AND a.appointment_date < DATE_TRUNC('week', $${params.length}::date) + INTERVAL '1 week'`;
     } else if (period === 'month') {
-      dateCondition = "a.appointment_date >= DATE_TRUNC('month', CURRENT_DATE) AND a.appointment_date < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'";
+      params.push(baseDate);
+      dateCondition = `a.appointment_date >= DATE_TRUNC('month', $${params.length}::date) AND a.appointment_date < DATE_TRUNC('month', $${params.length}::date) + INTERVAL '1 month'`;
     }
 
     const res = await pool.query(`
@@ -40,11 +44,15 @@ export async function getIngresos(period: 'day' | 'week' | 'month' = 'day', date
   }
 }
 
+import { logAction } from './audit';
+import { put } from '@vercel/blob';
+
 export async function createIngreso(formData: FormData) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     
+    const existingId = formData.get("id") as string;
     const name = formData.get("name") as string;
     const dni = formData.get("dni") as string;
     const phone = formData.get("phone") as string;
@@ -62,6 +70,7 @@ export async function createIngreso(formData: FormData) {
     const particular_price = formData.get("particular_price") as string;
     const payment_method = formData.get("payment_method") as string;
     const observations = formData.get("observations") as string;
+    const files = formData.getAll("document") as File[];
 
     // UPSERT patient
     const patientRes = await client.query(
@@ -80,14 +89,43 @@ export async function createIngreso(formData: FormData) {
     );
     const patientId = patientRes.rows[0].id;
 
-    // Insert Appointment as Ingreso
-    await client.query(
-      `INSERT INTO appointments 
-       (patient_id, appointment_date, analysis_type, observations, status, 
-        report_id, result_date, coseguro, particular_price, payment_method, professional_name, is_ingreso) 
-       VALUES ($1, $2, $3, $4, 'COMPLETADO', $5, NULLIF($6, '')::timestamp, NULLIF($7, '')::numeric, NULLIF($8, '')::numeric, $9, $10, TRUE)`,
-      [patientId, appointment_date || new Date().toISOString(), analysis_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name]
-    );
+    let aptId;
+    if (existingId) {
+      // Update existing appointment
+      await client.query(
+        `UPDATE appointments SET 
+          analysis_type = $1, observations = $2, status = 'COMPLETADO',
+          report_id = $3, result_date = NULLIF($4, '')::timestamp, 
+          coseguro = NULLIF($5, '')::numeric, particular_price = NULLIF($6, '')::numeric, 
+          payment_method = $7, professional_name = $8, is_ingreso = TRUE
+         WHERE id = $9`,
+        [analysis_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, existingId]
+      );
+      aptId = existingId;
+    } else {
+      // Insert Appointment as Ingreso
+      const aptRes = await client.query(
+        `INSERT INTO appointments 
+         (patient_id, appointment_date, analysis_type, observations, status, 
+          report_id, result_date, coseguro, particular_price, payment_method, professional_name, is_ingreso) 
+         VALUES ($1, $2, $3, $4, 'COMPLETADO', $5, NULLIF($6, '')::timestamp, NULLIF($7, '')::numeric, NULLIF($8, '')::numeric, $9, $10, TRUE)
+         RETURNING id`,
+        [patientId, appointment_date || new Date().toISOString(), analysis_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name]
+      );
+      aptId = aptRes.rows[0].id;
+    }
+
+    // Handle File Uploads
+    for (const file of files) {
+      if (file && file.size > 0) {
+        const path = `ingresos/${Date.now()}-${file.name}`;
+        const blob = await put(path, file, { access: 'private' });
+        await client.query(
+          'INSERT INTO appointment_documents (appointment_id, document_url, filename) VALUES ($1, $2, $3)',
+          [aptId, blob.url, file.name]
+        );
+      }
+    }
 
     await client.query('COMMIT');
     revalidatePath("/ingresos");
@@ -95,10 +133,20 @@ export async function createIngreso(formData: FormData) {
     return { success: true };
   } catch (error: any) {
     await client.query('ROLLBACK');
-    console.error("Create ingreso error:", error);
+    console.error("Create/Update ingreso error:", error);
     return { error: error.message };
   } finally {
     client.release();
+  }
+}
+
+export async function deleteIngreso(id: string) {
+  try {
+    await pool.query('DELETE FROM appointments WHERE id = $1', [id]);
+    revalidatePath("/ingresos");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
   }
 }
 

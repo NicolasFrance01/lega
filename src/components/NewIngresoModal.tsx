@@ -9,9 +9,10 @@ import { createIngreso } from "@/actions/ingresos";
 interface NewIngresoModalProps {
   isOpen: boolean;
   onClose: () => void;
+  editingIngreso?: any;
 }
 
-export default function NewIngresoModal({ isOpen, onClose }: NewIngresoModalProps) {
+export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: NewIngresoModalProps) {
   const [mode, setMode] = useState<"sin_turno" | "con_turno">("sin_turno");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -26,10 +27,20 @@ export default function NewIngresoModal({ isOpen, onClose }: NewIngresoModalProp
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
 
   useEffect(() => {
-    if (isOpen && mode === "con_turno") {
+    if (editingIngreso) {
+      setSelectedPatient(editingIngreso);
+      setMode("sin_turno");
+    } else {
+      setSelectedPatient(null);
+      setMode("sin_turno");
+    }
+  }, [editingIngreso, isOpen]);
+
+  useEffect(() => {
+    if (isOpen && mode === "con_turno" && !editingIngreso) {
       fetchToday();
     }
-  }, [isOpen, mode]);
+  }, [isOpen, mode, editingIngreso]);
 
   async function fetchToday() {
     setLoadingToday(true);
@@ -104,42 +115,48 @@ export default function NewIngresoModal({ isOpen, onClose }: NewIngresoModalProp
       }}>
         <div style={{ padding: '1.5rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'white', zIndex: 10 }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>Nuevo Ingreso</h3>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Registrá la entrada de un paciente al laboratorio</p>
+            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
+              {editingIngreso ? 'Editar Ingreso' : 'Nuevo Ingreso'}
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>
+              {editingIngreso ? 'Modificá los datos del ingreso' : 'Registrá la entrada de un paciente al laboratorio'}
+            </p>
           </div>
           <button onClick={onClose} style={{ color: '#64748b', cursor: 'pointer' }}><X size={20} /></button>
         </div>
 
         <div style={{ padding: '1.5rem' }}>
           {/* Mode Switcher */}
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-            <button 
-              onClick={() => setMode("sin_turno")}
-              style={{ 
-                flex: 1, padding: '1rem', borderRadius: '12px', fontWeight: 700,
-                background: mode === 'sin_turno' ? 'var(--primary)' : '#f8fafc',
-                color: mode === 'sin_turno' ? 'white' : '#64748b',
-                border: mode === 'sin_turno' ? 'none' : '1px solid #e2e8f0',
-                transition: 'all 0.2s'
-              }}
-            >
-              SIN TURNO (Manual)
-            </button>
-            <button 
-              onClick={() => setMode("con_turno")}
-              style={{ 
-                flex: 1, padding: '1rem', borderRadius: '12px', fontWeight: 700,
-                background: mode === 'con_turno' ? 'var(--primary)' : '#f8fafc',
-                color: mode === 'con_turno' ? 'white' : '#64748b',
-                border: mode === 'con_turno' ? 'none' : '1px solid #e2e8f0',
-                transition: 'all 0.2s'
-              }}
-            >
-              CON TURNO (Agendados Hoy)
-            </button>
-          </div>
+          {!editingIngreso && (
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+              <button 
+                onClick={() => setMode("sin_turno")}
+                style={{ 
+                  flex: 1, padding: '1rem', borderRadius: '12px', fontWeight: 700,
+                  background: mode === 'sin_turno' ? 'var(--primary)' : '#f8fafc',
+                  color: mode === 'sin_turno' ? 'white' : '#64748b',
+                  border: mode === 'sin_turno' ? 'none' : '1px solid #e2e8f0',
+                  transition: 'all 0.2s'
+                }}
+              >
+                SIN TURNO (Manual)
+              </button>
+              <button 
+                onClick={() => setMode("con_turno")}
+                style={{ 
+                  flex: 1, padding: '1rem', borderRadius: '12px', fontWeight: 700,
+                  background: mode === 'con_turno' ? 'var(--primary)' : '#f8fafc',
+                  color: mode === 'con_turno' ? 'white' : '#64748b',
+                  border: mode === 'con_turno' ? 'none' : '1px solid #e2e8f0',
+                  transition: 'all 0.2s'
+                }}
+              >
+                CON TURNO (Agendados Hoy)
+              </button>
+            </div>
+          )}
 
-          {mode === "con_turno" ? (
+          {mode === "con_turno" && !editingIngreso ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <h4 style={{ fontSize: '0.9rem', color: '#64748b' }}>Seleccioná el turno de hoy:</h4>
               {loadingToday ? <p>Cargando turnos...</p> : (
@@ -166,11 +183,18 @@ export default function NewIngresoModal({ isOpen, onClose }: NewIngresoModalProp
               {todayAppointments.length === 0 && !loadingToday && <p>No hay turnos agendados para hoy.</p>}
             </div>
           ) : (
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <form 
+              key={selectedPatient?.id || 'new'} 
+              onSubmit={handleSubmit} 
+              style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+            >
+              {editingIngreso && <input type="hidden" name="id" value={editingIngreso.id} />}
+              {selectedPatient?.id && !editingIngreso && <input type="hidden" name="id" value={selectedPatient.id} />}
+              
               {error && <div style={{ color: 'var(--danger)', padding: '0.75rem', background: '#fef2f2', borderRadius: '8px', fontSize: '0.85rem' }}>{error}</div>}
 
               {/* Patient Search / Autofill */}
-              {!selectedPatient && (
+              {!selectedPatient && !editingIngreso && (
                 <div style={{ position: 'relative' }}>
                   <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '1.2rem', color: '#94a3b8' }} />
                   <input 
@@ -246,19 +270,19 @@ export default function NewIngresoModal({ isOpen, onClose }: NewIngresoModalProp
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>N° Informe</label>
-                  <input name="report_id" style={inputStyle} placeholder="Ej: 94113" />
+                  <input name="report_id" defaultValue={selectedPatient?.report_id} style={inputStyle} placeholder="Ej: 94113" />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Fecha de Resultado</label>
-                  <input name="result_date" type="date" style={inputStyle} />
+                  <input name="result_date" type="date" defaultValue={selectedPatient?.result_date ? new Date(selectedPatient.result_date).toISOString().split('T')[0] : ''} style={inputStyle} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Profesional</label>
-                  <input name="professional_name" style={inputStyle} placeholder="Nombre del médico" />
+                  <input name="professional_name" defaultValue={selectedPatient?.professional_name} style={inputStyle} placeholder="Nombre del médico" />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Medio de Pago</label>
-                  <select name="payment_method" style={inputStyle}>
+                  <select name="payment_method" defaultValue={selectedPatient?.payment_method || 'EFECTIVO'} style={inputStyle}>
                     <option value="EFECTIVO">Efectivo</option>
                     <option value="TRANSFERENCIA">Transferencia</option>
                     <option value="TARJETA">Tarjeta</option>
@@ -267,11 +291,25 @@ export default function NewIngresoModal({ isOpen, onClose }: NewIngresoModalProp
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Coseguro O.Soc</label>
-                  <input name="coseguro" type="number" step="0.01" style={inputStyle} placeholder="$ 0.00" />
+                  <input name="coseguro" type="number" step="0.01" defaultValue={selectedPatient?.coseguro} style={inputStyle} placeholder="$ 0.00" />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>Particular</label>
-                  <input name="particular_price" type="number" step="0.01" style={inputStyle} placeholder="$ 0.00" />
+                  <input name="particular_price" type="number" step="0.01" defaultValue={selectedPatient?.particular_price} style={inputStyle} placeholder="$ 0.00" />
+                </div>
+                
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>
+                    Adjuntar Archivos (PDF o Imágenes)
+                  </label>
+                  <input 
+                    name="document" 
+                    type="file" 
+                    multiple 
+                    accept="image/*,application/pdf" 
+                    style={{ ...inputStyle, padding: '0.5rem' }} 
+                  />
+                  <p style={{ margin: '0.3rem 0 0', fontSize: '0.75rem', color: '#64748b' }}>Podés seleccionar varios archivos a la vez.</p>
                 </div>
               </div>
 

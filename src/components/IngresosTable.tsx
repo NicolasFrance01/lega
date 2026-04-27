@@ -3,16 +3,22 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Check, Edit2, Trash2, Search, Filter, Calendar as CalendarIcon, Clock, User, Shield, CreditCard, DollarSign } from "lucide-react";
-import { updateIngresoField } from "@/actions/ingresos";
+import { Check, Edit2, Trash2, Search, Filter, Calendar as CalendarIcon, Clock, User, Shield, CreditCard, DollarSign, Mail, MapPin } from "lucide-react";
+import { updateIngresoField, deleteIngreso } from "@/actions/ingresos";
 
-export default function IngresosTable({ ingresos }: { ingresos: any[] }) {
+export default function IngresosTable({ ingresos, onEdit }: { ingresos: any[], onEdit: (ingreso: any) => void }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   async function handleToggleCheck(id: string, current: boolean) {
     setLoadingId(id);
     const res = await updateIngresoField(id, 'checkbox_checked', !current);
     setLoadingId(null);
+  }
+
+  async function handleDelete(id: string) {
+    if (confirm("¿Estás seguro de eliminar este ingreso?")) {
+      await deleteIngreso(id);
+    }
   }
 
   if (!ingresos || ingresos.length === 0) {
@@ -37,6 +43,8 @@ export default function IngresosTable({ ingresos }: { ingresos: any[] }) {
               <th style={{ padding: '0.75rem 1rem' }}>INFORME</th>
               <th style={{ padding: '0.75rem 1rem' }}>NOMBRE</th>
               <th style={{ padding: '0.75rem 1rem' }}>DNI</th>
+              <th style={{ padding: '0.75rem 1rem' }}>DIRECCIÓN</th>
+              <th style={{ padding: '0.75rem 1rem' }}>MAIL</th>
               <th style={{ padding: '0.75rem 1rem' }}>NACIMIENTO</th>
               <th style={{ padding: '0.75rem 1rem' }}>TELÉFONO</th>
               <th style={{ padding: '0.75rem 1rem' }}>PROFESIONAL</th>
@@ -45,6 +53,7 @@ export default function IngresosTable({ ingresos }: { ingresos: any[] }) {
               <th style={{ padding: '0.75rem 1rem' }}>COSEGURO</th>
               <th style={{ padding: '0.75rem 1rem' }}>PARTICULAR</th>
               <th style={{ padding: '0.75rem 1rem' }}>PAGO</th>
+              <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>ACCIONES</th>
             </tr>
           </thead>
           <tbody>
@@ -80,6 +89,12 @@ export default function IngresosTable({ ingresos }: { ingresos: any[] }) {
                   {ing.dni}
                 </td>
                 <td style={{ padding: '0.75rem 1rem' }}>
+                  {ing.address || '-'}
+                </td>
+                <td style={{ padding: '0.75rem 1rem' }}>
+                  {ing.email || '-'}
+                </td>
+                <td style={{ padding: '0.75rem 1rem' }}>
                   {ing.birth_date ? format(new Date(ing.birth_date), "dd/MM/yyyy") : '-'}
                 </td>
                 <td style={{ padding: '0.75rem 1rem' }}>
@@ -106,6 +121,24 @@ export default function IngresosTable({ ingresos }: { ingresos: any[] }) {
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: '#64748b' }}>
                     {ing.payment_method || '-'}
                   </span>
+                </td>
+                <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                    <button 
+                      onClick={() => onEdit(ing)}
+                      style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(14, 165, 233, 0.1)', color: 'var(--primary)', border: 'none', cursor: 'pointer' }}
+                      title="Editar"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(ing.id)}
+                      style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: 'none', cursor: 'pointer' }}
+                      title="Eliminar"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
