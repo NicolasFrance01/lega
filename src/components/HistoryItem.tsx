@@ -128,6 +128,47 @@ export default function HistoryItem({ apt }: { apt: any }) {
                 </div>
               )}
 
+              {/* Detalles Administrativos (Ingreso) */}
+              {(apt.report_id || apt.professional_name || apt.payment_method || apt.coseguro || apt.particular_price) && (
+                <div style={{ padding: '1rem', background: 'rgba(14, 165, 233, 0.05)', borderRadius: '12px', border: '1px solid rgba(14, 165, 233, 0.2)' }}>
+                  <h5 style={{ margin: '0 0 0.75rem 0', fontSize: '0.85rem', fontWeight: 800, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.4rem', textTransform: 'uppercase' }}>
+                    <Info size={14} /> Detalles del Ingreso:
+                  </h5>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
+                    {apt.report_id && (
+                      <div>
+                        <p style={{ margin: 0, fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>N° PROTOCOLO</p>
+                        <p style={{ margin: 0, fontWeight: 700 }}>{apt.report_id}</p>
+                      </div>
+                    )}
+                    {apt.professional_name && (
+                      <div>
+                        <p style={{ margin: 0, fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>PROFESIONAL</p>
+                        <p style={{ margin: 0, fontWeight: 700 }}>{apt.professional_name}</p>
+                      </div>
+                    )}
+                    {apt.payment_method && (
+                      <div>
+                        <p style={{ margin: 0, fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>MEDIO DE PAGO</p>
+                        <p style={{ margin: 0, fontWeight: 700 }}>{apt.payment_method}</p>
+                      </div>
+                    )}
+                    {apt.coseguro > 0 && (
+                      <div>
+                        <p style={{ margin: 0, fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>COSEGURO</p>
+                        <p style={{ margin: 0, fontWeight: 700, color: 'var(--success)' }}>${apt.coseguro}</p>
+                      </div>
+                    )}
+                    {apt.particular_price > 0 && (
+                      <div>
+                        <p style={{ margin: 0, fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>PARTICULAR</p>
+                        <p style={{ margin: 0, fontWeight: 700 }}>${apt.particular_price}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Documentos */}
               {apt.documents && apt.documents.length > 0 && (
                 <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '1rem' }}>

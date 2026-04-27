@@ -174,6 +174,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                             <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-main)' }}>{format(new Date(apt.appointment_date), "EEEE d 'de' MMMM, yyyy", { locale: es })}</div>
                             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
                               <Clock size={14} /> {format(new Date(apt.appointment_date), "HH:mm")} hs — {apt.analysis_type}
+                              {apt.report_id && <span style={{ color: 'var(--primary)', fontWeight: 800 }}>• Protocolo {apt.report_id}</span>}
                             </div>
                           </div>
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -210,13 +211,19 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                       <p style={{ margin: '0.2rem 0 0', fontWeight: 600 }}>{format(new Date(selectedApt.appointment_date), "dd/MM/yyyy")} - {selectedApt.analysis_type}</p>
                     </div>
 
-                    <div>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Tipo de Resultado</label>
-                      <select name="type" required style={inputStyle}>
-                        <option value="pdf">Documento PDF</option>
-                        <option value="image">Imagen / Foto</option>
-                        <option value="note">Nota Escrita</option>
-                      </select>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Tipo de Resultado</label>
+                        <select name="type" required style={inputStyle}>
+                          <option value="pdf">Documento PDF</option>
+                          <option value="image">Imagen / Foto</option>
+                          <option value="note">Nota Escrita</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>N° Informe / Protocolo</label>
+                        <input name="report_id" defaultValue={selectedApt.report_id} placeholder="Ej: 94113" style={inputStyle} />
+                      </div>
                     </div>
 
                     <div>

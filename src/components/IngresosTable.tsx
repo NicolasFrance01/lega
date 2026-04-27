@@ -9,13 +9,9 @@ import { updateIngresoField, deleteIngreso } from "@/actions/ingresos";
 export default function IngresosTable({ ingresos, onEdit }: { ingresos: any[], onEdit: (ingreso: any) => void }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const todayRef = useRef<HTMLTableRowElement>(null);
+  const [editingCell, setEditingCell] = useState<{ id: string, field: string } | null>(null);
 
-  useEffect(() => {
-    // Auto-scroll to today if found
-    if (todayRef.current) {
-      todayRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, [ingresos]);
+  // Auto-scroll removed as per request
 
   async function handleToggleCheck(id: string, current: boolean) {
     setLoadingId(id);
@@ -28,6 +24,53 @@ export default function IngresosTable({ ingresos, onEdit }: { ingresos: any[], o
       await deleteIngreso(id);
     }
   }
+
+  async function handleCellEdit(id: string, field: string, value: any) {
+    await updateIngresoField(id, field, value);
+    setEditingCell(null);
+  }
+
+  const EditableCell = ({ id, field, value, type = "text", options = [] }: any) => {
+    const isEditing = editingCell?.id === id && editingCell?.field === field;
+    const [localValue, setLocalValue] = useState(value);
+
+    if (isEditing) {
+      if (type === "select") {
+        return (
+          <select 
+            autoFocus
+            value={localValue}
+            onChange={(e) => setLocalValue(e.target.value)}
+            onBlur={() => handleCellEdit(id, field, localValue)}
+            style={{ padding: '0.2rem', borderRadius: '4px', border: '1px solid var(--primary)', fontSize: '0.85rem', width: '100%' }}
+          >
+            {options.map((opt: any) => <option key={opt} value={opt}>{opt}</option>)}
+          </select>
+        );
+      }
+      return (
+        <input 
+          autoFocus
+          type={type}
+          value={localValue || ""}
+          onChange={(e) => setLocalValue(e.target.value)}
+          onBlur={() => handleCellEdit(id, field, localValue)}
+          onKeyDown={(e) => e.key === 'Enter' && handleCellEdit(id, field, localValue)}
+          style={{ padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid var(--primary)', fontSize: '0.85rem', width: '100%' }}
+        />
+      );
+    }
+
+    return (
+      <div 
+        onClick={() => setEditingCell({ id, field })}
+        style={{ cursor: 'pointer', minHeight: '1.2rem', minWidth: '2rem' }}
+        className="editable-cell-hover"
+      >
+        {type === "number" && value ? `$${value}` : (value || '-')}
+      </div>
+    );
+  };
 
   if (!ingresos || ingresos.length === 0) {
     return (
@@ -112,7 +155,7 @@ export default function IngresosTable({ ingresos, onEdit }: { ingresos: any[], o
                     </button>
                   </td>
                   <td style={{ padding: '0.75rem 1rem', color: '#64748b', fontWeight: 500 }}>
-                    {ing.report_id || '-'}
+                    <EditableCell id={ing.id} field="report_id" value={ing.report_id} />
                   </td>
                   <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>
                     {ing.name}
@@ -133,7 +176,7 @@ export default function IngresosTable({ ingresos, onEdit }: { ingresos: any[], o
                     {ing.phone || '-'}
                   </td>
                   <td style={{ padding: '0.75rem 1rem' }}>
-                    {ing.professional_name || '-'}
+                    <EditableCell id={ing.id} field="professional_name" value={ing.professional_name} />
                   </td>
                   <td style={{ padding: '0.75rem 1rem', color: 'var(--primary)', fontWeight: 700 }}>
                     {ing.analysis_type}
@@ -144,15 +187,19 @@ export default function IngresosTable({ ingresos, onEdit }: { ingresos: any[], o
                     </span>
                   </td>
                   <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--success)' }}>
-                    {ing.coseguro ? `$${ing.coseguro}` : '-'}
+                    <EditableCell id={ing.id} field="coseguro" value={ing.coseguro} type="number" />
                   </td>
                   <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>
-                    {ing.particular_price ? `$${ing.particular_price}` : '-'}
+                    <EditableCell id={ing.id} field="particular_price" value={ing.particular_price} type="number" />
                   </td>
                   <td style={{ padding: '0.75rem 1rem' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: '#64748b' }}>
-                      {ing.payment_method || '-'}
-                    </span>
+                    <EditableCell 
+                      id={ing.id} 
+                      field="payment_method" 
+                      value={ing.payment_method} 
+                      type="select" 
+                      options={['EFECTIVO', 'TRANSFERENCIA', 'TARJETA', 'COSEGURO']} 
+                    />
                   </td>
                   <td style={{ 
                     padding: '0.75rem 1rem', 
@@ -193,12 +240,14 @@ export default function IngresosTable({ ingresos, onEdit }: { ingresos: any[], o
         onClick={() => todayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
         style={{ 
           position: 'fixed', bottom: '2rem', right: '2rem', background: 'var(--primary)', color: 'white',
-          width: '44px', height: '44px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: 'none', cursor: 'pointer', zIndex: 100
+          width: '56px', height: '64px', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: 'none', cursor: 'pointer', zIndex: 100,
+          gap: '2px'
         }}
         title="Ir a Hoy"
       >
-        <ArrowDown size={20} />
+        <ArrowDown size={22} />
+        <span style={{ fontSize: '0.7rem', fontWeight: 800 }}>HOY</span>
       </button>
     </div>
   );

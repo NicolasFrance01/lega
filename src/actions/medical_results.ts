@@ -24,7 +24,7 @@ export async function searchPatients(query: string) {
 export async function getPatientAppointments(patientId: string) {
   try {
     const res = await pool.query(`
-      SELECT id, appointment_date, status, analysis_type 
+      SELECT id, appointment_date, status, analysis_type, report_id 
       FROM appointments 
       WHERE patient_id = $1 
       ORDER BY appointment_date DESC
@@ -49,6 +49,12 @@ export async function uploadMedicalResult(formData: FormData) {
     const type = formData.get("type") as 'pdf' | 'image' | 'note';
     const noteContent = formData.get("note_content") as string;
     const files = formData.getAll("files") as File[];
+    const report_id = formData.get("report_id") as string;
+
+    // Update report_id in appointment if provided
+    if (report_id) {
+      await client.query('UPDATE appointments SET report_id = $1 WHERE id = $2', [report_id, appointmentId]);
+    }
 
     if (type === 'note') {
       await client.query(`
@@ -88,7 +94,7 @@ export async function getPatientResults(dni: string) {
   try {
     const res = await pool.query(`
       SELECT mr.id, mr.result_type, mr.content, mr.filename, mr.created_at, mr.notified_at,
-             a.appointment_date, a.analysis_type,
+             a.appointment_date, a.analysis_type, a.report_id,
              u.full_name as uploaded_by_name
       FROM medical_results mr
       JOIN patients p ON mr.patient_id = p.id
@@ -138,7 +144,7 @@ export async function getAllMedicalResults() {
     const res = await pool.query(`
       SELECT mr.*, p.name as patient_name, p.dni as patient_dni, p.phone as patient_phone,
              u.full_name as uploaded_by_name,
-             a.appointment_date, a.analysis_type
+             a.appointment_date, a.analysis_type, a.report_id
       FROM medical_results mr
       JOIN patients p ON mr.patient_id = p.id
       LEFT JOIN appointments a ON mr.appointment_id = a.id

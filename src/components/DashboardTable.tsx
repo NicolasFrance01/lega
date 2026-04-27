@@ -193,6 +193,12 @@ export default function DashboardTable({ appointments, currentFilter }: { appoin
               </td>
               <td style={{ padding: '1rem', fontSize: '0.875rem', color: 'var(--text-muted)', position: 'relative' }}>
                 <div style={{ maxWidth: '300px', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                  {(apt.report_id || apt.professional_name) && (
+                    <div style={{ marginBottom: '0.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {apt.report_id && <span style={{ background: 'rgba(14, 165, 233, 0.1)', color: 'var(--primary)', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 800, fontSize: '0.7rem' }}>PROT: {apt.report_id}</span>}
+                      {apt.professional_name && <span style={{ background: '#f1f5f9', color: '#64748b', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 700, fontSize: '0.7rem' }}>DR/A: {apt.professional_name}</span>}
+                    </div>
+                  )}
                   {apt.observations || '-'}
                 </div>
                 
