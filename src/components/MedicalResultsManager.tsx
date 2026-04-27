@@ -91,6 +91,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
   };
 
   return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <div>
         <h2 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: '0.5rem', color: 'var(--text-main)' }}>ENTREGAR RESULTADO MEDICO</h2>
         <div style={{ position: 'relative' }}>
