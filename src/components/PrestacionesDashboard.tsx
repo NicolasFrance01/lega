@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { getPrestacionesBySheet, updatePrestacion, addPrestacion, deletePrestacion, reorderPrestaciones } from "@/actions/prestaciones";
-import { FileSpreadsheet, Plus, Save, Trash2, Edit3, Search, ChevronDown, ChevronRight, X, GripVertical, Palette, Info } from "lucide-react";
+import { Search, Plus, Save, Trash2, Edit2, Loader2, FileSpreadsheet, Settings, ChevronDown, ChevronRight, X, GripVertical, Palette, Info } from "lucide-react";
 import { PrestacionesIcon } from "./icons/PrestacionesIcon";
 import CreateSectionModal from "./CreateSectionModal";
 import { evaluateGrid, evaluateFormula, parseNumberValue, indexToCol } from "@/lib/formulas";
