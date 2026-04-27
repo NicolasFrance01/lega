@@ -13,6 +13,7 @@ export default function ResultadoPortal() {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<"results" | "history">("results");
   const [selectedResult, setSelectedResult] = useState<any>(null);
+  const [portalSearch, setPortalSearch] = useState("");
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -70,6 +71,18 @@ export default function ResultadoPortal() {
   const results = data.results || [];
   const appointments = data.appointments || [];
 
+  const filteredResults = results.filter((res: any) => {
+    const s = portalSearch.toLowerCase();
+    const dateStr = res.appointment_date ? format(new Date(res.appointment_date), "dd/MM/yyyy") : "";
+    return res.analysis_type?.toLowerCase().includes(s) || dateStr.includes(s) || res.report_id?.toLowerCase().includes(s);
+  });
+
+  const filteredAppointments = appointments.filter((apt: any) => {
+    const s = portalSearch.toLowerCase();
+    const dateStr = format(new Date(apt.appointment_date), "dd/MM/yyyy");
+    return apt.analysis_type?.toLowerCase().includes(s) || dateStr.includes(s) || apt.report_id?.toLowerCase().includes(s);
+  });
+
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
       {/* Patient Header */}
@@ -99,7 +112,7 @@ export default function ResultadoPortal() {
               display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s'
             }}
           >
-            <CheckCircle size={20} /> RESULTADOS MÉDICOS
+            <FileText size={20} /> RESULTADOS MÉDICOS
           </button>
           <button 
             onClick={() => setActiveTab('history')}
@@ -115,17 +128,29 @@ export default function ResultadoPortal() {
           </button>
         </div>
 
+        {/* Filter Bar */}
+        <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
+          <Search size={20} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.3 }} />
+          <input 
+            type="text" 
+            placeholder="Filtrar por fecha o tipo de análisis (ej: Hemograma, 20/04...)" 
+            value={portalSearch}
+            onChange={(e) => setPortalSearch(e.target.value)}
+            style={{ width: '100%', padding: '1rem 1rem 1rem 3.5rem', borderRadius: '16px', border: '1px solid #e2e8f0', background: 'white', outline: 'none', fontSize: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
+          />
+        </div>
+
         {activeTab === 'results' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {results.length === 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {filteredResults.length === 0 ? (
               <div style={{ padding: '4rem', textAlign: 'center', background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0' }}>
                 <Info size={48} color="var(--primary)" style={{ opacity: 0.5, marginBottom: '1rem' }} />
                 <h3>No hay resultados disponibles</h3>
-                <p style={{ color: 'var(--text-muted)' }}>Tus informes aparecerán aquí una vez que el laboratorio los cargue.</p>
+                <p style={{ color: 'var(--text-muted)' }}>{portalSearch ? "No hay resultados que coincidan con tu búsqueda." : "Tus informes aparecerán aquí una vez que el laboratorio los cargue."}</p>
               </div>
             ) : (
-              results.map((res: any) => (
-                <div key={res.id} className="glass-panel" style={{ overflow: 'hidden', border: selectedResult?.id === res.id ? '2px solid var(--primary)' : '1px solid var(--glass-border)' }}>
+              filteredResults.map((res: any) => (
+                <div key={res.id} className="glass-panel" style={{ overflow: 'hidden', border: selectedResult?.id === res.id ? '2px solid var(--primary)' : '1px solid var(--glass-border)', background: 'white' }}>
                   <div 
                     onClick={() => setSelectedResult(selectedResult?.id === res.id ? null : res)}
                     style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
@@ -141,26 +166,22 @@ export default function ResultadoPortal() {
                             PROTOCOLO N° {res.report_id}
                           </span>
                         )}
-                        <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Cargado el {format(new Date(res.created_at), "d 'de' MMMM, yyyy", { locale: es })}</p>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem', fontWeight: 600 }}>
+                          Cargado el {format(new Date(res.created_at), "d 'de' MMMM", { locale: es })}
+                        </div>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                      <div style={{ textAlign: 'right', display: 'none' }}>
-                        <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: 'var(--success)' }}>LISTO PARA VER</p>
-                      </div>
-                      <ChevronRight size={24} style={{ transform: selectedResult?.id === res.id ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', opacity: 0.3 }} />
-                    </div>
+                    <ChevronRight size={24} style={{ transform: selectedResult?.id === res.id ? 'rotate(90deg)' : 'none', transition: 'all 0.3s', opacity: 0.3 }} />
                   </div>
 
                   {selectedResult?.id === res.id && (
-                    <div style={{ padding: '0 1.5rem 1.5rem', animation: 'fadeIn 0.3s ease' }}>
-                      <div style={{ height: '1px', background: '#f1f5f9', marginBottom: '1.5rem' }} />
-                      
-                      {/* APPOINTMENT INFO */}
-                      <div style={{ background: '#f0f9ff', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', border: '1px solid #bae6fd', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <Calendar size={20} color="var(--primary)" />
-                        <div style={{ fontSize: '0.9rem' }}>
-                          Corresponde al turno de <strong>{res.analysis_type}</strong> del día <strong>{format(new Date(res.appointment_date), "dd/MM/yyyy")}</strong>
+                    <div style={{ padding: '0 1.5rem 1.5rem', borderTop: '1px solid #f1f5f9', animation: 'fadeIn 0.3s ease' }}>
+                      <div style={{ padding: '1rem 0', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                          <Calendar size={16} /> Turno: {format(new Date(res.appointment_date), "dd/MM/yyyy")}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                          <CheckCircle size={16} color="var(--success)" /> {res.analysis_type}
                         </div>
                       </div>
 
@@ -177,7 +198,7 @@ export default function ResultadoPortal() {
                         )}
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}>
                         <a 
                           href={`/api/medical-result/file/${res.id}`} 
                           download={res.filename || `resultado_${res.id}`} 
@@ -209,7 +230,7 @@ export default function ResultadoPortal() {
             )}
           </div>
         ) : (
-          <div className="glass-panel" style={{ padding: '1.5rem' }}>
+          <div className="glass-panel" style={{ padding: '1.5rem', background: 'white' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid #f1f5f9', color: 'var(--text-muted)' }}>
@@ -219,7 +240,7 @@ export default function ResultadoPortal() {
                 </tr>
               </thead>
               <tbody>
-                {appointments.map((apt: any) => (
+                {filteredAppointments.map((apt: any) => (
                   <tr key={apt.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <td style={{ padding: '1rem', fontWeight: 600 }}>{format(new Date(apt.appointment_date), "dd/MM/yyyy")}</td>
                     <td style={{ padding: '1rem' }}>{apt.analysis_type}</td>
@@ -234,6 +255,11 @@ export default function ResultadoPortal() {
                     </td>
                   </tr>
                 ))}
+                {filteredAppointments.length === 0 && (
+                  <tr>
+                    <td colSpan={3} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No se encontraron turnos.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

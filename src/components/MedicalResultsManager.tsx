@@ -20,6 +20,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
   
   // Modal Step 1: History, Step 2: Upload
   const [modalStep, setModalStep] = useState(1);
+  const [historySearch, setHistorySearch] = useState("");
   
   useEffect(() => {
     loadAllResults();
@@ -68,9 +69,9 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
     
     const res = await uploadMedicalResult(formData);
     if (res.success) {
-      alert("Resultado cargado con éxito");
       setIsModalOpen(false);
       setSelectedApt(null);
+      loadAllResults(); // Real-time refresh
     } else {
       alert("Error: " + res.error);
     }
@@ -82,7 +83,8 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
     padding: "0.75rem 1rem",
     borderRadius: "12px",
     border: "1px solid var(--glass-border)",
-    background: "var(--glass-bg)",
+    background: 'var(--input-bg, rgba(255, 255, 255, 0.05))',
+    color: 'var(--text-main)',
     fontSize: "1rem",
     outline: "none",
     transition: "all 0.2s"
@@ -140,14 +142,22 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
             display: "flex", alignItems: "center", justifyContent: "center",
             zIndex: 1000, padding: "1rem"
           }}>
-            <div style={{ 
-              width: "100%", maxWidth: "600px", maxHeight: "90vh",
-              background: "white", borderRadius: "20px", overflow: "hidden",
-              display: "flex", flexDirection: "column",
-              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)"
-            }}>
-              <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="glass-panel" style={{ 
+            position: 'relative', 
+            width: '100%', 
+            maxWidth: '800px', 
+            maxHeight: '92vh', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            background: 'var(--glass-bg)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid var(--glass-border)',
+            borderRadius: '24px',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+            overflow: 'hidden'
+          }}>
+            <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--glass-border)", display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
+                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-main)' }}>
                   {modalStep === 1 ? <Calendar size={20} color="var(--primary)" /> : <FilePlus2 size={20} color="var(--primary)" />}
                   {modalStep === 1 ? `Historial de ${selectedPatient?.name}` : `Cargar Resultado Médico`}
                 </h3>
@@ -227,9 +237,49 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Contenido / Archivos</label>
-                      <input name="files" type="file" multiple style={inputStyle} />
-                      <textarea name="note_content" placeholder="Escribí aquí si seleccionaste 'Nota Escrita'..." style={{ ...inputStyle, marginTop: '1rem', minHeight: '100px', resize: 'vertical' }} />
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 700, color: 'var(--text-main)' }}>Contenido / Archivos</label>
+                      
+                      {/* Dropzone Design */}
+                      <div 
+                        onClick={() => document.getElementById('file-upload-results')?.click()}
+                        style={{
+                          border: '2.5px dashed var(--primary)',
+                          borderRadius: '20px',
+                          padding: '2.5rem',
+                          textAlign: 'center',
+                          background: 'rgba(14, 165, 233, 0.03)',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          marginBottom: '1rem'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.background = 'rgba(14, 165, 233, 0.08)';
+                          e.currentTarget.style.borderColor = 'var(--primary)';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.background = 'rgba(14, 165, 233, 0.03)';
+                        }}
+                      >
+                        <div style={{ marginBottom: '1rem', color: 'var(--primary)' }}>
+                          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+                        </div>
+                        <div style={{ fontWeight: 800, fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>Subir Resultados Médicos</div>
+                        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Hacé clic para seleccionar o arrastrá uno o varios archivos (PDF/Imagen)</div>
+                        <input 
+                          id="file-upload-results"
+                          name="files" 
+                          type="file" 
+                          multiple 
+                          accept="image/*,application/pdf" 
+                          style={{ display: 'none' }} 
+                        />
+                      </div>
+
+                      <textarea 
+                        name="note_content" 
+                        placeholder="Opcional: Agregá una nota o descripción para este resultado..." 
+                        style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }} 
+                      />
                     </div>
 
                     <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
@@ -247,27 +297,52 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
       )}
 
       {/* Historical Results Table */}
-      <div style={{ marginTop: '2rem' }}>
-        <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <History size={24} color="var(--primary)" /> Últimos Resultados Cargados
-        </h3>
-        <div className="glass-panel" style={{ overflow: 'hidden' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem', gap: '1rem', flexWrap: 'wrap' }}>
+          <h3 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-main)' }}>
+            <History size={28} color="var(--primary)" /> Últimos Resultados
+          </h3>
+          <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
+            <Search style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} size={18} />
+            <input 
+              type="text" 
+              placeholder="Filtrar por paciente, DNI o Protocolo..." 
+              style={{ ...inputStyle, padding: '0.6rem 1rem 0.6rem 2.8rem', fontSize: '0.9rem' }}
+              value={historySearch}
+              onChange={(e) => setHistorySearch(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="glass-panel" style={{ overflow: 'hidden', borderRadius: '20px' }}>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                  <th style={{ padding: '1rem' }}>Fecha Carga</th>
-                  <th style={{ padding: '1rem' }}>Paciente</th>
-                  <th style={{ padding: '1rem' }}>Turno Correspondiente</th>
-                  <th style={{ padding: '1rem' }}>Tipo</th>
-                  <th style={{ padding: '1rem' }}>Cargado por</th>
-                  <th style={{ padding: '1rem', textAlign: 'right' }}>Acción</th>
+                <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)', fontSize: '0.85rem', background: 'rgba(255,255,255,0.02)' }}>
+                  <th style={{ padding: '1.25rem 1rem' }}>Fecha Carga</th>
+                  <th style={{ padding: '1.25rem 1rem' }}>Protocolo</th>
+                  <th style={{ padding: '1.25rem 1rem' }}>Paciente</th>
+                  <th style={{ padding: '1.25rem 1rem' }}>Turno</th>
+                  <th style={{ padding: '1.25rem 1rem' }}>Tipo</th>
+                  <th style={{ padding: '1.25rem 1rem' }}>Cargado por</th>
+                  <th style={{ padding: '1.25rem 1rem', textAlign: 'right' }}>Acción</th>
                 </tr>
               </thead>
               <tbody>
-                {allResults.map((res: any) => (
-                  <tr key={res.id} className="hoverable-row" style={{ borderBottom: '1px solid var(--glass-border)', fontSize: '0.9rem' }}>
+                {allResults.filter(res => {
+                  const s = historySearch.toLowerCase();
+                  return res.patient_name?.toLowerCase().includes(s) || 
+                         res.patient_dni?.includes(s) || 
+                         res.report_id?.toLowerCase().includes(s) ||
+                         res.analysis_type?.toLowerCase().includes(s);
+                }).map((res: any) => (
+                  <tr key={res.id} className="hoverable-row" style={{ borderBottom: '1px solid var(--glass-border)', fontSize: '0.85rem', color: 'var(--text-main)' }}>
                     <td style={{ padding: '1rem', fontWeight: 600 }}>{format(new Date(res.created_at), "dd/MM/yyyy HH:mm")} hs</td>
+                    <td style={{ padding: '1rem' }}>
+                      {res.report_id ? (
+                        <span style={{ background: 'var(--primary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 900, fontSize: '0.8rem' }}>
+                          {res.report_id}
+                        </span>
+                      ) : '-'}
+                    </td>
                     <td style={{ padding: '1rem' }}>
                       <div style={{ fontWeight: 700 }}>{res.patient_name}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>DNI: {res.patient_dni}</div>

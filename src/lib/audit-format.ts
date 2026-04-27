@@ -39,7 +39,7 @@ export function formatAuditLog(log: any) {
     
     // Resultados Médicos
     case 'UPLOAD_MEDICAL_RESULT':
-      return `Subió un resultado (${d.type}) para el paciente ID: ${d.patient_id}`;
+      return `Subió un resultado (${d.type}) para ${d.patient_name} (DNI: ${d.patient_dni})`;
     case 'DELETE_MEDICAL_RESULT':
       return `Eliminó un resultado de ${d.patient_name} (${d.result_type})`;
     case 'NOTIFIED_PATIENT':

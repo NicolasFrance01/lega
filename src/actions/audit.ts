@@ -44,7 +44,9 @@ export async function getAuditLogs(filters: { period?: string, date?: string, us
     const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     const query = `
-      SELECT al.*, u.username, u.role
+      SELECT al.id, al.user_id, al.action, al.details, 
+             (al.created_at AT TIME ZONE 'UTC') as created_at, 
+             u.username, u.role
       FROM audit_logs al
       JOIN users u ON al.user_id = u.id
       ${where}

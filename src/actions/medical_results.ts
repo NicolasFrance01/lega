@@ -77,7 +77,16 @@ export async function uploadMedicalResult(formData: FormData) {
     }
 
     await client.query('COMMIT');
-    await logAction("UPLOAD_MEDICAL_RESULT", { patient_id: patientId, type });
+    
+    // Get patient details for logging
+    const pRes = await client.query('SELECT name, dni FROM patients WHERE id = $1', [patientId]);
+    const pInfo = pRes.rows[0];
+
+    await logAction("UPLOAD_MEDICAL_RESULT", { 
+      patient_name: pInfo?.name, 
+      patient_dni: pInfo?.dni,
+      type 
+    });
     
     revalidatePath("/resumen-medico");
     return { success: true };
