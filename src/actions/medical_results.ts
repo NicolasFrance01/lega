@@ -132,3 +132,32 @@ export async function getPatientPortalData(dni: string) {
     return { data: null, error: error.message };
   }
 }
+
+export async function getAllMedicalResults() {
+  try {
+    const res = await pool.query(`
+      SELECT mr.*, p.name as patient_name, p.dni as patient_dni, p.phone as patient_phone,
+             u.full_name as uploaded_by_name,
+             a.appointment_date, a.analysis_type
+      FROM medical_results mr
+      JOIN patients p ON mr.patient_id = p.id
+      LEFT JOIN appointments a ON mr.appointment_id = a.id
+      LEFT JOIN users u ON mr.uploaded_by = u.id
+      ORDER BY mr.created_at DESC
+      LIMIT 100
+    `);
+    return { data: res.rows, error: null };
+  } catch (error: any) {
+    console.error("Error fetching all results:", error);
+    return { data: null, error: error.message };
+  }
+}
+
+export async function markAsNotified(id: string) {
+  try {
+    await pool.query('UPDATE medical_results SET notified_at = NOW() WHERE id = $1', [id]);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}

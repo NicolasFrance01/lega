@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Search, User, Calendar, FileText, Plus, Send, CheckCircle, Clock, Trash2, Eye, Download, MessageSquare } from "lucide-react";
-import { searchPatients, getPatientAppointments, uploadMedicalResult } from "@/actions/medical_results";
+import { searchPatients, getPatientAppointments, uploadMedicalResult, getAllMedicalResults, markAsNotified } from "@/actions/medical_results";
 import Portal from "./Portal";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -12,6 +12,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
   const [patients, setPatients] = useState<any[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [allResults, setAllResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedApt, setSelectedApt] = useState<any>(null);
@@ -20,6 +21,15 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
   // Modal Step 1: History, Step 2: Upload
   const [modalStep, setModalStep] = useState(1);
   
+  useEffect(() => {
+    loadAllResults();
+  }, []);
+
+  async function loadAllResults() {
+    const res = await getAllMedicalResults();
+    if (res.data) setAllResults(res.data);
+  }
+
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (searchQuery.length > 2) {
@@ -229,6 +239,91 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
         </Portal>
       )}
 
+      {/* Historical Results Table */}
+      <div style={{ marginTop: '2rem' }}>
+        <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <History size={24} color="var(--primary)" /> Últimos Resultados Cargados
+        </h3>
+        <div className="glass-panel" style={{ overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  <th style={{ padding: '1rem' }}>Fecha Carga</th>
+                  <th style={{ padding: '1rem' }}>Paciente</th>
+                  <th style={{ padding: '1rem' }}>Turno Correspondiente</th>
+                  <th style={{ padding: '1rem' }}>Tipo</th>
+                  <th style={{ padding: '1rem' }}>Cargado por</th>
+                  <th style={{ padding: '1rem', textAlign: 'right' }}>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allResults.map((res: any) => (
+                  <tr key={res.id} className="hoverable-row" style={{ borderBottom: '1px solid var(--glass-border)', fontSize: '0.9rem' }}>
+                    <td style={{ padding: '1rem', fontWeight: 600 }}>{format(new Date(res.created_at), "dd/MM/yyyy HH:mm")} hs</td>
+                    <td style={{ padding: '1rem' }}>
+                      <div style={{ fontWeight: 700 }}>{res.patient_name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>DNI: {res.patient_dni}</div>
+                    </td>
+                    <td style={{ padding: '1rem' }}>
+                      {res.appointment_date ? (
+                        <>
+                          <div style={{ fontWeight: 600 }}>{format(new Date(res.appointment_date), "dd/MM/yyyy")}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 700 }}>{res.analysis_type}</div>
+                        </>
+                      ) : '-'}
+                    </td>
+                    <td style={{ padding: '1rem' }}>
+                      <span style={{ 
+                        background: res.result_type === 'pdf' ? '#fee2e2' : (res.result_type === 'image' ? '#f0f9ff' : '#fef9c3'),
+                        color: res.result_type === 'pdf' ? '#ef4444' : (res.result_type === 'image' ? 'var(--primary)' : '#ca8a04'),
+                        padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase'
+                      }}>
+                        {res.result_type}
+                      </span>
+                    </td>
+                    <td style={{ padding: '1rem' }}>
+                      <div style={{ fontWeight: 600 }}>{res.uploaded_by_name || 'Sistema'}</div>
+                      {res.notified_at ? (
+                        <div style={{ fontSize: '0.7rem', color: 'var(--success)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <CheckCircle size={10} /> Notificado {format(new Date(res.notified_at), "dd/MM HH:mm")}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '0.7rem', color: 'var(--danger)', fontWeight: 700 }}>Pendiente aviso</div>
+                      )}
+                    </td>
+                    <td style={{ padding: '1rem', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                        <button 
+                          onClick={async () => {
+                            const msg = `Hola ${res.patient_name}, tu resultado médico del día ${format(new Date(res.appointment_date), "dd/MM")} ya está disponible en: https://laboratoriolega.vercel.app/resultado`;
+                            window.open(`https://wa.me/${res.patient_phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+                            await markAsNotified(res.id);
+                            loadAllResults();
+                          }}
+                          style={{ padding: '0.4rem', borderRadius: '8px', background: '#25D366', color: 'white', display: 'flex', alignItems: 'center' }}
+                          title="Avisar por WhatsApp"
+                        >
+                          <MessageSquare size={14} />
+                        </button>
+                        <a 
+                          href={`/api/medical-result/file/${res.id}`} 
+                          target="_blank"
+                          style={{ padding: '0.4rem', borderRadius: '8px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--primary)', display: 'inline-flex', alignItems: 'center' }}
+                          title="Ver archivo"
+                        >
+                          <Eye size={14} />
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <style jsx>{`
         .hoverable-card:hover {
           transform: translateY(-2px);
@@ -241,6 +336,9 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
 }
 
 const HistoryIcon = () => <Calendar size={20} color="var(--primary)" />;
+const History = ({ size, color }: { size: number, color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color || "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+);
 const FilePlusIcon = () => <FileText size={20} color="var(--primary)" />;
 const XIcon = () => <X size={20} />;
 const X = ({ size }: { size: number }) => (

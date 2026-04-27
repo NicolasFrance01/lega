@@ -151,12 +151,20 @@ export default function ResultadoPortal() {
                     <div style={{ padding: '0 1.5rem 1.5rem', animation: 'fadeIn 0.3s ease' }}>
                       <div style={{ height: '1px', background: '#f1f5f9', marginBottom: '1.5rem' }} />
                       
+                      {/* APPOINTMENT INFO */}
+                      <div style={{ background: '#f0f9ff', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', border: '1px solid #bae6fd', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <Calendar size={20} color="var(--primary)" />
+                        <div style={{ fontSize: '0.9rem' }}>
+                          Corresponde al turno de <strong>{res.analysis_type}</strong> del día <strong>{format(new Date(res.appointment_date), "dd/MM/yyyy")}</strong>
+                        </div>
+                      </div>
+
                       {/* INLINE VIEWER */}
                       <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {res.result_type === 'pdf' ? (
-                          <iframe src={res.content} style={{ width: '100%', height: '600px', border: 'none', borderRadius: '8px' }} />
+                          <iframe src={`/api/medical-result/file/${res.id}`} style={{ width: '100%', height: '600px', border: 'none', borderRadius: '8px' }} />
                         ) : res.result_type === 'image' ? (
-                          <img src={res.content} alt="Resultado" style={{ maxWidth: '100%', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
+                          <img src={`/api/medical-result/file/${res.id}`} alt="Resultado" style={{ maxWidth: '100%', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
                         ) : (
                           <div style={{ padding: '2rem', width: '100%', fontSize: '1.1rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                             {res.content}
@@ -166,7 +174,7 @@ export default function ResultadoPortal() {
 
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
                         <a 
-                          href={res.content} 
+                          href={`/api/medical-result/file/${res.id}`} 
                           download={res.filename || `resultado_${res.id}`} 
                           target="_blank"
                           style={{ 
