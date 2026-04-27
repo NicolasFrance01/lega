@@ -18,7 +18,7 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
   const [dragOverRowId, setDragOverRowId] = useState<number | null>(null);
 
   
-  const isExcelSheet = activeSheet === "Panel BioM. Int.Panel" || activeSheet === "O. Sociales" || activeSheet === "Delgado";
+  const isExcelSheet = activeSheet === "Panel BioM. Int.Panel" || activeSheet === "O. Sociales" || activeSheet === "Delgado" || activeSheet === "Federacion-PAMI";
 
   const isStructuredSheet = useMemo(() => {
     if (activeSheet === "Convenios Particulares" || activeSheet === "Dra. Selva" || activeSheet === "Lab Clínico Noelia Dutto" || isExcelSheet) return true;
@@ -391,6 +391,8 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
                priceCols = ["__EMPTY_2", "__EMPTY_4", "__EMPTY_6", "__EMPTY_7"];
              } else if (activeSheet === "Delgado") {
                priceCols = ["__EMPTY_1", "__EMPTY_3", "__EMPTY_4", "__EMPTY_5", "__EMPTY_6", "__EMPTY_7", "__EMPTY_8", "__EMPTY_9"];
+             } else if (activeSheet === "Federacion-PAMI") {
+               priceCols = ["__EMPTY_1", "__EMPTY_2", "__EMPTY_3", "__EMPTY_4", "__EMPTY_5", "__EMPTY_6", "__EMPTY_7", "__EMPTY_8", "__EMPTY_9", "__EMPTY_10", "__EMPTY_11", "__EMPTY_12"];
              }
              priceCols.forEach(c => currentSection.types[c] = "price");
           }
