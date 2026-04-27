@@ -501,7 +501,7 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
                         const isPrice = type === 'price' || h === '__EMPTY_1';
                         const align = isDescriptionCol ? 'left' : 'right';
                         return (
-                          <td key={h} style={{ padding: '0.75rem 1rem', border: '1px solid #cbd5e1', minWidth: isDescriptionCol ? (activeSheet === 'Panel BioM. Int.Panel' ? '200px' : '300px') : 'auto', textAlign: align, backgroundColor: row.row_data[`__cell_color_${h}`] || row.row_data.__row_color || (editingRow === row.id ? '#f8fafc' : 'transparent') }}>
+                          <td key={h} style={{ padding: '0.75rem 1rem', border: '1px solid #cbd5e1', minWidth: isDescriptionCol ? (isExcelSheet ? '200px' : '300px') : 'auto', textAlign: align, backgroundColor: row.row_data[`__cell_color_${h}`] || row.row_data.__row_color || (editingRow === row.id ? '#f8fafc' : 'transparent') }}>
                             {editingRow === row.id ? (
                               isDescriptionCol && type === 'text' ? (
                                 <div style={{display: 'flex', alignItems: 'flex-start', gap: '0.5rem'}}>
@@ -534,7 +534,7 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
                               ) : (
                                 <div style={{display: 'flex', flexDirection: 'column'}}>
                                   <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                                    <input type={activeSheet === 'Panel BioM. Int.Panel' || (!isPrice || (editData[h] && String(editData[h]).startsWith('='))) ? 'text' : 'number'} step="0.01" className="input-inline" style={{ flex: 1 }} value={editData[h] || ""} onChange={(e) => handleValueChange(h, e.target.value)} autoFocus={!isDescriptionCol && h === section.headers[0]} />
+                                    <input type={isExcelSheet || (!isPrice || (editData[h] && String(editData[h]).startsWith('='))) ? 'text' : 'number'} step="0.01" className="input-inline" style={{ flex: 1 }} value={editData[h] || ""} onChange={(e) => handleValueChange(h, e.target.value)} autoFocus={!isDescriptionCol && h === section.headers[0]} />
                                     {isExcelSheet && (
                                       <div style={{display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center'}}>
                                         <input 
