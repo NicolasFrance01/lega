@@ -9,6 +9,7 @@ import { updateIngresoField, deleteIngreso } from "@/actions/ingresos";
 export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: any[], onEdit: (ingreso: any) => void, period: string }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const todayRef = useRef<HTMLTableRowElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [editingCell, setEditingCell] = useState<{ id: string, field: string } | null>(null);
   const [isAtToday, setIsAtToday] = useState(false);
 
@@ -17,7 +18,9 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
       todayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setIsAtToday(true);
     } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (containerRef.current) {
+        containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       setIsAtToday(false);
     }
   };
@@ -95,7 +98,7 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
 
   return (
     <div style={{ background: 'var(--glass-bg)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'hidden', position: 'relative', backdropFilter: 'blur(10px)' }}>
-      <div style={{ overflow: 'auto', maxHeight: 'calc(100vh - 280px)' }}>
+      <div ref={containerRef} style={{ overflow: 'auto', maxHeight: 'calc(100vh - 280px)' }}>
         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, textAlign: 'left', fontSize: '0.85rem' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 20 }}>
             <tr style={{ background: '#244c7d', color: 'white', borderBottom: '2px solid var(--glass-border)' }}>
