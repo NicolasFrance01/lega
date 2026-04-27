@@ -200,6 +200,7 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
                   searchQuery={searchQuery}
                   setSearchQuery={setSearchQuery}
                   autofillPatient={autofillPatient}
+                  onClose={onClose}
                 />
               )}
             </div>
@@ -216,6 +217,7 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               autofillPatient={autofillPatient}
+              onClose={onClose}
             />
           )}
         </div>
@@ -225,7 +227,7 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
 }
 
 function IngresoForm({ 
-  selectedPatient, editingIngreso, setSelectedPatient, handleSubmit, loading, error, inputStyle, searchResults, searchQuery, setSearchQuery, autofillPatient 
+  selectedPatient, editingIngreso, setSelectedPatient, handleSubmit, loading, error, inputStyle, searchResults, searchQuery, setSearchQuery, autofillPatient, onClose 
 }: any) {
   return (
     <form 
