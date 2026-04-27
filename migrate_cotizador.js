@@ -23,8 +23,8 @@ async function migrate() {
     
     for (let i = 0; i < data.length; i++) {
         const row = data[i];
-        const rowData = {};
         
+        // Determinar heurística de meta_part
         let metaPart = "DATA";
         const firstCell = String(row?.[0] || "").trim();
         if (i === 0) metaPart = "TITLE";
@@ -32,6 +32,14 @@ async function migrate() {
         else if (firstCell === "Prestaciones" || firstCell === "Nombre" || (row && row.includes("Prestaciones "))) metaPart = "HEADER";
         else if (firstCell.includes("NOTA:")) metaPart = "NOTE";
         
+        // Si es DATA, verificar que no esté vacía
+        if (metaPart === "DATA" && i > 5) {
+            if (!firstCell || firstCell === "" || firstCell === "null" || firstCell === "undefined") {
+                continue; // Saltar filas vacías después de la cabecera
+            }
+        }
+        
+        const rowData = {};
         rowData["meta_part"] = metaPart;
 
         const maxCols = 13; 

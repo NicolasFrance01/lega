@@ -352,8 +352,9 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
       const rd = row.row_data;
       const part = rd["meta_part"] || rd["__SECTION_PART__"];
       const entries = Object.entries(rd);
-      const internalKeys = ['id', 'sheet_name', 'meta_part', '__SECTION_PART__'];
-      const textValues = entries.filter(([k, v]) => v !== null && String(v).trim() !== '' && !internalKeys.includes(k)).map(([_, v]) => v);
+      const internalKeys = ['id', 'sheet_name', 'meta_part', '__SECTION_PART__', '__row_color'];
+      const isInternalKey = (k: string) => internalKeys.includes(k) || k.startsWith('__cell_color_') || k.startsWith('__SECTION_');
+      const textValues = entries.filter(([k, v]) => v !== null && String(v).trim() !== '' && !isInternalKey(k)).map(([_, v]) => v);
 
       const mainKey = Object.keys(rd).find(k => k === "__EMPTY" || k.toLowerCase().includes("laboratorio")) || Object.keys(rd)[0];
       const mainVal = mainKey ? rd[mainKey] : null;
@@ -382,7 +383,7 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
           currentSection.structuralIds.subtitle = row.id;
         } else if (isForcedMetadata || mainVal === "__METADATA__") {
           currentSection.structuralIds.metadata = row.id;
-          Object.keys(rd).forEach(k => { if (!internalKeys.includes(k)) currentSection.types[k] = rd[k]; });
+          Object.keys(rd).forEach(k => { if (!isInternalKey(k)) currentSection.types[k] = rd[k]; });
           if (isExcelSheet) {
              let priceCols: string[] = [];
              if (activeSheet === "Panel BioM. Int.Panel") {
@@ -400,7 +401,7 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
           }
         } else if (isForcedHeader || (!part && (String(mainVal).includes("Prestaciones") || String(mainVal).includes("Nombre")))) {
           currentSection.structuralIds.header = row.id;
-          currentSection.headers = Object.keys(rd).filter(k => !internalKeys.includes(k) && (rd[k] || k === mainKey));
+          currentSection.headers = Object.keys(rd).filter(k => !isInternalKey(k) && (rd[k] || k === mainKey));
           currentSection.headers.forEach((h: string) => currentSection.labels[h] = rd[h]);
         } else if (isForcedNote || (!part && String(mainVal).includes("NOTA:"))) {
           currentSection.note = mainVal;
