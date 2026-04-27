@@ -393,7 +393,6 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
                priceCols = ["__EMPTY_1", "__EMPTY_3", "__EMPTY_4", "__EMPTY_5", "__EMPTY_6", "__EMPTY_7", "__EMPTY_8", "__EMPTY_9"];
              }
              priceCols.forEach(c => currentSection.types[c] = "price");
-             currentSection.rows.push(row);
           }
         } else if (isForcedHeader || (!part && (String(mainVal).includes("Prestaciones") || String(mainVal).includes("Nombre")))) {
           currentSection.structuralIds.header = row.id;
