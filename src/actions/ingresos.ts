@@ -154,6 +154,7 @@ export async function createIngreso(formData: FormData) {
 }
 
 export async function deleteIngreso(id: string) {
+  try {
     const res = await pool.query('SELECT a.*, p.name FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = $1', [id]);
     const details = res.rows[0];
 

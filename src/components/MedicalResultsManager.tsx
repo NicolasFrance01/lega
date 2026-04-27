@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, User, Calendar, FileText, Plus, Send, CheckCircle, Clock, Trash2, Eye, Download, MessageSquare, FilePlus, X } from "lucide-react";
+import { Search, User, Calendar, FileText, Plus, Send, CheckCircle, Clock, Trash2, Eye, Download, MessageSquare, FilePlus2, X } from "lucide-react";
 import { searchPatients, getPatientAppointments, uploadMedicalResult, getAllMedicalResults, markAsNotified, deleteMedicalResult } from "@/actions/medical_results";
 import Portal from "./Portal";
 import { format } from "date-fns";
@@ -148,11 +148,11 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
             }}>
               <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  {modalStep === 1 ? <HistoryIcon /> : <FilePlusIcon />}
+                  {modalStep === 1 ? <Calendar size={20} color="var(--primary)" /> : <FilePlus2 size={20} color="var(--primary)" />}
                   {modalStep === 1 ? `Historial de ${selectedPatient?.name}` : `Cargar Resultado Médico`}
                 </h3>
-                <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5 }}>
-                  <XIcon />
+                <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5, color: 'var(--text-main)' }}>
+                  <X size={20} />
                 </button>
               </div>
 
@@ -356,12 +356,6 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
   );
 }
 
-const HistoryIcon = () => <Calendar size={20} color="var(--primary)" />;
 const History = ({ size, color }: { size: number, color?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color || "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
-);
-const FilePlusIcon = () => <FileText size={20} color="var(--primary)" />;
-const XIcon = () => <X size={20} />;
-const X = ({ size }: { size: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
 );
