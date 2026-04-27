@@ -45,7 +45,11 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
     setLoading(true);
     const res = await getPrestacionesBySheet(sheetName);
     if (res.success && res.data) {
-      setData(res.data);
+      const parsedData = res.data.map((r: any) => ({
+        ...r,
+        row_data: typeof r.row_data === 'string' ? JSON.parse(r.row_data) : r.row_data
+      }));
+      setData(parsedData);
     }
     setLoading(false);
   };
@@ -87,7 +91,8 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
 
   const recalculateRow = (rowData: any, sheet: string) => {
     const updated = { ...rowData };
-    if (sheet === 'O. SOCIALES ' && updated['NBU'] && updated['COSTO DERIVACION']) {
+    const sheetTrim = sheet.trim().toUpperCase();
+    if (sheetTrim === 'O. SOCIALES' && updated['NBU'] && updated['COSTO DERIVACION']) {
       const g = parseFloat(updated['NBU']) || 0;
       const c = parseFloat(updated['COSTO DERIVACION']) || 0;
       updated['COBERTURA OBRA SOCIAL '] = g - c;
