@@ -184,7 +184,13 @@ button {
 
 /* Portal Specific Responsiveness */
 .portal-main {
-  padding: 1.5rem !important;
+  padding: 3rem 2rem !important; /* Larger padding for desktop */
+}
+
+@media (max-width: 1024px) {
+  .portal-main {
+    padding: 1.5rem !important;
+  }
 }
 
 @media (max-width: 768px) {
