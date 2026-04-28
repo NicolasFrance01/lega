@@ -127,13 +127,21 @@ export default function IngresosPage() {
             </button>
           </div>
 
-          {loading ? (
+          {(loading && ingresos.length === 0) ? (
             <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
               <div className="animate-spin" style={{ marginBottom: '1rem' }}><Activity size={40} /></div>
               Cargando ingresos históricos...
             </div>
           ) : (
-            <IngresosTable ingresos={filteredIngresos} onEdit={handleEdit} onRefresh={fetchData} period="all" />
+            <div style={{ position: 'relative' }}>
+              {loading && (
+                <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 100, background: 'var(--primary)', color: 'white', padding: '0.4rem 0.8rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                  <div className="animate-spin" style={{ display: 'inline-block' }}><Activity size={12} /></div>
+                  Sincronizando...
+                </div>
+              )}
+              <IngresosTable ingresos={filteredIngresos} onEdit={handleEdit} onRefresh={fetchData} period="all" />
+            </div>
           )}
         </>
       ) : (
