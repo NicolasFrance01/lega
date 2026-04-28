@@ -194,7 +194,7 @@ export default function ResultadoPortal() {
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      {res.notes && !selectedResult && <MessageSquare size={18} color="var(--primary)" style={{ opacity: 0.6 }} title="Tiene una nota adjunta" />}
+                      {res.notes && !selectedResult && <MessageSquare size={18} color="var(--primary)" style={{ opacity: 0.6 }} />}
                       <ChevronRight size={26} style={{ transform: selectedResult?.id === res.id ? 'rotate(90deg)' : 'none', transition: 'all 0.3s', opacity: 0.3 }} />
                     </div>
                   </div>
