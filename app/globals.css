@@ -182,9 +182,40 @@ button {
   }
 }
 
-/* Table scroll wrapper */
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+/* Portal Specific Responsiveness */
+.portal-main {
+  padding: 1.5rem !important;
+}
+
+@media (max-width: 768px) {
+  .portal-main {
+    padding: 1rem !important;
+  }
+  
+  .portal-tabs {
+    flex-direction: column;
+    gap: 0.5rem !important;
+  }
+  
+  .portal-tabs button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .portal-card-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1.5rem !important;
+  }
+  
+  .portal-card-actions {
+    width: 100%;
+    flex-direction: column;
+    gap: 0.5rem !important;
+  }
+  
+  .portal-card-actions a {
+    width: 100%;
+    justify-content: center;
+  }
 }

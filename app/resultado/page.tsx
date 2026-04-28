@@ -31,27 +31,29 @@ export default function ResultadoPortal() {
 
   if (!data) {
     return (
-      <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)', position: 'fixed', top: 0, left: 0 }}>
-        <div className="glass-panel" style={{ width: '100%', maxWidth: '450px', padding: '3.5rem 3rem', textAlign: 'center', animation: 'fadeIn 0.5s ease', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
-          <div style={{ marginBottom: '2rem' }}>
-            <img src="/logo.png" alt="LEGA" style={{ width: '140px', marginBottom: '1.5rem' }} />
-            <div style={{ display: 'inline-block', padding: '0.25rem 1rem', background: 'rgba(14, 165, 233, 0.1)', color: 'var(--primary)', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)' }}>
+        <div className="glass-panel" style={{ width: '100%', maxWidth: '450px', padding: '3rem 2rem', textAlign: 'center', animation: 'fadeIn 0.5s ease', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '2.5rem' }}>
+            <img src="/logo.png" alt="LEGA" style={{ width: '160px', maxWidth: '80%', height: 'auto', marginBottom: '1.5rem' }} />
+            <div style={{ padding: '0.4rem 1.25rem', background: 'rgba(14, 165, 233, 0.1)', color: 'var(--primary)', borderRadius: '100px', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', border: '1px solid rgba(14, 165, 233, 0.2)' }}>
               Portal de Pacientes
             </div>
           </div>
-          <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '0.75rem', color: '#1e293b' }}>Mis Resultados</h1>
-          <p style={{ color: '#64748b', marginBottom: '2.5rem', fontWeight: 500, lineHeight: 1.5 }}>Ingresá tu DNI para consultar tus informes médicos y el historial de tus turnos.</p>
+          
+          <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '0.75rem', color: '#1e293b', letterSpacing: '-0.02em' }}>Mis Resultados</h1>
+          <p style={{ color: '#64748b', marginBottom: '2.5rem', fontWeight: 500, lineHeight: 1.6, fontSize: '1.05rem' }}>Ingresá tu DNI para consultar tus informes médicos y el historial de tus turnos.</p>
           
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div style={{ position: 'relative' }}>
-              <User size={22} style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.4, color: 'var(--primary)' }} />
+              <User size={22} style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, color: 'var(--primary)' }} />
               <input 
                 type="text" 
+                inputMode="numeric"
                 placeholder="DNI del Paciente" 
                 value={dni}
                 onChange={(e) => setDni(e.target.value)}
                 required
-                style={{ width: '100%', padding: '1.1rem 1.1rem 1.1rem 3.5rem', borderRadius: '16px', border: '2px solid #e2e8f0', outline: 'none', fontSize: '1.1rem', fontWeight: 700, transition: 'all 0.2s', background: 'white' }}
+                style={{ width: '100%', padding: '1.1rem 1.1rem 1.1rem 3.5rem', borderRadius: '18px', border: '2px solid #e2e8f0', outline: 'none', fontSize: '1.1rem', fontWeight: 700, transition: 'all 0.2s', background: 'white' }}
                 onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
                 onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
               />
@@ -60,22 +62,22 @@ export default function ResultadoPortal() {
               type="submit" 
               disabled={loading}
               className="btn-primary" 
-              style={{ padding: '1.1rem', fontSize: '1.1rem', borderRadius: '16px', width: '100%', fontWeight: 800, boxShadow: '0 10px 15px -3px rgba(14, 165, 233, 0.3)' }}
+              style={{ padding: '1.1rem', fontSize: '1.1rem', borderRadius: '18px', width: '100%', fontWeight: 800, boxShadow: '0 10px 15px -3px rgba(14, 165, 233, 0.4)', marginTop: '0.5rem' }}
             >
               {loading ? "Verificando..." : "VER MIS RESULTADOS"}
             </button>
             {error && (
-              <div style={{ background: '#fef2f2', color: '#dc2626', padding: '1rem', borderRadius: '12px', fontSize: '0.9rem', marginTop: '0.5rem', fontWeight: 700, border: '1px solid #fee2e2' }}>
+              <div style={{ background: '#fef2f2', color: '#dc2626', padding: '1rem', borderRadius: '14px', fontSize: '0.9rem', marginTop: '0.5rem', fontWeight: 700, border: '1px solid #fee2e2', animation: 'shake 0.4s ease' }}>
                 {error}
               </div>
             )}
           </form>
           
           <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid #f1f5f9' }}>
-            <p style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 600 }}>
+            <p style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: 600, lineHeight: 1.5 }}>
               ¿Necesitás ayuda con tus resultados? <br /> 
-              <a href="https://wa.me/5493513049709" target="_blank" style={{ color: '#25D366', fontWeight: 800, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', marginTop: '0.5rem' }}>
-                <MessageSquare size={16} /> Contactar Soporte WhatsApp
+              <a href="https://wa.me/5493513049709" target="_blank" style={{ color: '#25D366', fontWeight: 800, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.75rem', fontSize: '1rem' }}>
+                <MessageSquare size={20} /> Contactar por WhatsApp
               </a>
             </p>
           </div>
@@ -102,22 +104,22 @@ export default function ResultadoPortal() {
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
       {/* Patient Header */}
-      <nav style={{ background: 'white', padding: '1rem 2rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <img src="/logo.png" alt="LEGA" style={{ height: '35px' }} />
-          <div style={{ height: '24px', width: '1px', background: '#e2e8f0' }} />
+      <nav style={{ background: 'white', padding: '0.75rem 1rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <img src="/logo.png" alt="LEGA" style={{ height: '30px' }} />
+          <div style={{ height: '20px', width: '1px', background: '#e2e8f0' }} />
           <div>
-            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#1e293b' }}>{data.patient.name}</h4>
-            <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>DNI: {data.patient.dni}</p>
+            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#1e293b' }}>{data.patient.name}</h4>
+            <p style={{ margin: 0, fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>DNI: {data.patient.dni}</p>
           </div>
         </div>
-        <button onClick={() => setData(null)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#dc2626', fontWeight: 800, fontSize: '0.9rem', background: '#fef2f2', padding: '0.5rem 1rem', borderRadius: '10px', border: 'none', cursor: 'pointer' }}>
-          <LogOut size={18} /> Salir
+        <button onClick={() => setData(null)} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#dc2626', fontWeight: 800, fontSize: '0.85rem', background: '#fef2f2', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
+          <LogOut size={16} /> <span className="hide-mobile">Salir</span>
         </button>
       </nav>
 
-      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem' }}>
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+      <main className="portal-main" style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem' }}>
+        <div className="portal-tabs" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
           <button 
             onClick={() => setActiveTab('results')}
             style={{ 
@@ -151,7 +153,7 @@ export default function ResultadoPortal() {
           <Search size={22} style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.3 }} />
           <input 
             type="text" 
-            placeholder="Buscar por fecha, tipo de análisis o número de informe..." 
+            placeholder="Buscar por fecha, análisis o informe..." 
             value={portalSearch}
             onChange={(e) => setPortalSearch(e.target.value)}
             style={{ width: '100%', padding: '1.1rem 1.1rem 1.1rem 3.8rem', borderRadius: '20px', border: '1px solid #e2e8f0', background: 'white', outline: 'none', fontSize: '1.1rem', fontWeight: 500, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}
@@ -166,13 +168,14 @@ export default function ResultadoPortal() {
                   <Info size={40} color="var(--primary)" />
                 </div>
                 <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>No hay resultados disponibles</h3>
-                <p style={{ color: '#64748b', maxWidth: '400px', margin: '0 auto', fontWeight: 500 }}>{portalSearch ? "No hay resultados que coincidan con tu búsqueda." : "Tus informes aparecerán aquí una vez que el laboratorio los procese y cargue al sistema."}</p>
+                <p style={{ color: '#64748b', maxWidth: '400px', margin: '0 auto', fontWeight: 500 }}>{portalSearch ? "No hay resultados que coincidan con tu búsqueda." : "Tus informes aparecerán aquí una vez que el laboratorio los procese."}</p>
               </div>
             ) : (
               filteredResults.map((res: any) => (
                 <div key={res.id} style={{ borderRadius: '24px', overflow: 'hidden', border: selectedResult?.id === res.id ? '2px solid var(--primary)' : '1px solid #e2e8f0', background: 'white', transition: 'all 0.3s ease', boxShadow: selectedResult?.id === res.id ? '0 20px 25px -5px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)' }}>
                   <div 
                     onClick={() => setSelectedResult(selectedResult?.id === res.id ? null : res)}
+                    className="portal-card-header"
                     style={{ padding: '1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }}>
@@ -230,7 +233,7 @@ export default function ResultadoPortal() {
                         )}
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div className="portal-card-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}>
                         <a 
                           href={`/api/medical-result/file/${res.id}`} 
                           download={res.filename || `resultado_${res.id}`} 
@@ -243,7 +246,7 @@ export default function ResultadoPortal() {
                           onMouseOver={(e) => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.color = 'white'; }}
                           onMouseOut={(e) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = 'var(--primary)'; }}
                         >
-                          <Download size={20} /> DESCARGAR INFORME
+                          <Download size={20} /> <span className="hide-mobile">DESCARGAR</span> INFORME
                         </a>
                         <a 
                           href={`https://wa.me/5493513049709?text=${encodeURIComponent("Hola, necesito realizar una consulta sobre mi Resumen Medico N° " + (res.report_id || '-') + " del día " + format(new Date(res.created_at), "dd/MM/yyyy"))}`} 
@@ -254,7 +257,7 @@ export default function ResultadoPortal() {
                             borderRadius: '12px', fontWeight: 800, fontSize: '0.95rem', textDecoration: 'none', boxShadow: '0 4px 10px rgba(37, 211, 102, 0.3)'
                           }}
                         >
-                          <MessageSquare size={20} /> CONSULTAR POR WHATSAPP
+                          <MessageSquare size={20} /> CONSULTAR <span className="hide-mobile">POR WHATSAPP</span>
                         </a>
                       </div>
                     </div>
