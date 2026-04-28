@@ -26,6 +26,7 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [mode, setMode] = useState<"sin_turno" | "con_turno">("sin_turno");
 
   useEffect(() => {
     if (editingIngreso) {
