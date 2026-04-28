@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { X, Save, User as UserIcon, Calendar, Phone, Mail, Shield, Search, CheckCircle, Clock, DollarSign, CreditCard, ChevronRight } from "lucide-react";
 import { searchPatients } from "@/actions/medical_results";
 import { getTodayAppointments } from "@/actions/appointments";
-import { createIngreso } from "@/actions/ingresos";
+import { createIngreso, getNextReportId } from "@/actions/ingresos";
 
 interface NewIngresoModalProps {
   isOpen: boolean;
@@ -16,6 +16,7 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
   const [mode, setMode] = useState<"sin_turno" | "con_turno">("sin_turno");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [nextReportId, setNextReportId] = useState("");
   
   // Con Turno Selection
   const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
@@ -33,8 +34,16 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
     } else {
       setSelectedPatient(null);
       setMode("sin_turno");
+      if (isOpen) fetchNextId();
     }
   }, [editingIngreso, isOpen]);
+
+  async function fetchNextId() {
+    const res = await getNextReportId();
+    if (res.success && res.nextId) {
+      setNextReportId(res.nextId);
+    }
+  }
 
   useEffect(() => {
     if (isOpen && mode === "con_turno" && !editingIngreso) {
@@ -133,7 +142,7 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
           {!editingIngreso && (
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
               <button 
-                onClick={() => setMode("sin_turno")}
+                onClick={() => { setMode("sin_turno"); setSelectedPatient(null); }}
                 style={{ 
                   flex: 1, padding: '1rem', borderRadius: '12px', fontWeight: 700,
                   background: mode === 'sin_turno' ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
@@ -145,7 +154,7 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
                 SIN TURNO (Manual)
               </button>
               <button 
-                onClick={() => setMode("con_turno")}
+                onClick={() => { setMode("con_turno"); setSelectedPatient(null); }}
                 style={{ 
                   flex: 1, padding: '1rem', borderRadius: '12px', fontWeight: 700,
                   background: mode === 'con_turno' ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
@@ -189,6 +198,8 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
                 </>
               ) : (
                 <IngresoForm 
+                  mode={mode}
+                  nextReportId={nextReportId}
                   selectedPatient={selectedPatient} 
                   editingIngreso={editingIngreso} 
                   setSelectedPatient={setSelectedPatient} 
@@ -206,6 +217,8 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
             </div>
           ) : (
             <IngresoForm 
+              mode={mode}
+              nextReportId={nextReportId}
               selectedPatient={selectedPatient} 
               editingIngreso={editingIngreso} 
               setSelectedPatient={setSelectedPatient} 
@@ -227,7 +240,7 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
 }
 
 function IngresoForm({ 
-  selectedPatient, editingIngreso, setSelectedPatient, handleSubmit, loading, error, inputStyle, searchResults, searchQuery, setSearchQuery, autofillPatient, onClose 
+  mode, nextReportId, selectedPatient, editingIngreso, setSelectedPatient, handleSubmit, loading, error, inputStyle, searchResults, searchQuery, setSearchQuery, autofillPatient, onClose 
 }: any) {
   return (
     <form 
@@ -235,58 +248,58 @@ function IngresoForm({
       onSubmit={handleSubmit} 
       style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
     >
+      {/* existingId for the action should only be an APPOINTMENT id */}
       {editingIngreso && <input type="hidden" name="id" value={editingIngreso.id} />}
-      {selectedPatient?.id && !editingIngreso && <input type="hidden" name="id" value={selectedPatient.id} />}
+      {mode === 'con_turno' && selectedPatient?.id && !editingIngreso && <input type="hidden" name="id" value={selectedPatient.id} />}
       
       {error && <div style={{ color: 'var(--danger)', padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', fontSize: '0.85rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>{error}</div>}
 
-      {/* Patient Search / Autofill */}
-      {!selectedPatient && !editingIngreso && (
-        <div style={{ position: 'relative' }}>
-          <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '1.2rem', color: '#94a3b8' }} />
-          <input 
-            type="text" 
-            placeholder="Buscá por nombre o DNI para autocompletar..." 
-            style={{ ...inputStyle, paddingLeft: '2.5rem' }}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchResults.length > 0 && (
-            <div style={{ 
-              position: 'absolute', top: '100%', left: 0, right: 0, 
-              background: 'var(--glass-bg)', borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)',
-              zIndex: 20, marginTop: '0.5rem', border: '1px solid var(--glass-border)', backdropFilter: 'blur(10px)'
-            }}>
-              {searchResults.map((p: any) => (
-                <div key={p.id} onClick={() => autofillPatient(p)} style={{ padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid var(--glass-border)' }}>
-                  <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{p.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>DNI: {p.dni} — {p.health_insurance}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {selectedPatient && (
-        <div style={{ padding: '1rem', background: 'rgba(14, 165, 233, 0.1)', borderRadius: '12px', border: '1px solid rgba(14, 165, 233, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary)' }}>PACIENTE SELECCIONADO</p>
-            <p style={{ margin: 0, fontWeight: 700, color: 'var(--text-main)' }}>{selectedPatient.name} ({selectedPatient.dni})</p>
-          </div>
-          {!editingIngreso && <button type="button" onClick={() => setSelectedPatient(null)} style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 800, background: 'none', border: 'none', cursor: 'pointer' }}>Cambiar</button>}
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
         <div style={{ gridColumn: 'span 2' }}>
-          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Nombre Completo</label>
-          <input name="name" required defaultValue={selectedPatient?.name} style={inputStyle} />
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Paciente</label>
+          <div style={{ position: 'relative' }}>
+            <Search size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+            <input 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar por nombre o DNI para autocompletar..." 
+              style={{ ...inputStyle, paddingLeft: '2.5rem' }} 
+            />
+            
+            {searchResults.length > 0 && (
+              <div style={{ 
+                position: 'absolute', top: '100%', left: 0, right: 0, 
+                background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
+                borderRadius: '12px', marginTop: '0.5rem', zIndex: 100,
+                boxShadow: '0 10px 25px rgba(0,0,0,0.2)', overflow: 'hidden'
+              }}>
+                {searchResults.map((p: any) => (
+                  <div 
+                    key={p.id} 
+                    onClick={() => autofillPatient(p)}
+                    style={{ padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between' }}
+                    className="hoverable-row"
+                  >
+                    <span>{p.name}</span>
+                    <span style={{ opacity: 0.5 }}>{p.dni}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>DNI</label>
-          <input name="dni" required defaultValue={selectedPatient?.dni} style={inputStyle} />
+
+        <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Nombre Completo</label>
+            <input name="name" required defaultValue={selectedPatient?.name} style={inputStyle} />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>DNI</label>
+            <input name="dni" required defaultValue={selectedPatient?.dni} style={inputStyle} />
+          </div>
         </div>
+
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Nacimiento</label>
           <input name="birth_date" type="date" defaultValue={selectedPatient?.birth_date ? new Date(selectedPatient.birth_date).toISOString().split('T')[0] : ''} style={inputStyle} />
@@ -339,7 +352,13 @@ function IngresoForm({
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>N° INFORME</label>
-          <input name="report_id" defaultValue={selectedPatient?.report_id} style={inputStyle} placeholder="Ej: 94113" />
+          <input 
+            name="report_id" 
+            key={selectedPatient?.report_id || nextReportId} 
+            defaultValue={selectedPatient?.report_id || nextReportId} 
+            style={inputStyle} 
+            placeholder="Ej: 94113" 
+          />
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Fecha de Resultado</label>

@@ -251,34 +251,6 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
         </table>
       </div>
       
-      {/* Scroll to Today floating button */}
-      {period !== 'day' && (
-        <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 99999 }}>
-          <button 
-            onClick={handleJump}
-            style={{ 
-              background: 'var(--primary)', color: 'white',
-              width: '64px', height: '64px', borderRadius: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 15px 30px -5px rgba(14, 165, 233, 0.5)', border: '2px solid rgba(255,255,255,0.3)', cursor: 'pointer',
-              gap: '1px', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              transform: 'scale(1)',
-              padding: '8px'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.15) translateY(-5px)';
-              e.currentTarget.style.boxShadow = '0 20px 40px -10px rgba(14, 165, 233, 0.6)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1) translateY(0)';
-              e.currentTarget.style.boxShadow = '0 15px 30px -5px rgba(14, 165, 233, 0.5)';
-            }}
-            title={isAtToday ? "Ir al Inicio" : "Ir a Hoy"}
-          >
-            {isAtToday ? <ArrowUp size={24} strokeWidth={3} /> : <ArrowDown size={24} strokeWidth={3} />}
-            <span style={{ fontSize: '0.7rem', fontWeight: 900 }}>{isAtToday ? 'INICIO' : 'HOY'}</span>
-          </button>
-        </div>
-      )}
     </div>
   );
 }

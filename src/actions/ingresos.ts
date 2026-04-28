@@ -70,7 +70,7 @@ export async function createIngreso(formData: FormData) {
          email = EXCLUDED.email, 
          phone = EXCLUDED.phone, 
          health_insurance = EXCLUDED.health_insurance,
-         birth_date = COALESCE(NULLIF(EXCLUDED.birth_date, ''), patients.birth_date),
+         birth_date = EXCLUDED.birth_date,
          address = EXCLUDED.address
        RETURNING id`,
       [name, dni, email, phone, health_insurance, birth_date, address]
@@ -178,5 +178,22 @@ export async function updateIngresoField(id: string, field: string, value: any) 
     return { success: true };
   } catch (error: any) {
     return { error: error.message };
+  }
+}
+export async function getNextReportId() {
+  const client = await pool.connect();
+  try {
+    const res = await client.query(`
+      SELECT MAX(CAST(report_id AS INTEGER)) as max_id 
+      FROM appointments 
+      WHERE report_id ~ '^[0-9]+$'
+    `);
+    const nextId = (res.rows[0].max_id || 94000) + 1;
+    return { success: true, nextId: nextId.toString() };
+  } catch (error) {
+    console.error("Error getting next report id:", error);
+    return { success: false, error: "Error al obtener correlativo" };
+  } finally {
+    client.release();
   }
 }
