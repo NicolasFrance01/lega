@@ -300,11 +300,9 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
                      if (res.success) {
                        setBellPopup(null);
                        onRefresh();
-                     } else {
-                       alert("Error: " + (res.error || "No se pudo guardar"));
                      }
                    } catch (e: any) {
-                     alert("Error de conexión: " + e.message);
+                     console.error("Connection error:", e);
                    }
                    setLoadingId(null);
                  }}
@@ -322,11 +320,9 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
                        if (res.success) {
                          setBellPopup(null);
                          onRefresh();
-                       } else {
-                         alert("Error: " + (res.error || "No se pudo marcar como leído"));
                        }
                      } catch (e: any) {
-                       alert("Error de conexión: " + e.message);
+                       console.error("Connection error:", e);
                      }
                      setLoadingId(null);
                    }}
