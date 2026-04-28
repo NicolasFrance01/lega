@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { getIngresos } from "@/actions/ingresos";
 import IngresosTable from "@/components/IngresosTable";
 import NewIngresoModal from "@/components/NewIngresoModal";
-import { Plus, Calendar, Filter, Download, Activity, Clock, FileText, X, Car, CheckCircle } from "lucide-react";
+import { Plus, Calendar, Filter, Download, Activity, Clock, FileText, X, Car, CheckCircle, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
