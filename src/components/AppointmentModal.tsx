@@ -219,59 +219,11 @@ export default function AppointmentModal({
           <div className="modal-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <div>
               <label style={labelStyle}>Obra Social</label>
-              <input required name="health_insurance" type="text" list="insurance-list" className="modern-input" style={inputStyle} placeholder="Ej: OSDE, PAMI, etc." defaultValue={initialData?.health_insurance} />
+              <input name="health_insurance" type="text" list="insurance-list" className="modern-input" style={inputStyle} placeholder="Ej: Particular, OSDE, etc." defaultValue={initialData?.health_insurance} />
               <datalist id="insurance-list">
-                <option value="Particular" />
-                <option value="A.A.T.R.A. - OSTYR - (SCIS S.A. )" />
-                <option value="A.M.U.R." />
-                <option value="A.P.M." />
-                <option value="APROSS" />
-                <option value="AVALIAN" />
-                <option value="CAJA DE ABOGADOS" />
-                <option value="CAJA NOTARIAL" />
-                <option value="CEA - SAN PEDRO" />
-                <option value="CIENCIAS ECONOMICAS" />
-                <option value="COBERTURA DE SALUD S.A. (BOREAL)" />
-                <option value="D.A.S.P.U." />
-                <option value="DA.SU.Te.N" />
-                <option value="FEDERADA SALUD" />
-                <option value="GRUPO PREMEDIC" />
-                <option value="IOSFA" />
-                <option value="JERARQUICOS SALUD" />
-                <option value="LUIS PASTEUR" />
-                <option value="O.P.D.E.A." />
-                <option value="O.S.P.E.R.Y.H.R.A." />
-                <option value="O.S.P.I.A." />
-                <option value="O.S.P.I.G.P.C." />
-                <option value="OBRA SOCIAL PERSONAL DE FARMACIA (O.S.P.F.)" />
-                <option value="OSADEF" />
-                <option value="OSFFENTOS" />
-                <option value="OSMISS" />
-                <option value="OSPACA" />
-                <option value="OSPCRA" />
-                <option value="OSPECOR" />
-                <option value="OSPEP" />
-                <option value="OSPICAL ENSALUD" />
-                <option value="OSPIHMP" />
-                <option value="OSPIM" />
-                <option value="OSPJTAP" />
-                <option value="OSPL" />
-                <option value="OSSACRA AMA SALUD" />
-                <option value="OSTEL" />
-                <option value="OSTEP" />
-                <option value="PAMI" />
-                <option value="PODER JUDICIAL" />
-                <option value="PREVENCION SALUD" />
-                <option value="S.A.D.A.I.C." />
-                <option value="S.A.P." />
-                <option value="SANCOR SALUD" />
-                <option value="SUPERINTEND.DE BIENESTAR POLICIA FEDERAL ARG." />
-                <option value="UNION PERSONAL" />
-                <option value="VETERANOS DE GUERRA" />
-                <option value="Osde" />
-                <option value="Swiss medical" />
-                <option value="Medife" />
-                <option value="Galeno" />
+                {['Particular', 'A.A.T.R.A. - OSTYR - (SCIS S.A. )', 'A.M.U.R.', 'A.P.M.', 'APROSS', 'AVALIAN', 'CAJA DE ABOGADOS', 'CAJA NOTARIAL', 'CEA - SAN PEDRO', 'CIENCIAS ECONOMICAS', 'COBERTURA DE SALUD S.A. (BOREAL)', 'D.A.S.P.U.', 'DA.SU.Te.N', 'FEDERADA SALUD', 'GRUPO PREMEDIC', 'IOSFA', 'JERARQUICOS SALUD', 'LUIS PASTEUR', 'O.P.D.E.A.', 'O.S.P.E.R.Y.H.R.A.', 'O.S.P.I.A.', 'O.S.P.I.G.P.C.', 'OBRA SOCIAL PERSONAL DE FARMACIA (O.S.P.F.)', 'OSADEF', 'OSFFENTOS', 'OSMISS', 'OSPACA', 'OSPCRA', 'OSPECOR', 'OSPEP', 'OSPICAL ENSALUD', 'OSPIHMP', 'OSPIM', 'OSPJTAP', 'OSPL', 'OSSACRA AMA SALUD', 'OSTEL', 'PAMI', 'PODER JUDICIAL', 'PREVENCION SALUD', 'S.A.D.A.I.C.', 'S.A.P.', 'SANCOR SALUD', 'SUPERINTEND.DE BIENESTAR POLICIA FEDERAL ARG.', 'UNION PERSONAL', 'VETERANOS DE GUERRA', 'Osde', 'Swiss medical', 'Medife', 'Galeno', 'Derivacion', 'ALCAT', 'CIBIC', 'Metabolomica', 'Jujuy', 'Rio 1°'].map(opt => (
+                  <option key={opt} value={opt} />
+                ))}
               </datalist>
             </div>
             <div>
@@ -283,31 +235,13 @@ export default function AppointmentModal({
                 list="analysis-list" 
                 className="modern-input" 
                 style={inputStyle} 
-                placeholder="Ej: Test de aire, Rutina, etc."
+                placeholder="Ej: SIBO, Rutina, etc."
                 onChange={(e) => setAnalysisType(e.target.value)}
               />
               <datalist id="analysis-list">
-                {isDomicilio ? (
-                  <>
-                    <option value="Extraccion" />
-                    <option value="Materia fecal" />
-                    <option value="Alcat" />
-                    <option value="Panel" />
-                    <option value="Orina" />
-                  </>
-                ) : (
-                  <>
-                    <option value="Extraccion" />
-                    <option value="Materia fecal" />
-                    <option value="Pylori" />
-                    <option value="Test de aire" />
-                    <option value="Alcat" />
-                    <option value="Cibic" />
-                    <option value="Derivacion" />
-                    <option value="Panel" />
-                    <option value="Orina" />
-                  </>
-                )}
+                {['SIBO', 'LACTOSA', 'FRUCTUOSA', 'PYLORI', 'EXTRACCION', 'MATERIA FECAL', 'ORINA', 'PANEL 105', 'PANEL 63', 'ALCAT', 'CIBIC'].map(opt => (
+                  <option key={opt} value={opt} />
+                ))}
               </datalist>
             </div>
           </div>

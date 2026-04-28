@@ -297,7 +297,7 @@ function IngresoForm({
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Email</label>
-          <input name="email" type="email" defaultValue={selectedPatient?.email} style={inputStyle} />
+          <input name="email" type="text" defaultValue={selectedPatient?.email} style={inputStyle} />
         </div>
         <div style={{ gridColumn: 'span 2' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Dirección</label>
@@ -306,13 +306,22 @@ function IngresoForm({
 
         <div style={{ gridColumn: 'span 2', height: '1px', background: 'var(--glass-border)', margin: '0.5rem 0' }} />
 
-        <div>
+        <div style={{ gridColumn: 'span 2' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Tipo de Estudio/Análisis</label>
-          <input name="analysis_type" required defaultValue={selectedPatient?.analysis_type} style={inputStyle} placeholder="Ej: EXTRACCION" />
+          <select name="analysis_type" required defaultValue={selectedPatient?.analysis_type} style={{ ...inputStyle, background: 'var(--glass-bg)' }}>
+            <option value="" style={{ background: '#1e293b' }}>Seleccioná estudio...</option>
+            {['SIBO', 'LACTOSA', 'FRUCTUOSA', 'PYLORI', 'EXTRACCION', 'MATERIA FECAL', 'ORINA', 'PANEL 105', 'PANEL 63', 'ALCAT', 'CIBIC'].map(opt => (
+              <option key={opt} value={opt} style={{ background: '#1e293b' }}>{opt}</option>
+            ))}
+          </select>
         </div>
-        <div>
+        <div style={{ gridColumn: 'span 2' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Obra Social</label>
-          <input name="health_insurance" defaultValue={selectedPatient?.health_insurance} style={inputStyle} placeholder="Ej: PAMI" />
+          <select name="health_insurance" defaultValue={selectedPatient?.health_insurance || 'Particular'} style={{ ...inputStyle, background: 'var(--glass-bg)' }}>
+            {['Particular', 'A.A.T.R.A. - OSTYR - (SCIS S.A. )', 'A.M.U.R.', 'A.P.M.', 'APROSS', 'AVALIAN', 'CAJA DE ABOGADOS', 'CAJA NOTARIAL', 'CEA - SAN PEDRO', 'CIENCIAS ECONOMICAS', 'COBERTURA DE SALUD S.A. (BOREAL)', 'D.A.S.P.U.', 'DA.SU.Te.N', 'FEDERADA SALUD', 'GRUPO PREMEDIC', 'IOSFA', 'JERARQUICOS SALUD', 'LUIS PASTEUR', 'O.P.D.E.A.', 'O.S.P.E.R.Y.H.R.A.', 'O.S.P.I.A.', 'O.S.P.I.G.P.C.', 'OBRA SOCIAL PERSONAL DE FARMACIA (O.S.P.F.)', 'OSADEF', 'OSFFENTOS', 'OSMISS', 'OSPACA', 'OSPCRA', 'OSPECOR', 'OSPEP', 'OSPICAL ENSALUD', 'OSPIHMP', 'OSPIM', 'OSPJTAP', 'OSPL', 'OSSACRA AMA SALUD', 'OSTEL', 'PAMI', 'PODER JUDICIAL', 'PREVENCION SALUD', 'S.A.D.A.I.C.', 'S.A.P.', 'SANCOR SALUD', 'SUPERINTEND.DE BIENESTAR POLICIA FEDERAL ARG.', 'UNION PERSONAL', 'VETERANOS DE GUERRA', 'Osde', 'Swiss medical', 'Medife', 'Galeno', 'Derivacion', 'ALCAT', 'CIBIC', 'Metabolomica', 'Jujuy', 'Rio 1°'].map(opt => (
+              <option key={opt} value={opt} style={{ background: '#1e293b' }}>{opt}</option>
+            ))}
+          </select>
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>N° INFORME</label>
@@ -344,6 +353,16 @@ function IngresoForm({
           <input name="particular_price" type="number" step="0.01" defaultValue={selectedPatient?.particular_price} style={inputStyle} placeholder="$ 0.00" />
         </div>
         
+        <div style={{ gridColumn: 'span 2' }}>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Observaciones / Detalles</label>
+          <textarea 
+            name="observations" 
+            defaultValue={selectedPatient?.observations} 
+            style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} 
+            placeholder="Algún detalle adicional sobre el paciente o el estudio..."
+          />
+        </div>
+
         <div style={{ gridColumn: 'span 2' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>
             Documentación Médica (Podés seleccionar varios)

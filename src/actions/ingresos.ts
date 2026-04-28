@@ -4,33 +4,19 @@ import pool from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { format } from 'date-fns';
 
-export async function getIngresos(period: 'day' | 'week' | 'month' = 'day', date?: string) {
+export async function getIngresos(search?: string) {
   try {
-    let dateCondition = "DATE(a.appointment_date) = CURRENT_DATE";
-    const params: any[] = [];
-
-    const baseDate = date || format(new Date(), 'yyyy-MM-dd');
-
-    if (period === 'day') {
-      params.push(baseDate);
-      dateCondition = `DATE(a.appointment_date) = $${params.length}`;
-    } else if (period === 'week') {
-      // 7 days back, 2 days forward
-      params.push(baseDate);
-      dateCondition = `a.appointment_date >= ($${params.length}::date - INTERVAL '7 days') AND a.appointment_date <= ($${params.length}::date + INTERVAL '2 days')`;
-    } else if (period === 'month') {
-      // 1 month back, 1 week forward
-      params.push(baseDate);
-      dateCondition = `a.appointment_date >= ($${params.length}::date - INTERVAL '1 month') AND a.appointment_date <= ($${params.length}::date + INTERVAL '1 week')`;
-    }
-
+    // We fetch everything that is an ingreso OR is a completed/confirmed appointment
+    // This includes historical data from internal calendar and domicilio if they have these statuses.
     const res = await pool.query(`
       SELECT a.*, p.name, p.dni, p.phone, p.email, p.health_insurance, p.birth_date, p.address
       FROM appointments a
       JOIN patients p ON a.patient_id = p.id
-      WHERE ${dateCondition}
-      ORDER BY a.appointment_date ASC
-    `, params);
+      WHERE a.is_ingreso = TRUE 
+         OR a.status = 'COMPLETADO' 
+         OR a.status = 'CONFIRMAR ASISTENCIA'
+      ORDER BY a.appointment_date DESC
+    `);
 
     return { 
       data: res.rows.map(row => ({
@@ -92,30 +78,30 @@ export async function createIngreso(formData: FormData) {
     const patientId = patientRes.rows[0].id;
 
     let aptId;
-    if (existingId) {
-      // Update existing appointment
-      await client.query(
-        `UPDATE appointments SET 
-          analysis_type = $1, observations = $2, status = 'COMPLETADO',
-          report_id = $3, result_date = NULLIF($4, '')::timestamp, 
-          coseguro = NULLIF($5, '')::numeric, particular_price = NULLIF($6, '')::numeric, 
-          payment_method = $7, professional_name = $8, is_ingreso = TRUE
-         WHERE id = $9`,
-        [analysis_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, existingId]
-      );
-      aptId = existingId;
-    } else {
-      // Insert Appointment as Ingreso
-      const aptRes = await client.query(
-        `INSERT INTO appointments 
-         (patient_id, appointment_date, analysis_type, observations, status, 
-          report_id, result_date, coseguro, particular_price, payment_method, professional_name, is_ingreso) 
-         VALUES ($1, $2, $3, $4, 'COMPLETADO', $5, NULLIF($6, '')::timestamp, NULLIF($7, '')::numeric, NULLIF($8, '')::numeric, $9, $10, TRUE)
-         RETURNING id`,
-        [patientId, appointment_date || new Date().toISOString(), analysis_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name]
-      );
-      aptId = aptRes.rows[0].id;
-    }
+      if (existingId) {
+        // Update existing appointment
+        await client.query(
+          `UPDATE appointments SET 
+            analysis_type = $1, observations = $2, status = 'CONFIRMAR ASISTENCIA',
+            report_id = $3, result_date = NULLIF($4, '')::timestamp, 
+            coseguro = NULLIF($5, '')::numeric, particular_price = NULLIF($6, '')::numeric, 
+            payment_method = $7, professional_name = $8, is_ingreso = TRUE
+           WHERE id = $9`,
+          [analysis_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, existingId]
+        );
+        aptId = existingId;
+      } else {
+        // Insert Appointment as Ingreso
+        const aptRes = await client.query(
+          `INSERT INTO appointments 
+           (patient_id, appointment_date, analysis_type, observations, status, 
+            report_id, result_date, coseguro, particular_price, payment_method, professional_name, is_ingreso) 
+           VALUES ($1, $2, $3, $4, 'CONFIRMAR ASISTENCIA', $5, NULLIF($6, '')::timestamp, NULLIF($7, '')::numeric, NULLIF($8, '')::numeric, $9, $10, TRUE)
+           RETURNING id`,
+          [patientId, appointment_date || new Date().toISOString(), analysis_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name]
+        );
+        aptId = aptRes.rows[0].id;
+      }
 
     // Handle File Uploads
     for (const file of files) {
