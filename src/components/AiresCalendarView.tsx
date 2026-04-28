@@ -301,6 +301,7 @@ export default function AiresCalendarView({ appointments }: { appointments: any[
         isOpen={selectedAp !== null}
         onClose={() => setSelectedAp(null)}
         ap={selectedAp}
+        isAires={true}
       />
 
       <EvolutionModal
