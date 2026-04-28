@@ -200,8 +200,14 @@ export async function getNextReportId() {
 
 export async function updateInternalNote(id: string, note: string) {
   try {
+    console.log("Updating internal note for:", id, note);
     const res = await pool.query('SELECT a.*, p.name FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = $1', [id]);
     const details = res.rows[0];
+
+    if (!details) {
+      console.error("No appointment found for id:", id);
+      return { error: "No se encontró el registro" };
+    }
 
     await pool.query(
       `UPDATE appointments SET internal_note = $1, internal_note_status = 'unread' WHERE id = $2`,
@@ -214,17 +220,22 @@ export async function updateInternalNote(id: string, note: string) {
       note: note
     });
 
+    console.log("Internal note updated successfully");
     revalidatePath("/ingresos");
     return { success: true };
   } catch (error: any) {
+    console.error("Error in updateInternalNote:", error);
     return { error: error.message };
   }
 }
 
 export async function markInternalNoteAsRead(id: string) {
   try {
+    console.log("Marking note as read for:", id);
     const res = await pool.query('SELECT a.*, p.name FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = $1', [id]);
     const details = res.rows[0];
+
+    if (!details) return { error: "No se encontró el registro" };
 
     await pool.query(
       `UPDATE appointments SET internal_note_status = 'read' WHERE id = $1`,
@@ -236,9 +247,11 @@ export async function markInternalNoteAsRead(id: string) {
       report_id: details?.report_id
     });
 
+    console.log("Internal note marked as read successfully");
     revalidatePath("/ingresos");
     return { success: true };
   } catch (error: any) {
+    console.error("Error in markInternalNoteAsRead:", error);
     return { error: error.message };
   }
 }

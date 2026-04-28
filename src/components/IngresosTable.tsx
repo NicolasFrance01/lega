@@ -295,10 +295,16 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
                <button 
                  onClick={async () => {
                    setLoadingId(bellPopup.id);
-                   const res = await updateInternalNote(bellPopup.id, bellPopup.note);
-                   if (res.success) {
-                     setBellPopup(null);
-                     onRefresh();
+                   try {
+                     const res = await updateInternalNote(bellPopup.id, bellPopup.note);
+                     if (res.success) {
+                       setBellPopup(null);
+                       onRefresh();
+                     } else {
+                       alert("Error: " + (res.error || "No se pudo guardar"));
+                     }
+                   } catch (e: any) {
+                     alert("Error de conexión: " + e.message);
                    }
                    setLoadingId(null);
                  }}
@@ -311,10 +317,16 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
                  <button 
                    onClick={async () => {
                      setLoadingId(bellPopup.id);
-                     const res = await markInternalNoteAsRead(bellPopup.id);
-                     if (res.success) {
-                       setBellPopup(null);
-                       onRefresh();
+                     try {
+                       const res = await markInternalNoteAsRead(bellPopup.id);
+                       if (res.success) {
+                         setBellPopup(null);
+                         onRefresh();
+                       } else {
+                         alert("Error: " + (res.error || "No se pudo marcar como leído"));
+                       }
+                     } catch (e: any) {
+                       alert("Error de conexión: " + e.message);
                      }
                      setLoadingId(null);
                    }}
