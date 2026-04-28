@@ -371,7 +371,7 @@ function IngresoForm({
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Medio de Pago</label>
           <select name="payment_method" defaultValue={selectedPatient?.payment_method || 'EFECTIVO'} style={{ ...inputStyle, background: 'var(--glass-bg)', color: 'var(--text-main)' }}>
-            <option value="-" style={{ background: 'var(--glass-bg)', color: 'var(--text-main)' }}>- (Pendiente)</option>
+            <option value="-" style={{ background: 'var(--glass-bg)', color: 'var(--text-main)' }}>-</option>
             <option value="EFECTIVO" style={{ background: 'var(--glass-bg)', color: 'var(--text-main)' }}>Efectivo</option>
             <option value="TRANSFERENCIA" style={{ background: 'var(--glass-bg)', color: 'var(--text-main)' }}>Transferencia</option>
             <option value="TARJETA" style={{ background: 'var(--glass-bg)', color: 'var(--text-main)' }}>Tarjeta</option>
