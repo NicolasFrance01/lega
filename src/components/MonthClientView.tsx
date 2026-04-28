@@ -22,15 +22,14 @@ export default function MonthClientView({ appointments }: { appointments: any[] 
 
   if (!appointments) return null;
 
-  // EXCLUDE Breath Tests ONLY if they don't have other analyses, and EXCLUDE Domicilios
+  // EXCLUDE Breath Tests, Domicilios, and everything already processed in /ingresos
   const airTestNames = ['Test de aire', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'Aires'];
   const filteredAppointments = (appointments || []).filter(a => 
     a && 
     !a.is_domicilio &&
-    (
-      !airTestNames.includes(a.analysis_type) || 
-      (a.analyses && a.analyses.some((ana: any) => !airTestNames.includes(ana.name)))
-    )
+    !a.is_ingreso && // EXCLUDE processed ingresos
+    !airTestNames.includes(a.analysis_type) &&
+    !(a.analyses && a.analyses.some((ana: any) => airTestNames.includes(ana.name)))
   );
 
   const monthStart = startOfMonth(currentDate);
