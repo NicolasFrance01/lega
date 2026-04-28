@@ -58,6 +58,11 @@ export async function createIngreso(formData: FormData) {
     const analysisNames = formData.getAll("analysis_name") as string[];
     const analysisSubtypes = formData.getAll("aire_test_subtype") as string[];
     const analysis_type = analysisNames[0] || ""; // Legacy fallback
+    
+    // Determine if it should go to the Air Test calendar
+    const airTestIndex = analysisNames.findIndex(name => name === 'Test de aire');
+    const aire_test_type = airTestIndex !== -1 ? analysisSubtypes[airTestIndex] : null;
+
     const report_id = formData.get("report_id") as string;
     const result_date = formData.get("result_date") as string;
     const professional_name = formData.get("professional_name") as string;
@@ -100,12 +105,12 @@ export async function createIngreso(formData: FormData) {
         // Update existing appointment
         await client.query(
           `UPDATE appointments SET 
-            analysis_type = $1, observations = $2, status = 'CONFIRMAR ASISTENCIA',
-            report_id = $3, result_date = NULLIF($4, '')::timestamp, 
-            coseguro = NULLIF($5, '')::numeric, particular_price = NULLIF($6, '')::numeric, 
-            payment_method = $7, professional_name = $8, is_ingreso = TRUE
-           WHERE id = $9`,
-          [analysis_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, existingId]
+            analysis_type = $1, aire_test_type = $2, observations = $3, status = 'CONFIRMAR ASISTENCIA',
+            report_id = $4, result_date = NULLIF($5, '')::timestamp, 
+            coseguro = NULLIF($6, '')::numeric, particular_price = NULLIF($7, '')::numeric, 
+            payment_method = $8, professional_name = $9, is_ingreso = TRUE
+           WHERE id = $10`,
+          [analysis_type, aire_test_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, existingId]
         );
         aptId = existingId;
         // Clean old analyses and insert new ones
@@ -114,11 +119,11 @@ export async function createIngreso(formData: FormData) {
         // Insert Appointment as Ingreso
         const aptRes = await client.query(
           `INSERT INTO appointments 
-           (patient_id, appointment_date, analysis_type, observations, status, 
+           (patient_id, appointment_date, analysis_type, aire_test_type, observations, status, 
             report_id, result_date, coseguro, particular_price, payment_method, professional_name, is_ingreso) 
-           VALUES ($1, $2, $3, $4, 'CONFIRMAR ASISTENCIA', $5, NULLIF($6, '')::timestamp, NULLIF($7, '')::numeric, NULLIF($8, '')::numeric, $9, $10, TRUE)
+           VALUES ($1, $2, $3, $4, $5, 'CONFIRMAR ASISTENCIA', $6, NULLIF($7, '')::timestamp, NULLIF($8, '')::numeric, NULLIF($9, '')::numeric, $10, $11, TRUE)
            RETURNING id`,
-          [patientId, appointment_date || new Date().toISOString(), analysis_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name]
+          [patientId, appointment_date || new Date().toISOString(), analysis_type, aire_test_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name]
         );
         aptId = aptRes.rows[0].id;
       }
