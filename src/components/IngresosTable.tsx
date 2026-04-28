@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { format, isToday } from "date-fns";
 import { es } from "date-fns/locale";
-import { Check, Edit2, Trash2, Search, Filter, Calendar as CalendarIcon, Clock, User, Shield, CreditCard, DollarSign, Mail, MapPin, ArrowDown, ArrowUp } from "lucide-react";
-import { updateIngresoField, deleteIngreso } from "@/actions/ingresos";
+import { Check, Edit2, Trash2, Search, Filter, Calendar as CalendarIcon, Clock, User, Shield, CreditCard, DollarSign, Mail, MapPin, ArrowDown, ArrowUp, Bell } from "lucide-react";
+import { updateIngresoField, deleteIngreso, updateInternalNote, markInternalNoteAsRead } from "@/actions/ingresos";
 
 export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: any[], onEdit: (ingreso: any) => void, period: string }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -12,6 +12,7 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
   const containerRef = useRef<HTMLDivElement>(null);
   const [editingCell, setEditingCell] = useState<{ id: string, field: string } | null>(null);
   const [isAtToday, setIsAtToday] = useState(false);
+  const [bellPopup, setBellPopup] = useState<{ id: string, note: string, status: string } | null>(null);
 
   const handleJump = () => {
     if (!isAtToday) {
@@ -155,7 +156,21 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
                   <td style={{ padding: '0.75rem 1rem' }}>
                     {ing.result_date ? format(new Date(ing.result_date), "dd/MM") : '-'}
                   </td>
-                  <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
+                  <td style={{ padding: '0.75rem 1rem', textAlign: 'center', position: 'relative' }}>
+                    {/* Notification Bell */}
+                    <div 
+                      onClick={() => setBellPopup({ id: ing.id, note: ing.internal_note || '', status: ing.internal_note_status || 'none' })}
+                      style={{ 
+                        position: 'absolute', top: '4px', right: '4px', cursor: 'pointer',
+                        color: ing.internal_note_status === 'unread' ? '#F59E0B' : (ing.internal_note_status === 'read' ? '#10B981' : '#94a3b8'),
+                        transition: 'all 0.2s',
+                        zIndex: 5
+                      }}
+                      title="Nota Interna"
+                    >
+                      <Bell size={12} fill={ing.internal_note_status !== 'none' ? 'currentColor' : 'none'} />
+                    </div>
+
                     <button 
                       onClick={() => handleToggleCheck(ing.id, ing.checkbox_checked)}
                       style={{ 
@@ -163,7 +178,8 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
                         background: ing.checkbox_checked ? 'var(--success)' : 'transparent',
                         borderColor: ing.checkbox_checked ? 'var(--success)' : 'var(--glass-border)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                        color: 'white'
+                        color: 'white',
+                        margin: '0 auto'
                       }}
                     >
                       {ing.checkbox_checked && <Check size={14} strokeWidth={3} />}
@@ -251,6 +267,60 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
         </table>
       </div>
       
+      {bellPopup && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'fadeIn 0.3s ease' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                <Bell size={24} color={bellPopup.status === 'unread' ? '#F59E0B' : (bellPopup.status === 'read' ? '#10B981' : 'var(--primary)')} /> 
+                NOTA INTERNA
+              </h3>
+              <button onClick={() => setBellPopup(null)} style={{ background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Check size={20} />
+              </button>
+            </div>
+            
+            <textarea 
+              value={bellPopup.note}
+              onChange={(e) => setBellPopup({ ...bellPopup, note: e.target.value })}
+              placeholder="Escribe una nota interna para el equipo..."
+              style={{ 
+                width: '100%', minHeight: '150px', padding: '1.25rem', borderRadius: '14px', border: '1px solid var(--glass-border)', 
+                background: 'var(--glass-bg)', color: 'var(--text-main)', fontSize: '1rem', fontWeight: 600, outline: 'none',
+                resize: 'none', lineHeight: 1.6
+              }}
+            />
+            
+            <div style={{ display: 'flex', gap: '1rem' }}>
+               <button 
+                 onClick={async () => {
+                   setLoadingId(bellPopup.id);
+                   await updateInternalNote(bellPopup.id, bellPopup.note);
+                   setBellPopup(null);
+                   setLoadingId(null);
+                 }}
+                 className="btn-primary" 
+                 style={{ flex: 1, padding: '0.85rem', borderRadius: '12px', fontWeight: 800 }}
+               >
+                 GUARDAR NOTA
+               </button>
+               {bellPopup.status === 'unread' && (
+                 <button 
+                   onClick={async () => {
+                     setLoadingId(bellPopup.id);
+                     await markInternalNoteAsRead(bellPopup.id);
+                     setBellPopup(null);
+                     setLoadingId(null);
+                   }}
+                   style={{ flex: 1, padding: '0.85rem', borderRadius: '12px', background: '#10B981', color: 'white', border: 'none', fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)' }}
+                 >
+                   MARCAR LEÍDO
+                 </button>
+               )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

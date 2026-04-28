@@ -268,7 +268,8 @@ export default function ResultadoPortal() {
           </div>
         ) : (
           <div style={{ background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-            <div style={{ overflowX: 'auto' }}>
+            {/* Desktop View */}
+            <div className="hide-mobile" style={{ overflowX: 'auto', display: 'block' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid #f1f5f9', background: '#f8fafc' }}>
@@ -307,13 +308,41 @@ export default function ResultadoPortal() {
                       </td>
                     </tr>
                   ))}
-                  {filteredAppointments.length === 0 && (
-                    <tr>
-                      <td colSpan={5} style={{ padding: '4rem 2rem', textAlign: 'center', color: '#94a3b8', fontSize: '1rem', fontWeight: 600 }}>No se encontraron turnos registrados.</td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile View - Card based to ensure "Nota" is visible */}
+            <div className="show-mobile" style={{ display: 'none', flexDirection: 'column', gap: '1rem', padding: '1rem' }}>
+               {filteredAppointments.map((apt: any) => (
+                 <div key={apt.id} style={{ padding: '1.25rem', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                       <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1rem' }}>{format(new Date(apt.appointment_date), "dd/MM/yyyy")}</span>
+                       <span style={{ fontSize: '0.8rem', background: 'rgba(14, 165, 233, 0.1)', color: 'var(--primary)', padding: '0.2rem 0.6rem', borderRadius: '8px', fontWeight: 800 }}>
+                          N° {apt.report_id || '-'}
+                       </span>
+                    </div>
+                    <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '1rem', lineHeight: 1.4 }}>{apt.analysis_type}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                       <span style={{ 
+                          background: apt.status === 'COMPLETADO' ? '#dcfce7' : '#fee2e2', 
+                          color: apt.status === 'COMPLETADO' ? '#166534' : '#991b1b',
+                          padding: '0.3rem 1rem', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 800
+                       }}>
+                          {apt.status === 'COMPLETADO' ? 'RESULTADO LISTO' : apt.status}
+                       </span>
+                    </div>
+                    {apt.notes && (
+                      <div style={{ marginTop: '0.5rem', padding: '0.75rem', background: 'white', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.9rem', color: '#475569', fontWeight: 600 }}>
+                         <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Nota del Laboratorio:</div>
+                         {apt.notes}
+                      </div>
+                    )}
+                 </div>
+               ))}
+               {filteredAppointments.length === 0 && (
+                 <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#94a3b8', fontWeight: 600 }}>No se encontraron turnos registrados.</div>
+               )}
             </div>
           </div>
         )}

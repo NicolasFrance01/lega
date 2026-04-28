@@ -197,3 +197,48 @@ export async function getNextReportId() {
     client.release();
   }
 }
+
+export async function updateInternalNote(id: string, note: string) {
+  try {
+    const res = await pool.query('SELECT a.*, p.name FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = $1', [id]);
+    const details = res.rows[0];
+
+    await pool.query(
+      `UPDATE appointments SET internal_note = $1, internal_note_status = 'unread' WHERE id = $2`,
+      [note, id]
+    );
+
+    await logAction("CREATE_INTERNAL_NOTE", {
+      patient_name: details?.name,
+      report_id: details?.report_id,
+      note: note
+    });
+
+    revalidatePath("/ingresos");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function markInternalNoteAsRead(id: string) {
+  try {
+    const res = await pool.query('SELECT a.*, p.name FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = $1', [id]);
+    const details = res.rows[0];
+
+    await pool.query(
+      `UPDATE appointments SET internal_note_status = 'read' WHERE id = $1`,
+      [id]
+    );
+
+    await logAction("READ_INTERNAL_NOTE", {
+      patient_name: details?.name,
+      report_id: details?.report_id
+    });
+
+    revalidatePath("/ingresos");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
