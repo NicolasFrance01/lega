@@ -58,7 +58,7 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
             onBlur={() => handleCellEdit(id, field, localValue)}
             style={{ padding: '0.2rem', borderRadius: '4px', border: '1px solid var(--primary)', fontSize: '0.85rem', width: '100%', background: 'var(--glass-bg)', color: 'var(--text-main)' }}
           >
-            {options.map((opt: any) => <option key={opt} value={opt} style={{ background: '#1e293b', color: 'white' }}>{opt}</option>)}
+            {options.map((opt: any) => <option key={opt} value={opt} style={{ background: 'var(--glass-bg)', color: 'var(--text-main)' }}>{opt}</option>)}
           </select>
         );
       }
@@ -98,11 +98,11 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
 
   return (
     <div style={{ background: 'var(--glass-bg)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'hidden', position: 'relative', backdropFilter: 'blur(10px)' }}>
-      <div ref={containerRef} style={{ overflow: 'auto', maxHeight: 'calc(100vh - 280px)' }}>
+      <div ref={containerRef} style={{ overflow: 'auto', maxHeight: 'calc(100vh - 50px)' }}>
         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, textAlign: 'left', fontSize: '0.85rem' }}>
-          <thead style={{ position: 'sticky', top: 0, zIndex: 20 }}>
+          <thead style={{ position: 'sticky', top: 0, zIndex: 30 }}>
             <tr style={{ background: '#244c7d', color: 'white', borderBottom: '2px solid var(--glass-border)' }}>
-              <th style={{ padding: '0.75rem 1rem', position: 'sticky', left: 0, background: '#ffffff', color: '#000000', zIndex: 10, borderBottom: '2px solid var(--glass-border)' }}>FECHA</th>
+              <th style={{ padding: '0.75rem 1rem', position: 'sticky', left: 0, background: 'var(--table-sticky-bg, #ffffff)', color: 'var(--table-sticky-text, #000000)', zIndex: 31, borderBottom: '2px solid var(--glass-border)' }}>FECHA</th>
               <th style={{ padding: '0.75rem 1rem' }}>RESULTADO</th>
               <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
                 <Check size={16} />
@@ -120,7 +120,7 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
               <th style={{ padding: '0.75rem 1rem' }}>COSEGURO</th>
               <th style={{ padding: '0.75rem 1rem' }}>PARTICULAR</th>
               <th style={{ padding: '0.75rem 1rem' }}>PAGO</th>
-              <th style={{ padding: '0.75rem 1rem', textAlign: 'right', position: 'sticky', right: 0, background: '#ffffff', color: '#000000', zIndex: 21, borderLeft: '1px solid var(--glass-border)', borderBottom: '2px solid var(--glass-border)' }}>ACCIONES</th>
+              <th style={{ padding: '0.75rem 1rem', textAlign: 'right', position: 'sticky', right: 0, background: 'var(--table-sticky-bg, #ffffff)', color: 'var(--table-sticky-text, #000000)', zIndex: 31, borderLeft: '1px solid var(--glass-border)', borderBottom: '2px solid var(--glass-border)' }}>ACCIONES</th>
             </tr>
           </thead>
           <tbody>
@@ -145,8 +145,8 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
                     fontWeight: 700, 
                     position: 'sticky', 
                     left: 0, 
-                    background: '#ffffff',
-                    color: '#000000',
+                    background: 'var(--table-sticky-bg, #ffffff)',
+                    color: 'var(--table-sticky-text, #000000)',
                     zIndex: 2,
                     borderBottom: '1px solid var(--glass-border)'
                   }}>
@@ -213,7 +213,7 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
                       field="payment_method" 
                       value={ing.payment_method} 
                       type="select" 
-                      options={['EFECTIVO', 'TRANSFERENCIA', 'TARJETA', 'COSEGURO']} 
+                      options={['EFECTIVO', 'TRANSFERENCIA', 'TARJETA']} 
                     />
                   </td>
                   <td style={{ 
@@ -221,8 +221,8 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
                     textAlign: 'right', 
                     position: 'sticky', 
                     right: 0, 
-                    background: '#ffffff',
-                    color: '#000000',
+                    background: 'var(--table-sticky-bg, #ffffff)',
+                    color: 'var(--table-sticky-text, #000000)',
                     zIndex: 2,
                     borderLeft: '1px solid var(--glass-border)',
                     borderBottom: '1px solid var(--glass-border)'

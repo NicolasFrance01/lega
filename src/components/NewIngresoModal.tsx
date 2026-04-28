@@ -308,20 +308,34 @@ function IngresoForm({
 
         <div style={{ gridColumn: 'span 2' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Tipo de Estudio/Análisis</label>
-          <select name="analysis_type" required defaultValue={selectedPatient?.analysis_type} style={{ ...inputStyle, background: 'var(--glass-bg)' }}>
-            <option value="" style={{ background: '#1e293b' }}>Seleccioná estudio...</option>
+          <input 
+            name="analysis_type" 
+            required 
+            list="analysis-list"
+            defaultValue={selectedPatient?.analysis_type} 
+            placeholder="Seleccioná o escribí estudio..."
+            style={{ ...inputStyle, background: 'var(--glass-bg)' }} 
+          />
+          <datalist id="analysis-list">
             {['SIBO', 'LACTOSA', 'FRUCTUOSA', 'PYLORI', 'EXTRACCION', 'MATERIA FECAL', 'ORINA', 'PANEL 105', 'PANEL 63', 'ALCAT', 'CIBIC'].map(opt => (
-              <option key={opt} value={opt} style={{ background: '#1e293b' }}>{opt}</option>
+              <option key={opt} value={opt} />
             ))}
-          </select>
+          </datalist>
         </div>
         <div style={{ gridColumn: 'span 2' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Obra Social</label>
-          <select name="health_insurance" defaultValue={selectedPatient?.health_insurance || 'Particular'} style={{ ...inputStyle, background: 'var(--glass-bg)' }}>
+          <input 
+            name="health_insurance" 
+            list="insurance-list"
+            defaultValue={selectedPatient?.health_insurance || 'Particular'} 
+            placeholder="Seleccioná o escribí obra social..."
+            style={{ ...inputStyle, background: 'var(--glass-bg)' }} 
+          />
+          <datalist id="insurance-list">
             {['Particular', 'A.A.T.R.A. - OSTYR - (SCIS S.A. )', 'A.M.U.R.', 'A.P.M.', 'APROSS', 'AVALIAN', 'CAJA DE ABOGADOS', 'CAJA NOTARIAL', 'CEA - SAN PEDRO', 'CIENCIAS ECONOMICAS', 'COBERTURA DE SALUD S.A. (BOREAL)', 'D.A.S.P.U.', 'DA.SU.Te.N', 'FEDERADA SALUD', 'GRUPO PREMEDIC', 'IOSFA', 'JERARQUICOS SALUD', 'LUIS PASTEUR', 'O.P.D.E.A.', 'O.S.P.E.R.Y.H.R.A.', 'O.S.P.I.A.', 'O.S.P.I.G.P.C.', 'OBRA SOCIAL PERSONAL DE FARMACIA (O.S.P.F.)', 'OSADEF', 'OSFFENTOS', 'OSMISS', 'OSPACA', 'OSPCRA', 'OSPECOR', 'OSPEP', 'OSPICAL ENSALUD', 'OSPIHMP', 'OSPIM', 'OSPJTAP', 'OSPL', 'OSSACRA AMA SALUD', 'OSTEL', 'PAMI', 'PODER JUDICIAL', 'PREVENCION SALUD', 'S.A.D.A.I.C.', 'S.A.P.', 'SANCOR SALUD', 'SUPERINTEND.DE BIENESTAR POLICIA FEDERAL ARG.', 'UNION PERSONAL', 'VETERANOS DE GUERRA', 'Osde', 'Swiss medical', 'Medife', 'Galeno', 'Derivacion', 'ALCAT', 'CIBIC', 'Metabolomica', 'Jujuy', 'Rio 1°'].map(opt => (
-              <option key={opt} value={opt} style={{ background: '#1e293b' }}>{opt}</option>
+              <option key={opt} value={opt} />
             ))}
-          </select>
+          </datalist>
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>N° INFORME</label>
@@ -337,11 +351,10 @@ function IngresoForm({
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Medio de Pago</label>
-          <select name="payment_method" defaultValue={selectedPatient?.payment_method || 'EFECTIVO'} style={{ ...inputStyle, background: 'var(--glass-bg)' }}>
-            <option value="EFECTIVO" style={{ background: '#1e293b' }}>Efectivo</option>
-            <option value="TRANSFERENCIA" style={{ background: '#1e293b' }}>Transferencia</option>
-            <option value="TARJETA" style={{ background: '#1e293b' }}>Tarjeta</option>
-            <option value="COSEGURO" style={{ background: '#1e293b' }}>Coseguro</option>
+          <select name="payment_method" defaultValue={selectedPatient?.payment_method || 'EFECTIVO'} style={{ ...inputStyle, background: 'var(--glass-bg)', color: 'var(--text-main)' }}>
+            <option value="EFECTIVO" style={{ background: 'var(--glass-bg)', color: 'var(--text-main)' }}>Efectivo</option>
+            <option value="TRANSFERENCIA" style={{ background: 'var(--glass-bg)', color: 'var(--text-main)' }}>Transferencia</option>
+            <option value="TARJETA" style={{ background: 'var(--glass-bg)', color: 'var(--text-main)' }}>Tarjeta</option>
           </select>
         </div>
         <div>
