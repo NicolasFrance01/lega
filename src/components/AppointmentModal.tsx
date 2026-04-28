@@ -13,7 +13,8 @@ export default function AppointmentModal({
   onClose, 
   defaultDate,
   initialData,
-  isDomicilio
+  isDomicilio,
+  isAire
 }: { 
   isOpen: boolean, 
   onClose: () => void, 
@@ -28,11 +29,12 @@ export default function AppointmentModal({
     is_domicilio?: boolean,
     domicilio_address?: string
   },
-  isDomicilio?: boolean
+  isDomicilio?: boolean,
+  isAire?: boolean
 }) {
   const [loading, setLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [analysisType, setAnalysisType] = useState("");
+  const [analysisType, setAnalysisType] = useState(isAire ? "Test de aire" : "");
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
 
@@ -40,12 +42,12 @@ export default function AppointmentModal({
   useEffect(() => {
     if (isOpen) {
       setSelectedFiles([]);
-      setAnalysisType("");
+      setAnalysisType(isAire ? "Test de aire" : "");
       if (formRef.current) {
         formRef.current.reset();
       }
     }
-  }, [isOpen]);
+  }, [isOpen, isAire]);
   
   if (!isOpen) return null;
 
@@ -236,10 +238,11 @@ export default function AppointmentModal({
                 className="modern-input" 
                 style={inputStyle} 
                 placeholder="Ej: SIBO, Rutina, etc."
+                defaultValue={isAire ? "Test de aire" : initialData?.analysis_type}
                 onChange={(e) => setAnalysisType(e.target.value)}
               />
               <datalist id="analysis-list">
-                {['SIBO', 'LACTOSA', 'FRUCTUOSA', 'PYLORI', 'EXTRACCION', 'MATERIA FECAL', 'ORINA', 'PANEL 105', 'PANEL 63', 'ALCAT', 'CIBIC'].map(opt => (
+                {['Test de aire', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'PYLORI', 'EXTRACCION', 'MATERIA FECAL', 'ORINA', 'PANEL 105', 'PANEL 63', 'ALCAT', 'CIBIC'].map(opt => (
                   <option key={opt} value={opt} />
                 ))}
               </datalist>
