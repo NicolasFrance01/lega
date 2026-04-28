@@ -55,7 +55,9 @@ export async function createIngreso(formData: FormData) {
     const health_insurance = formData.get("health_insurance") as string;
     
     const appointment_date = formData.get("appointment_date") as string;
-    const analysis_type = formData.get("analysis_type") as string;
+    const analysisNames = formData.getAll("analysis_name") as string[];
+    const analysisSubtypes = formData.getAll("aire_test_subtype") as string[];
+    const analysis_type = analysisNames[0] || ""; // Legacy fallback
     const report_id = formData.get("report_id") as string;
     const result_date = formData.get("result_date") as string;
     const professional_name = formData.get("professional_name") as string;
@@ -122,8 +124,7 @@ export async function createIngreso(formData: FormData) {
       }
 
     // Insert Analyses (Multiple)
-    const analysisNames = formData.getAll("analysis_name") as string[];
-    const analysisSubtypes = formData.getAll("aire_test_subtype") as string[];
+    console.log("Saving analyses:", analysisNames, analysisSubtypes);
 
     if (analysisNames.length > 0) {
       for (let i = 0; i < analysisNames.length; i++) {
