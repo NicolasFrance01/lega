@@ -37,9 +37,10 @@ export default function AiresCalendarView({ appointments }: { appointments: any[
   }
 
   // Filter ONLY Test de aire appointments AND EXCLUDE Domicilio
+  const airTestNames = ['Test de aire', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'Aires'];
   const airesAppts = (appointments || []).filter(a => 
     a && 
-    (a.analysis_type === 'Test de aire' || a.aire_test_type || (a.analyses && a.analyses.some((ana: any) => ana.name === 'Test de aire'))) && 
+    (airTestNames.includes(a.analysis_type) || a.aire_test_type || (a.analyses && a.analyses.some((ana: any) => airTestNames.includes(ana.name)))) && 
     !a.is_domicilio
   );
   

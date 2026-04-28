@@ -23,12 +23,13 @@ export default function MonthClientView({ appointments }: { appointments: any[] 
   if (!appointments) return null;
 
   // EXCLUDE Breath Tests ONLY if they don't have other analyses, and EXCLUDE Domicilios
+  const airTestNames = ['Test de aire', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'Aires'];
   const filteredAppointments = (appointments || []).filter(a => 
     a && 
     !a.is_domicilio &&
     (
-      (a.analysis_type !== 'Test de aire' && a.analysis_type !== 'Aires') || 
-      (a.analyses && a.analyses.some((ana: any) => ana.name !== 'Test de aire'))
+      !airTestNames.includes(a.analysis_type) || 
+      (a.analyses && a.analyses.some((ana: any) => !airTestNames.includes(ana.name)))
     )
   );
 

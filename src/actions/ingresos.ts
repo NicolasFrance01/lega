@@ -60,8 +60,12 @@ export async function createIngreso(formData: FormData) {
     const analysis_type = analysisNames[0] || ""; // Legacy fallback
     
     // Determine if it should go to the Air Test calendar
-    const airTestIndex = analysisNames.findIndex(name => name === 'Test de aire');
-    const aire_test_type = airTestIndex !== -1 ? analysisSubtypes[airTestIndex] : null;
+    const airTestNames = ['Test de aire', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'Aires'];
+    const airTestIndex = analysisNames.findIndex(name => airTestNames.includes(name));
+    let aire_test_type = null;
+    if (airTestIndex !== -1) {
+      aire_test_type = analysisSubtypes[airTestIndex] || analysisNames[airTestIndex];
+    }
 
     const report_id = formData.get("report_id") as string;
     const result_date = formData.get("result_date") as string;
