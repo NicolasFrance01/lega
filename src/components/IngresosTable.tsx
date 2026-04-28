@@ -241,7 +241,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
                       field="payment_method" 
                       value={ing.payment_method} 
                       type="select" 
-                      options={['EFECTIVO', 'TRANSFERENCIA', 'TARJETA']} 
+                      options={['-', 'EFECTIVO', 'TRANSFERENCIA', 'TARJETA']} 
                     />
                   </td>
                   <td style={{ 
