@@ -60,22 +60,33 @@ export async function createIngreso(formData: FormData) {
     const observations = formData.get("observations") as string;
     const files = formData.getAll("document") as File[];
 
-    // UPSERT patient
-    const patientRes = await client.query(
-      `INSERT INTO patients (name, dni, email, phone, health_insurance, birth_date, address) 
-       VALUES ($1, $2, $3, $4, $5, NULLIF($6, '')::date, $7) 
-       ON CONFLICT (dni) 
-       DO UPDATE SET 
-         name = EXCLUDED.name, 
-         email = EXCLUDED.email, 
-         phone = EXCLUDED.phone, 
-         health_insurance = EXCLUDED.health_insurance,
-         birth_date = EXCLUDED.birth_date,
-         address = EXCLUDED.address
-       RETURNING id`,
-      [name, dni, email, phone, health_insurance, birth_date, address]
+    // Find or Create patient. 
+    // We search by DNI AND Name to allow multiple people to share a DNI (like a placeholder '.')
+    let patientRes = await client.query(
+      "SELECT id FROM patients WHERE dni = $1 AND name = $2",
+      [dni, name]
     );
-    const patientId = patientRes.rows[0].id;
+
+    let patientId;
+    if (patientRes.rows.length > 0) {
+      patientId = patientRes.rows[0].id;
+      // Update other details if changed
+      await client.query(
+        `UPDATE patients SET 
+          email = $1, phone = $2, health_insurance = $3, 
+          birth_date = NULLIF($4, '')::date, address = $5 
+         WHERE id = $6`,
+        [email, phone, health_insurance, birth_date, address, patientId]
+      );
+    } else {
+      const newPatientRes = await client.query(
+        `INSERT INTO patients (name, dni, email, phone, health_insurance, birth_date, address) 
+         VALUES ($1, $2, $3, $4, $5, NULLIF($6, '')::date, $7) 
+         RETURNING id`,
+        [name, dni, email, phone, health_insurance, birth_date, address]
+      );
+      patientId = newPatientRes.rows[0].id;
+    }
 
     let aptId;
       if (existingId) {

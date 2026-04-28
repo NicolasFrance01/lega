@@ -94,20 +94,28 @@ export async function createAppointment(formData: FormData) {
       }
     }
 
-    // UPSERT patient based on DNI and update their details to ensure synchronization
-    const patientRes = await client.query(
-      `INSERT INTO patients (name, dni, email, phone, health_insurance) 
-       VALUES ($1, $2, $3, $4, $5) 
-       ON CONFLICT (dni) 
-       DO UPDATE SET 
-         name = EXCLUDED.name, 
-         email = EXCLUDED.email, 
-         phone = EXCLUDED.phone, 
-         health_insurance = EXCLUDED.health_insurance 
-       RETURNING id`,
-      [name, dni, email, phone, health_insurance]
+    // Find or Create patient. 
+    // We search by DNI AND Name to allow multiple people to share a DNI (like a placeholder '.')
+    let patientRes = await client.query(
+      "SELECT id FROM patients WHERE dni = $1 AND name = $2",
+      [dni, name]
     );
-    const patientId = patientRes.rows[0].id;
+
+    let patientId;
+    if (patientRes.rows.length > 0) {
+      patientId = patientRes.rows[0].id;
+      // Update other details if changed
+      await client.query(
+        "UPDATE patients SET email = $1, phone = $2, health_insurance = $3 WHERE id = $4",
+        [email, phone, health_insurance, patientId]
+      );
+    } else {
+      const newPatientRes = await client.query(
+        "INSERT INTO patients (name, dni, email, phone, health_insurance) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+        [name, dni, email, phone, health_insurance]
+      );
+      patientId = newPatientRes.rows[0].id;
+    }
 
     // Insert Appointment
     const aptRes = await client.query(
