@@ -9,7 +9,7 @@ export async function getIngresos(search?: string) {
     // We fetch everything that is an ingreso OR is a completed/confirmed appointment
     // This includes historical data from internal calendar and domicilio if they have these statuses.
     const res = await pool.query(`
-      SELECT a.*, p.name, p.dni, p.phone, p.email, p.health_insurance, p.birth_date, p.address,
+      SELECT a.*, p.name, p.dni, p.phone, p.email, p.health_insurance, p.birth_date, p.address, a.biochemical_notice,
              (
                SELECT json_agg(json_build_object('id', aa.id, 'name', aa.analysis_name, 'subtype', aa.aire_test_subtype, 'status', aa.status))
                FROM appointment_analyses aa
@@ -296,6 +296,36 @@ export async function markInternalNoteAsRead(id: string) {
     return { success: true };
   } catch (error: any) {
     console.error("Error in markInternalNoteAsRead:", error);
+    return { error: error.message };
+  }
+}
+
+export async function updateBiochemicalNotice(appointmentId: string, value: string) {
+  try {
+    await pool.query(
+      "UPDATE appointments SET biochemical_notice = $1 WHERE id = $2",
+      [value, appointmentId]
+    );
+
+    const aptRes = await pool.query(`
+      SELECT p.name 
+      FROM appointments a 
+      JOIN patients p ON a.patient_id = p.id 
+      WHERE a.id = $1
+    `, [appointmentId]);
+    
+    const patientName = aptRes.rows[0]?.name || "Desconocido";
+
+    await logAction("UPDATE_BIOCHEMICAL_NOTICE", {
+      patient_name: patientName,
+      field: "Aviso Bioq.",
+      new_value: value || "Vacío"
+    });
+
+    revalidatePath("/ingresos");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating biochemical notice:", error);
     return { error: error.message };
   }
 }

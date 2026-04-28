@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { format, isToday } from "date-fns";
 import { es } from "date-fns/locale";
 import { Check, Edit2, Trash2, Search, Filter, Calendar as CalendarIcon, Clock, User, Shield, CreditCard, DollarSign, Mail, MapPin, ArrowDown, ArrowUp, Bell } from "lucide-react";
-import { updateIngresoField, deleteIngreso, updateInternalNote, markInternalNoteAsRead } from "@/actions/ingresos";
+import { updateIngresoField, deleteIngreso, updateInternalNote, markInternalNoteAsRead, updateBiochemicalNotice } from "@/actions/ingresos";
 
 export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: { ingresos: any[], onEdit: (ingreso: any) => void, onRefresh: () => void, period: string }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -116,6 +116,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
             <tr style={{ background: '#244c7d', color: 'white', borderBottom: '2px solid var(--glass-border)' }}>
               <th style={{ padding: '0.75rem 1rem', position: 'sticky', left: 0, background: 'var(--table-sticky-bg, #ffffff)', color: 'var(--table-sticky-text, #000000)', zIndex: 31, borderBottom: '2px solid var(--glass-border)' }}>FECHA</th>
               <th style={{ padding: '0.75rem 1rem' }}>RESULTADO</th>
+              <th style={{ padding: '0.75rem 1rem' }}>AVISO BIOQ.</th>
               <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
                 <Check size={16} />
               </th>
@@ -167,6 +168,31 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
                   </td>
                   <td style={{ padding: '0.75rem 1rem' }}>
                     {ing.result_date ? format(new Date(ing.result_date), "dd/MM") : '-'}
+                  </td>
+                  <td style={{ padding: '0.75rem 1rem' }}>
+                    <select
+                      value={ing.biochemical_notice || ''}
+                      onChange={async (e) => {
+                        const val = e.target.value;
+                        await updateBiochemicalNotice(ing.id, val);
+                      }}
+                      style={{
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--glass-border)',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        outline: 'none',
+                        width: '130px',
+                        background: ing.biochemical_notice === 'LISTO P/ ENVIAR' ? '#dcfce7' : (ing.biochemical_notice === 'RTO PARCIALES' ? '#ffedd5' : 'var(--glass-bg)'),
+                        color: ing.biochemical_notice === 'LISTO P/ ENVIAR' ? '#166534' : (ing.biochemical_notice === 'RTO PARCIALES' ? '#9a3412' : 'var(--text-main)'),
+                      }}
+                    >
+                      <option value="">-</option>
+                      <option value="LISTO P/ ENVIAR" style={{ background: '#dcfce7', color: '#166534' }}>LISTO P/ ENVIAR</option>
+                      <option value="RTO PARCIALES" style={{ background: '#ffedd5', color: '#9a3412' }}>RTO PARCIALES</option>
+                    </select>
                   </td>
                   <td style={{ padding: '0.75rem 1rem', textAlign: 'center', position: 'relative' }}>
                     {/* Notification Bell */}
