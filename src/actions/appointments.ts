@@ -27,16 +27,19 @@ export async function getAppointments() {
     const res = await pool.query(`
       SELECT a.id, a.appointment_date, a.status, a.analysis_type, a.aire_test_type, a.observations, a.evolution_notes, a.is_domicilio, a.domicilio_address, a.google_maps_link,
              a.report_id, a.result_date, a.coseguro, a.particular_price, a.payment_method, a.professional_name, a.checkbox_checked,
-             json_agg(DISTINCT json_build_object('id', ad.id, 'url', ad.document_url, 'filename', ad.filename, 'analysis_id', ad.analysis_id)) 
-             FILTER (WHERE ad.id IS NOT NULL) as documents,
-             json_agg(DISTINCT json_build_object('id', aa.id, 'name', aa.analysis_name, 'subtype', aa.aire_test_subtype, 'status', aa.status))
-             FILTER (WHERE aa.id IS NOT NULL) as analyses,
+             (
+               SELECT json_agg(json_build_object('id', ad.id, 'url', ad.document_url, 'filename', ad.filename, 'analysis_id', ad.analysis_id))
+               FROM appointment_documents ad
+               WHERE ad.appointment_id = a.id
+             ) as documents,
+             (
+               SELECT json_agg(json_build_object('id', aa.id, 'name', aa.analysis_name, 'subtype', aa.aire_test_subtype, 'status', aa.status))
+               FROM appointment_analyses aa
+               WHERE aa.appointment_id = a.id
+             ) as analyses,
              p.name, p.dni, p.phone, p.health_insurance, a.indications_sent 
       FROM appointments a
       JOIN patients p ON a.patient_id = p.id
-      LEFT JOIN appointment_documents ad ON a.id = ad.appointment_id
-      LEFT JOIN appointment_analyses aa ON a.id = aa.appointment_id
-      GROUP BY a.id, p.id
       ORDER BY a.appointment_date ASC
     `);
     return { 

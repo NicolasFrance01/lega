@@ -10,15 +10,16 @@ export async function getIngresos(search?: string) {
     // This includes historical data from internal calendar and domicilio if they have these statuses.
     const res = await pool.query(`
       SELECT a.*, p.name, p.dni, p.phone, p.email, p.health_insurance, p.birth_date, p.address,
-             json_agg(DISTINCT json_build_object('id', aa.id, 'name', aa.analysis_name, 'subtype', aa.aire_test_subtype, 'status', aa.status))
-             FILTER (WHERE aa.id IS NOT NULL) as analyses
+             (
+               SELECT json_agg(json_build_object('id', aa.id, 'name', aa.analysis_name, 'subtype', aa.aire_test_subtype, 'status', aa.status))
+               FROM appointment_analyses aa
+               WHERE aa.appointment_id = a.id
+             ) as analyses
       FROM appointments a
       JOIN patients p ON a.patient_id = p.id
-      LEFT JOIN appointment_analyses aa ON a.id = aa.appointment_id
       WHERE a.is_ingreso = TRUE 
          OR a.status = 'COMPLETADO' 
          OR a.status = 'CONFIRMAR ASISTENCIA'
-      GROUP BY a.id, p.id
       ORDER BY a.appointment_date ASC, CAST(NULLIF(a.report_id, '') AS INTEGER) ASC NULLS LAST
     `);
 
@@ -220,7 +221,7 @@ export async function updateIngresoField(id: string, field: string, value: any) 
 export async function getNextReportId() {
   const client = await pool.connect();
   try {
-    const res = await client.query(`
+    const res = await pool.query(`
       SELECT MAX(CAST(report_id AS INTEGER)) as max_id 
       FROM appointments 
       WHERE report_id ~ '^[0-9]+$'

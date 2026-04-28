@@ -28,12 +28,13 @@ export async function getPatientAppointments(patientId: string) {
   try {
     const res = await pool.query(`
       SELECT a.id, a.appointment_date, a.status, a.analysis_type, a.report_id,
-             json_agg(DISTINCT json_build_object('id', aa.id, 'name', aa.analysis_name, 'subtype', aa.aire_test_subtype, 'status', aa.status))
-             FILTER (WHERE aa.id IS NOT NULL) as analyses
+             (
+               SELECT json_agg(json_build_object('id', aa.id, 'name', aa.analysis_name, 'subtype', aa.aire_test_subtype, 'status', aa.status))
+               FROM appointment_analyses aa
+               WHERE aa.appointment_id = a.id
+             ) as analyses
       FROM appointments a
-      LEFT JOIN appointment_analyses aa ON a.id = aa.appointment_id
       WHERE a.patient_id = $1 
-      GROUP BY a.id
       ORDER BY a.appointment_date DESC
     `, [patientId]);
     return { data: res.rows, error: null };
@@ -140,12 +141,13 @@ export async function getPatientPortalData(dni: string) {
     const results = await getPatientResults(dni);
     const appointments = await pool.query(`
       SELECT a.id, a.appointment_date, a.status, a.analysis_type, a.report_id,
-             json_agg(DISTINCT json_build_object('id', aa.id, 'name', aa.analysis_name, 'subtype', aa.aire_test_subtype, 'status', aa.status))
-             FILTER (WHERE aa.id IS NOT NULL) as analyses
+             (
+               SELECT json_agg(json_build_object('id', aa.id, 'name', aa.analysis_name, 'subtype', aa.aire_test_subtype, 'status', aa.status))
+               FROM appointment_analyses aa
+               WHERE aa.appointment_id = a.id
+             ) as analyses
       FROM appointments a
-      LEFT JOIN appointment_analyses aa ON a.id = aa.appointment_id
       WHERE a.patient_id = $1 
-      GROUP BY a.id
       ORDER BY a.appointment_date DESC
     `, [patient.id]);
 
