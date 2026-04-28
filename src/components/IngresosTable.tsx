@@ -6,7 +6,7 @@ import { es } from "date-fns/locale";
 import { Check, Edit2, Trash2, Search, Filter, Calendar as CalendarIcon, Clock, User, Shield, CreditCard, DollarSign, Mail, MapPin, ArrowDown, ArrowUp, Bell } from "lucide-react";
 import { updateIngresoField, deleteIngreso, updateInternalNote, markInternalNoteAsRead } from "@/actions/ingresos";
 
-export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: any[], onEdit: (ingreso: any) => void, period: string }) {
+export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: { ingresos: any[], onEdit: (ingreso: any) => void, onRefresh: () => void, period: string }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const todayRef = useRef<HTMLTableRowElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -295,26 +295,32 @@ export default function IngresosTable({ ingresos, onEdit, period }: { ingresos: 
                <button 
                  onClick={async () => {
                    setLoadingId(bellPopup.id);
-                   await updateInternalNote(bellPopup.id, bellPopup.note);
-                   setBellPopup(null);
+                   const res = await updateInternalNote(bellPopup.id, bellPopup.note);
+                   if (res.success) {
+                     setBellPopup(null);
+                     onRefresh();
+                   }
                    setLoadingId(null);
                  }}
                  className="btn-primary" 
                  style={{ flex: 1, padding: '0.85rem', borderRadius: '12px', fontWeight: 800 }}
                >
-                 GUARDAR NOTA
+                 {loadingId === bellPopup.id ? 'GUARDANDO...' : 'GUARDAR NOTA'}
                </button>
                {bellPopup.status === 'unread' && (
                  <button 
                    onClick={async () => {
                      setLoadingId(bellPopup.id);
-                     await markInternalNoteAsRead(bellPopup.id);
-                     setBellPopup(null);
+                     const res = await markInternalNoteAsRead(bellPopup.id);
+                     if (res.success) {
+                       setBellPopup(null);
+                       onRefresh();
+                     }
                      setLoadingId(null);
                    }}
                    style={{ flex: 1, padding: '0.85rem', borderRadius: '12px', background: '#10B981', color: 'white', border: 'none', fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)' }}
                  >
-                   MARCAR LEÍDO
+                   {loadingId === bellPopup.id ? '...' : 'MARCAR LEÍDO'}
                  </button>
                )}
             </div>

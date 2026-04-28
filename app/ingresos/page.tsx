@@ -133,7 +133,7 @@ export default function IngresosPage() {
               Cargando ingresos históricos...
             </div>
           ) : (
-            <IngresosTable ingresos={filteredIngresos} onEdit={handleEdit} period="all" />
+            <IngresosTable ingresos={filteredIngresos} onEdit={handleEdit} onRefresh={fetchData} period="all" />
           )}
         </>
       ) : (
