@@ -225,7 +225,19 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <div>
+                      <div style={{ gridColumn: selectedApt.analyses?.length > 1 ? 'span 2' : 'span 1' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Estudio correspondiente</label>
+                        <select name="analysis_id" required style={inputStyle}>
+                          {selectedApt.analyses?.length > 0 ? (
+                            selectedApt.analyses.map((a: any) => (
+                              <option key={a.id} value={a.id}>{a.name}{a.subtype ? ` (${a.subtype})` : ''}</option>
+                            ))
+                          ) : (
+                            <option value="">{selectedApt.analysis_type}</option>
+                          )}
+                        </select>
+                      </div>
+                      <div style={{ gridColumn: selectedApt.analyses?.length > 1 ? 'span 1' : 'span 1' }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Tipo de Resultado</label>
                         <select name="type" required style={inputStyle}>
                           <option value="pdf">Documento PDF</option>
@@ -233,7 +245,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                           <option value="note">Nota Escrita</option>
                         </select>
                       </div>
-                      <div>
+                      <div style={{ gridColumn: selectedApt.analyses?.length > 1 ? 'span 1' : 'span 1' }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 700, color: 'var(--text-main)' }}>N° INFORME</label>
                         <input name="report_id" defaultValue={selectedApt.report_id} placeholder="Ej: 94113" style={inputStyle} />
                       </div>

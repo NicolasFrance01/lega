@@ -13,7 +13,7 @@ interface NewIngresoModalProps {
 }
 
 export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: NewIngresoModalProps) {
-  const [mode, setMode] = useState<"sin_turno" | "con_turno">("sin_turno");
+  const [analyses, setAnalyses] = useState<{name: string, subtype: string}[]>([{name: "", subtype: ""}]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [nextReportId, setNextReportId] = useState("");
@@ -31,12 +31,28 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
     if (editingIngreso) {
       setSelectedPatient(editingIngreso);
       setMode("sin_turno");
+      if (editingIngreso.analyses && editingIngreso.analyses.length > 0) {
+        setAnalyses(editingIngreso.analyses.map((a: any) => ({ name: a.name, subtype: a.subtype })));
+      } else {
+        setAnalyses([{ name: editingIngreso.analysis_type || "", subtype: editingIngreso.aire_test_type || "" }]);
+      }
     } else {
       setSelectedPatient(null);
       setMode("sin_turno");
+      setAnalyses([{ name: "", subtype: "" }]);
       if (isOpen) fetchNextId();
     }
   }, [editingIngreso, isOpen]);
+
+  useEffect(() => {
+    if (!editingIngreso && selectedPatient) {
+        if (selectedPatient.analyses && selectedPatient.analyses.length > 0) {
+            setAnalyses(selectedPatient.analyses.map((a: any) => ({ name: a.name, subtype: a.subtype })));
+        } else {
+            setAnalyses([{ name: selectedPatient.analysis_type || "", subtype: selectedPatient.aire_test_type || "" }]);
+        }
+    }
+  }, [selectedPatient, editingIngreso]);
 
   async function fetchNextId() {
     const res = await getNextReportId();
@@ -212,6 +228,8 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
                   setSearchQuery={setSearchQuery}
                   autofillPatient={autofillPatient}
                   onClose={onClose}
+                  analyses={analyses}
+                  setAnalyses={setAnalyses}
                 />
               )}
             </div>
@@ -231,6 +249,8 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
               setSearchQuery={setSearchQuery}
               autofillPatient={autofillPatient}
               onClose={onClose}
+              analyses={analyses}
+              setAnalyses={setAnalyses}
             />
           )}
         </div>
@@ -240,8 +260,15 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
 }
 
 function IngresoForm({ 
-  mode, nextReportId, selectedPatient, editingIngreso, setSelectedPatient, handleSubmit, loading, error, inputStyle, searchResults, searchQuery, setSearchQuery, autofillPatient, onClose 
+  mode, nextReportId, selectedPatient, editingIngreso, setSelectedPatient, handleSubmit, loading, error, inputStyle, searchResults, searchQuery, setSearchQuery, autofillPatient, onClose, analyses, setAnalyses 
 }: any) {
+  const addAnalysis = () => setAnalyses([...analyses, { name: "", subtype: "" }]);
+  const removeAnalysis = (index: number) => setAnalyses(analyses.filter((_: any, i: number) => i !== index));
+  const updateAnalysis = (index: number, field: string, value: string) => {
+    const newAnalyses = [...analyses];
+    newAnalyses[index] = { ...newAnalyses[index], [field]: value };
+    setAnalyses(newAnalyses);
+  };
   return (
     <form 
       key={selectedPatient?.id || 'new'} 
@@ -320,17 +347,49 @@ function IngresoForm({
         <div style={{ gridColumn: 'span 2', height: '1px', background: 'var(--glass-border)', margin: '0.5rem 0' }} />
 
         <div style={{ gridColumn: 'span 2' }}>
-          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Tipo de Estudio/Análisis</label>
-          <input 
-            name="analysis_type" 
-            required 
-            list="analysis-list"
-            defaultValue={selectedPatient?.analysis_type} 
-            placeholder="Seleccioná o escribí estudio..."
-            style={{ ...inputStyle, background: 'var(--glass-bg)' }} 
-          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)' }}>Tipos de Estudios/Análisis</label>
+            <button type="button" onClick={addAnalysis} style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary)', background: 'rgba(14, 165, 233, 0.1)', border: 'none', padding: '0.2rem 0.6rem', borderRadius: '4px', cursor: 'pointer' }}>+ AGREGAR ESTUDIO</button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {analyses.map((a: any, index: number) => (
+              <div key={index} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                    <input 
+                        name="analysis_name" 
+                        required 
+                        list="analysis-list"
+                        value={a.name}
+                        onChange={(e) => updateAnalysis(index, 'name', e.target.value)}
+                        placeholder="Seleccioná o escribí estudio..."
+                        style={{ ...inputStyle, background: 'var(--glass-bg)' }} 
+                    />
+                    {a.name === 'Test de aire' && (
+                        <select 
+                            name="aire_test_subtype" 
+                            required 
+                            value={a.subtype}
+                            onChange={(e) => updateAnalysis(index, 'subtype', e.target.value)}
+                            style={{ ...inputStyle, marginTop: '0.4rem', background: 'var(--glass-bg)', color: 'var(--text-main)', fontSize: '0.8rem', padding: '0.4rem' }}
+                        >
+                            <option value="">-- Seleccionar Prueba --</option>
+                            <option value="SIBO">SIBO</option>
+                            <option value="SIBO c/Lactulon">SIBO c/Lactulon</option>
+                            <option value="Lactosa">Lactosa</option>
+                            <option value="Fructuosa">Fructuosa</option>
+                        </select>
+                    )}
+                    {/* Fallback for legacy subtype if not explicitly using aire_test_subtype name in some forms */}
+                    {a.name !== 'Test de aire' && <input type="hidden" name="aire_test_subtype" value="" />}
+                </div>
+                {analyses.length > 1 && (
+                  <button type="button" onClick={() => removeAnalysis(index)} style={{ padding: '0.5rem', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
+                )}
+              </div>
+            ))}
+          </div>
           <datalist id="analysis-list">
-            {['SIBO', 'LACTOSA', 'FRUCTUOSA', 'PYLORI', 'EXTRACCION', 'MATERIA FECAL', 'ORINA', 'PANEL 105', 'PANEL 63', 'ALCAT', 'CIBIC'].map(opt => (
+            {['Test de aire', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'PYLORI', 'EXTRACCION', 'MATERIA FECAL', 'ORINA', 'PANEL 105', 'PANEL 63', 'ALCAT', 'CIBIC'].map(opt => (
               <option key={opt} value={opt} />
             ))}
           </datalist>

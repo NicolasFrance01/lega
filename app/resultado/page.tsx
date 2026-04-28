@@ -171,72 +171,106 @@ export default function ResultadoPortal() {
                 <p style={{ color: '#64748b', maxWidth: '400px', margin: '0 auto', fontWeight: 500 }}>{portalSearch ? "No hay resultados que coincidan con tu búsqueda." : "Tus informes aparecerán aquí una vez que el laboratorio los procese."}</p>
               </div>
             ) : (
-              filteredResults.map((res: any) => (
-                <div key={res.id} style={{ borderRadius: '24px', overflow: 'hidden', border: selectedResult?.id === res.id ? '2px solid var(--primary)' : '1px solid #e2e8f0', background: 'white', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: selectedResult?.id === res.id ? '0 20px 25px -5px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)' }}>
+              Object.values(filteredResults.reduce((acc: any, res: any) => {
+                const key = res.appointment_id || res.id;
+                if (!acc[key]) acc[key] = { 
+                    id: key, 
+                    date: res.appointment_date, 
+                    report_id: res.report_id, 
+                    items: [] 
+                };
+                acc[key].items.push(res);
+                return acc;
+              }, {})).map((group: any) => (
+                <div key={group.id} style={{ borderRadius: '24px', overflow: 'hidden', border: selectedResult?.appointment_id === group.id || selectedResult?.id === group.id ? '2px solid var(--primary)' : '1px solid #e2e8f0', background: 'white', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: selectedResult?.appointment_id === group.id ? '0 20px 25px -5px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)' }}>
                   <div 
-                    onClick={() => setSelectedResult(selectedResult?.id === res.id ? null : res)}
+                    onClick={() => {
+                        const firstItem = group.items[0];
+                        setSelectedResult(selectedResult?.id === firstItem.id ? null : firstItem);
+                    }}
                     className="portal-card-header"
                     style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                      <div style={{ background: res.result_type === 'pdf' ? '#fee2e2' : (res.result_type === 'image' ? '#f0f9ff' : '#fef9c3'), padding: '1rem', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {res.result_type === 'pdf' ? <FileText color="#ef4444" size={24} /> : (res.result_type === 'image' ? <Eye color="var(--primary)" size={24} /> : <History color="#ca8a04" size={24} />)}
+                      <div style={{ background: 'rgba(14, 165, 233, 0.1)', padding: '1rem', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <FileText color="var(--primary)" size={24} />
                       </div>
                       <div>
-                        <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#1e293b' }}>{res.analysis_type || "Informe Médico"}</h4>
+                        <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#1e293b' }}>
+                            {group.items.length > 1 ? `Múltiples Resultados (${group.items.length})` : (group.items[0].analysis_type || "Informe Médico")}
+                        </h4>
                         <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                          {res.report_id && (
+                          {group.report_id && (
                             <span style={{ fontSize: '0.75rem', background: 'var(--primary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 900 }}>
-                              N° {res.report_id}
+                              N° {group.report_id}
                             </span>
                           )}
                           <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 700 }}>
-                            Cargado el {format(new Date(res.created_at), "d 'de' MMMM", { locale: es })}
+                             Turno del {format(new Date(group.date), "d 'de' MMMM, yyyy", { locale: es })}
                           </div>
                         </div>
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      {res.notes && !selectedResult && <MessageSquare size={18} color="var(--primary)" style={{ opacity: 0.6 }} />}
-                      <ChevronRight size={20} style={{ transform: selectedResult?.id === res.id ? 'rotate(90deg)' : 'none', transition: 'all 0.3s', opacity: 0.3 }} />
+                      <ChevronRight size={20} style={{ transform: (selectedResult?.appointment_id === group.id || selectedResult?.id === group.id) ? 'rotate(90deg)' : 'none', transition: 'all 0.3s', opacity: 0.3 }} />
                     </div>
                   </div>
 
-                  {selectedResult?.id === res.id && (
+                  {(selectedResult?.appointment_id === group.id || selectedResult?.id === group.id) && (
                     <div style={{ padding: '0 1.5rem 1.5rem', borderTop: '1px solid #f1f5f9', animation: 'fadeIn 0.3s ease' }}>
+                      
+                      {group.items.length > 1 && (
+                        <div style={{ padding: '1.25rem 0', display: 'flex', gap: '0.75rem', flexWrap: 'wrap', borderBottom: '1px solid #f1f5f9', marginBottom: '1.5rem' }}>
+                            {group.items.map((item: any) => (
+                                <button 
+                                    key={item.id}
+                                    onClick={() => setSelectedResult(item)}
+                                    style={{ 
+                                        padding: '0.6rem 1.25rem', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 800,
+                                        background: selectedResult?.id === item.id ? 'var(--primary)' : 'rgba(14, 165, 233, 0.05)',
+                                        color: selectedResult?.id === item.id ? 'white' : 'var(--primary)',
+                                        border: 'none', cursor: 'pointer', transition: 'all 0.2s'
+                                    }}
+                                >
+                                    {item.analysis_type}
+                                </button>
+                            ))}
+                        </div>
+                      )}
+
                       <div style={{ padding: '1.25rem 0', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: '#64748b', fontWeight: 700 }}>
-                          <Calendar size={18} /> Turno: {format(new Date(res.appointment_date), "dd/MM/yyyy")}
+                          <CheckCircle size={18} color="var(--success)" /> {selectedResult?.analysis_type}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: '#64748b', fontWeight: 700 }}>
-                          <CheckCircle size={18} color="var(--success)" /> {res.analysis_type}
+                        <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 600 }}>
+                            Cargado el {format(new Date(selectedResult?.created_at), "dd/MM/yyyy HH:mm")} hs
                         </div>
                       </div>
 
-                      {res.notes && (
+                      {selectedResult?.notes && (
                         <div style={{ background: '#f0f9ff', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', border: '1px solid #e0f2fe' }}>
                           <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Nota del Profesional:</p>
-                          <p style={{ margin: 0, fontSize: '0.95rem', color: '#1e293b', fontWeight: 600, lineHeight: 1.5 }}>{res.notes}</p>
+                          <p style={{ margin: 0, fontSize: '0.95rem', color: '#1e293b', fontWeight: 600, lineHeight: 1.5 }}>{selectedResult?.notes}</p>
                         </div>
                       )}
 
                       {/* INLINE VIEWER */}
                       <div style={{ background: '#f8fafc', borderRadius: '16px', border: '1px solid #f1f5f9', marginBottom: '1.5rem', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                        {res.result_type === 'pdf' ? (
-                          <iframe src={`/api/medical-result/file/${res.id}`} style={{ width: '100%', height: '650px', border: 'none' }} />
-                        ) : res.result_type === 'image' ? (
-                          <img src={`/api/medical-result/file/${res.id}`} alt="Resultado" style={{ maxWidth: '100%', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
+                        {selectedResult?.result_type === 'pdf' ? (
+                          <iframe src={`/api/medical-result/file/${selectedResult?.id}`} style={{ width: '100%', height: '650px', border: 'none' }} />
+                        ) : selectedResult?.result_type === 'image' ? (
+                          <img src={`/api/medical-result/file/${selectedResult?.id}`} alt="Resultado" style={{ maxWidth: '100%', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
                         ) : (
                           <div style={{ padding: '2rem', width: '100%', fontSize: '1rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', color: '#1e293b', fontWeight: 500 }}>
-                            {res.content}
+                            {selectedResult?.content}
                           </div>
                         )}
                       </div>
 
                       <div className="portal-card-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}>
                         <a 
-                          href={`/api/medical-result/file/${res.id}`} 
-                          download={res.filename || `resultado_${res.id}`} 
+                          href={`/api/medical-result/file/${selectedResult?.id}`} 
+                          download={selectedResult?.filename || `resultado_${selectedResult?.id}`} 
                           target="_blank"
                           style={{ 
                             display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.85rem 1.75rem', 
@@ -249,7 +283,7 @@ export default function ResultadoPortal() {
                           <Download size={20} /> <span className="hide-mobile">DESCARGAR</span> INFORME
                         </a>
                         <a 
-                          href={`https://wa.me/5493513049709?text=${encodeURIComponent("Hola, necesito realizar una consulta sobre mi Resumen Medico N° " + (res.report_id || '-') + " del día " + format(new Date(res.created_at), "dd/MM/yyyy"))}`} 
+                          href={`https://wa.me/5493513049709?text=${encodeURIComponent("Hola, necesito realizar una consulta sobre mi resultado de " + (selectedResult?.analysis_type || 'Análisis') + " (Informe N° " + (selectedResult?.report_id || '-') + ") del día " + format(new Date(selectedResult?.created_at), "dd/MM/yyyy"))}`} 
                           target="_blank"
                           style={{ 
                             display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.85rem 1.75rem', 
@@ -293,7 +327,17 @@ export default function ResultadoPortal() {
                           <span style={{ color: '#94a3b8' }}>-</span>
                         )}
                       </td>
-                      <td style={{ padding: '1.25rem 1.5rem', fontWeight: 600, color: '#475569' }}>{apt.analysis_type}</td>
+                      <td style={{ padding: '1.25rem 1.5rem', fontWeight: 600, color: '#475569' }}>
+                        {apt.analyses && apt.analyses.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                {apt.analyses.map((a: any, i: number) => (
+                                    <div key={i} style={{ fontSize: '0.8rem' }}>• {a.name}{a.subtype ? ` (${a.subtype})` : ''}</div>
+                                ))}
+                            </div>
+                        ) : (
+                            apt.analysis_type
+                        )}
+                      </td>
                       <td style={{ padding: '1.25rem 1.5rem' }}>
                         <span style={{ 
                           background: apt.status === 'COMPLETADO' ? '#dcfce7' : '#fee2e2', 
@@ -322,7 +366,13 @@ export default function ResultadoPortal() {
                           N° {apt.report_id || '-'}
                        </span>
                     </div>
-                    <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '1rem', lineHeight: 1.4 }}>{apt.analysis_type}</div>
+                    <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '1rem', lineHeight: 1.4 }}>
+                        {apt.analyses && apt.analyses.length > 0 ? (
+                            apt.analyses.map((a: any) => a.name).join(', ')
+                        ) : (
+                            apt.analysis_type
+                        )}
+                    </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                        <span style={{ 
                           background: apt.status === 'COMPLETADO' ? '#dcfce7' : '#fee2e2', 

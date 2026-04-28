@@ -47,9 +47,15 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
     let totalRevenue = 0;
 
     filteredData.forEach(item => {
-      // Analysis
-      const type = item.analysis_type || 'Otros';
-      analysisMap[type] = (analysisMap[type] || 0) + 1;
+      // Multiple Analyses Support
+      const itemAnalyses = item.analyses && item.analyses.length > 0 
+        ? item.analyses 
+        : [{ analysis_name: item.analysis_type || 'Otros' }];
+
+      itemAnalyses.forEach((ana: any) => {
+        const type = ana.analysis_name || ana.name || 'Otros';
+        analysisMap[type] = (analysisMap[type] || 0) + 1;
+      });
 
       // Insurance
       const ins = item.health_insurance || 'Particular';

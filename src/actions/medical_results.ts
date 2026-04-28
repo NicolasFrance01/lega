@@ -27,10 +27,14 @@ export async function searchPatients(query: string) {
 export async function getPatientAppointments(patientId: string) {
   try {
     const res = await pool.query(`
-      SELECT id, appointment_date, status, analysis_type, report_id 
-      FROM appointments 
-      WHERE patient_id = $1 
-      ORDER BY appointment_date DESC
+      SELECT a.id, a.appointment_date, a.status, a.analysis_type, a.report_id,
+             json_agg(DISTINCT json_build_object('id', aa.id, 'name', aa.analysis_name, 'subtype', aa.aire_test_subtype, 'status', aa.status))
+             FILTER (WHERE aa.id IS NOT NULL) as analyses
+      FROM appointments a
+      LEFT JOIN appointment_analyses aa ON a.id = aa.appointment_id
+      WHERE a.patient_id = $1 
+      GROUP BY a.id
+      ORDER BY a.appointment_date DESC
     `, [patientId]);
     return { data: res.rows, error: null };
   } catch (error: any) {
@@ -49,6 +53,7 @@ export async function uploadMedicalResult(formData: FormData) {
 
     const appointmentId = formData.get("appointment_id") as string;
     const patientId = formData.get("patient_id") as string;
+    const analysisId = formData.get("analysis_id") as string || null;
     if (!patientId || patientId === 'undefined') throw new Error("ID de paciente no válido");
     const type = formData.get("type") as 'pdf' | 'image' | 'note';
     const noteContent = formData.get("note_content") as string;
@@ -62,9 +67,9 @@ export async function uploadMedicalResult(formData: FormData) {
 
     if (type === 'note') {
       await client.query(`
-        INSERT INTO medical_results (appointment_id, patient_id, result_type, content, notes, uploaded_by)
-        VALUES ($1, $2, $3, $4, $4, $5)
-      `, [appointmentId, patientId, type, noteContent, session.id]);
+        INSERT INTO medical_results (appointment_id, patient_id, analysis_id, result_type, content, notes, uploaded_by)
+        VALUES ($1, $2, $3, $4, $5, $5, $6)
+      `, [appointmentId, patientId, analysisId, type, noteContent, session.id]);
     } else {
       for (const file of files) {
         if (file && file.size > 0) {
@@ -73,9 +78,9 @@ export async function uploadMedicalResult(formData: FormData) {
           const blob = await put(path, file, { access: 'private' });
           
           await client.query(`
-            INSERT INTO medical_results (appointment_id, patient_id, result_type, content, filename, notes, uploaded_by)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-          `, [appointmentId, patientId, type, blob.url, file.name, noteContent, session.id]);
+            INSERT INTO medical_results (appointment_id, patient_id, analysis_id, result_type, content, filename, notes, uploaded_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          `, [appointmentId, patientId, analysisId, type, blob.url, file.name, noteContent, session.id]);
         }
       }
     }
@@ -106,12 +111,14 @@ export async function uploadMedicalResult(formData: FormData) {
 export async function getPatientResults(dni: string) {
   try {
     const res = await pool.query(`
-      SELECT mr.id, mr.result_type, mr.content, mr.filename, mr.notes, mr.created_at, mr.notified_at,
-             a.appointment_date, a.analysis_type, a.report_id,
+      SELECT mr.id, mr.result_type, mr.content, mr.filename, mr.notes, mr.created_at, mr.notified_at, mr.analysis_id,
+             a.appointment_date, a.report_id,
+             COALESCE(aa.analysis_name, a.analysis_type) as analysis_type,
              u.full_name as uploaded_by_name
       FROM medical_results mr
       JOIN patients p ON mr.patient_id = p.id
       LEFT JOIN appointments a ON mr.appointment_id = a.id
+      LEFT JOIN appointment_analyses aa ON mr.analysis_id = aa.id
       LEFT JOIN users u ON mr.uploaded_by = u.id
       WHERE p.dni = $1
       ORDER BY mr.created_at DESC
@@ -133,9 +140,12 @@ export async function getPatientPortalData(dni: string) {
     const results = await getPatientResults(dni);
     const appointments = await pool.query(`
       SELECT a.id, a.appointment_date, a.status, a.analysis_type, a.report_id,
-             (SELECT notes FROM medical_results WHERE appointment_id = a.id LIMIT 1) as notes
+             json_agg(DISTINCT json_build_object('id', aa.id, 'name', aa.analysis_name, 'subtype', aa.aire_test_subtype, 'status', aa.status))
+             FILTER (WHERE aa.id IS NOT NULL) as analyses
       FROM appointments a
+      LEFT JOIN appointment_analyses aa ON a.id = aa.appointment_id
       WHERE a.patient_id = $1 
+      GROUP BY a.id
       ORDER BY a.appointment_date DESC
     `, [patient.id]);
 
@@ -158,10 +168,12 @@ export async function getAllMedicalResults() {
     const res = await pool.query(`
       SELECT mr.*, p.name as patient_name, p.dni as patient_dni, p.phone as patient_phone,
              u.full_name as uploaded_by_name,
-             a.appointment_date, a.analysis_type, a.report_id
+             a.appointment_date, a.report_id,
+             COALESCE(aa.analysis_name, a.analysis_type) as analysis_type
       FROM medical_results mr
       JOIN patients p ON mr.patient_id = p.id
       LEFT JOIN appointments a ON mr.appointment_id = a.id
+      LEFT JOIN appointment_analyses aa ON mr.analysis_id = aa.id
       LEFT JOIN users u ON mr.uploaded_by = u.id
       ORDER BY mr.created_at DESC
       LIMIT 100

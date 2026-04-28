@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { deleteDocument, updateAppointment, deleteAppointment } from "@/actions/appointments";
-import { X, Calendar, Edit, Loader2, Info, CloudUpload, Trash2 } from "lucide-react";
+import { X, Calendar, Edit, Loader2, Info, CloudUpload, Trash2, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { compressImage } from "@/lib/compression";
 import Portal from "./Portal";
@@ -11,12 +11,21 @@ import Portal from "./Portal";
 export default function EditAppointmentModal({ isOpen, onClose, ap }: { isOpen: boolean, onClose: () => void, ap: any }) {
   const [loading, setLoading] = useState(false);
   const [analysisType, setAnalysisType] = useState("");
+  const [analyses, setAnalyses] = useState<{ analysis_name: string, aire_test_subtype?: string }[]>([{ analysis_name: '', aire_test_subtype: '' }]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const router = useRouter();
 
   useEffect(() => {
     if (ap) {
       setAnalysisType(ap.analysis_type || "");
+      if (ap.analyses && ap.analyses.length > 0) {
+        setAnalyses(ap.analyses.map((a: any) => ({ 
+            analysis_name: a.name || '', 
+            aire_test_subtype: a.subtype || '' 
+        })));
+      } else {
+        setAnalyses([{ analysis_name: ap.analysis_type || '', aire_test_subtype: ap.aire_test_type || '' }]);
+      }
       setSelectedFiles([]); // Reset new files when opening a different appointment
     }
   }, [ap]);
@@ -185,38 +194,83 @@ export default function EditAppointmentModal({ isOpen, onClose, ap }: { isOpen: 
                 style={inputStyle}
               />
             </div>
-            <div>
-              <label style={labelStyle}>Tipo de Análisis</label>
-              <input 
-                required 
-                name="analysis_type" 
-                defaultValue={ap.analysis_type}
-                type="text" 
-                list="analysis-list-edit" 
-                className="input-field" 
-                style={inputStyle}
-                onChange={(e) => setAnalysisType(e.target.value)}
-              />
-              <datalist id="analysis-list-edit">
-                {['SIBO', 'LACTOSA', 'FRUCTUOSA', 'PYLORI', 'EXTRACCION', 'MATERIA FECAL', 'ORINA', 'PANEL 105', 'PANEL 63', 'ALCAT', 'CIBIC'].map(opt => (
-                  <option key={opt} value={opt} />
-                ))}
-              </datalist>
+          {/* Multi-Analysis Selection */}
+          <div style={{ background: 'rgba(0,0,0,0.05)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+              <label style={{ ...labelStyle, marginBottom: 0 }}>Estudios / Análisis</label>
+              <button 
+                type="button" 
+                onClick={() => setAnalyses([...analyses, { analysis_name: '', aire_test_subtype: '' }])}
+                style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              >
+                <Plus size={12} /> AGREGAR
+              </button>
             </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              {analyses.map((ana, idx) => (
+                <div key={idx} style={{ display: 'flex', gap: '0.5rem', animation: 'fadeIn 0.2s ease' }}>
+                  <div style={{ flex: 1 }}>
+                    <input 
+                      required 
+                      name="analysis_name"
+                      value={ana.analysis_name}
+                      onChange={(e) => {
+                        const newAnalyses = [...analyses];
+                        newAnalyses[idx].analysis_name = e.target.value;
+                        setAnalyses(newAnalyses);
+                      }}
+                      placeholder="Ej: SIBO, Rutina..."
+                      type="text" 
+                      list="analysis-list-edit" 
+                      className="input-field" 
+                      style={inputStyle}
+                    />
+                  </div>
+                  {ana.analysis_name === 'Test de aire' && (
+                    <div style={{ flex: 1 }}>
+                      <select 
+                        name="aire_test_subtype"
+                        value={ana.aire_test_subtype}
+                        onChange={(e) => {
+                          const newAnalyses = [...analyses];
+                          newAnalyses[idx].aire_test_subtype = e.target.value;
+                          setAnalyses(newAnalyses);
+                        }}
+                        required 
+                        className="input-field" 
+                        style={inputStyle}
+                      >
+                        <option value="">-- Subtipo --</option>
+                        <option value="SIBO">SIBO</option>
+                        <option value="SIBO c/Lactulon">SIBO c/Lactulon</option>
+                        <option value="Lactosa">Lactosa</option>
+                        <option value="Fructuosa">Fructuosa</option>
+                      </select>
+                    </div>
+                  )}
+                  {/* Hidden inputs to maintain array alignment if some are not Test de aire */}
+                  {ana.analysis_name !== 'Test de aire' && (
+                    <input type="hidden" name="aire_test_subtype" value="" />
+                  )}
+                  {analyses.length > 1 && (
+                    <button 
+                      type="button" 
+                      onClick={() => setAnalyses(analyses.filter((_, i) => i !== idx))}
+                      style={{ padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <datalist id="analysis-list-edit">
+              {['Test de aire', 'EXTRACCION', 'MATERIA FECAL', 'ORINA', 'PANEL 105', 'PANEL 63', 'ALCAT', 'CIBIC'].map(opt => (
+                <option key={opt} value={opt} />
+              ))}
+            </datalist>
+            <input type="hidden" name="analyses_count" value={analyses.length} />
           </div>
-
-          {analysisType === 'Test de aire' && (
-            <div style={{ animation: 'fadeIn 0.3s ease' }}>
-              <label style={labelStyle}>Tipo de Aire Espirado</label>
-              <select name="aire_test_type" defaultValue={ap.aire_test_type || ""} required className="input-field" style={inputStyle}>
-                <option value="">-- Seleccionar --</option>
-                <option value="SIBO">SIBO</option>
-                <option value="SIBO c/Lactulon">SIBO c/Lactulon</option>
-                <option value="Lactosa">Lactosa</option>
-                <option value="Fructuosa">Fructuosa</option>
-              </select>
-            </div>
-          )}
 
           {ap.is_domicilio && (
             <div style={{ animation: 'fadeIn 0.3s ease' }}>

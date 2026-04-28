@@ -222,7 +222,18 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
                     <EditableCell id={ing.id} field="professional_name" value={ing.professional_name} />
                   </td>
                   <td style={{ padding: '0.75rem 1rem', color: 'var(--primary)', fontWeight: 700 }}>
-                    {ing.analysis_type}
+                    {ing.analyses && ing.analyses.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                        {ing.analyses.filter((a: any) => a.name).map((a: any, idx: number) => (
+                          <div key={idx} style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                             <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)' }}></span>
+                             {a.name}{a.subtype ? ` (${a.subtype})` : ''}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      ing.analysis_type
+                    )}
                   </td>
                   <td style={{ padding: '0.75rem 1rem' }}>
                     <span style={{ padding: '0.2rem 0.5rem', background: '#e0f2fe', color: '#0369a1', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem' }}>

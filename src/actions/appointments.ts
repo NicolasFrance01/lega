@@ -27,12 +27,15 @@ export async function getAppointments() {
     const res = await pool.query(`
       SELECT a.id, a.appointment_date, a.status, a.analysis_type, a.aire_test_type, a.observations, a.evolution_notes, a.is_domicilio, a.domicilio_address, a.google_maps_link,
              a.report_id, a.result_date, a.coseguro, a.particular_price, a.payment_method, a.professional_name, a.checkbox_checked,
-             json_agg(json_build_object('id', ad.id, 'url', ad.document_url, 'filename', ad.filename)) 
+             json_agg(DISTINCT json_build_object('id', ad.id, 'url', ad.document_url, 'filename', ad.filename, 'analysis_id', ad.analysis_id)) 
              FILTER (WHERE ad.id IS NOT NULL) as documents,
+             json_agg(DISTINCT json_build_object('id', aa.id, 'name', aa.analysis_name, 'subtype', aa.aire_test_subtype, 'status', aa.status))
+             FILTER (WHERE aa.id IS NOT NULL) as analyses,
              p.name, p.dni, p.phone, p.health_insurance, a.indications_sent 
       FROM appointments a
       JOIN patients p ON a.patient_id = p.id
       LEFT JOIN appointment_documents ad ON a.id = ad.appointment_id
+      LEFT JOIN appointment_analyses aa ON a.id = aa.appointment_id
       GROUP BY a.id, p.id
       ORDER BY a.appointment_date ASC
     `);
@@ -123,6 +126,25 @@ export async function createAppointment(formData: FormData) {
       [patientId, appointment_date, analysis_type, aire_test_type, observations, is_domicilio, domicilio_address, google_maps_link]
     );
     const appointmentId = aptRes.rows[0].id;
+
+    // Insert Analyses (Multiple)
+    const analysisNames = formData.getAll("analysis_name") as string[];
+    const analysisSubtypes = formData.getAll("aire_test_subtype") as string[];
+
+    if (analysisNames.length > 0) {
+      for (let i = 0; i < analysisNames.length; i++) {
+        await client.query(
+          "INSERT INTO appointment_analyses (appointment_id, analysis_name, aire_test_subtype) VALUES ($1, $2, $3)",
+          [appointmentId, analysisNames[i], analysisSubtypes[i] || null]
+        );
+      }
+    } else {
+      // Fallback to the single analysis_type if no array provided (legacy or single field)
+      await client.query(
+        "INSERT INTO appointment_analyses (appointment_id, analysis_name, aire_test_subtype) VALUES ($1, $2, $3)",
+        [appointmentId, analysis_type, aire_test_type]
+      );
+    }
 
     // Upload to Vercel Blob and Insert to documents table
     for (const file of files) {
@@ -218,6 +240,31 @@ export async function updateAppointment(formData: FormData) {
        WHERE a.patient_id = p.id AND a.id = $8`,
       [appointment_date, analysis_type, aire_test_type, observations, is_domicilio, domicilio_address, google_maps_link, id]
     );
+
+    // Sync Multiple Analyses
+    const analysisNames = formData.getAll("analysis_name") as string[];
+    const analysisSubtypes = formData.getAll("aire_test_subtype") as string[];
+
+    if (analysisNames.length > 0) {
+      // Delete old ones first
+      await client.query("DELETE FROM appointment_analyses WHERE appointment_id = $1", [id]);
+      
+      for (let i = 0; i < analysisNames.length; i++) {
+        if (analysisNames[i]) {
+          await client.query(
+            "INSERT INTO appointment_analyses (appointment_id, analysis_name, aire_test_subtype) VALUES ($1, $2, $3)",
+            [id, analysisNames[i], analysisSubtypes[i] || null]
+          );
+        }
+      }
+    } else if (analysis_type) {
+      // Legacy fallback
+      await client.query("DELETE FROM appointment_analyses WHERE appointment_id = $1", [id]);
+      await client.query(
+        "INSERT INTO appointment_analyses (appointment_id, analysis_name, aire_test_subtype) VALUES ($1, $2, $3)",
+        [id, analysis_type, aire_test_type]
+      );
+    }
 
     await client.query(
       `UPDATE patients SET health_insurance = $1 WHERE id = (SELECT patient_id FROM appointments WHERE id = $2)`,

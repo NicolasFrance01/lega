@@ -9,12 +9,16 @@ export async function getIngresos(search?: string) {
     // We fetch everything that is an ingreso OR is a completed/confirmed appointment
     // This includes historical data from internal calendar and domicilio if they have these statuses.
     const res = await pool.query(`
-      SELECT a.*, p.name, p.dni, p.phone, p.email, p.health_insurance, p.birth_date, p.address
+      SELECT a.*, p.name, p.dni, p.phone, p.email, p.health_insurance, p.birth_date, p.address,
+             json_agg(DISTINCT json_build_object('id', aa.id, 'name', aa.analysis_name, 'subtype', aa.aire_test_subtype, 'status', aa.status))
+             FILTER (WHERE aa.id IS NOT NULL) as analyses
       FROM appointments a
       JOIN patients p ON a.patient_id = p.id
+      LEFT JOIN appointment_analyses aa ON a.id = aa.appointment_id
       WHERE a.is_ingreso = TRUE 
          OR a.status = 'COMPLETADO' 
          OR a.status = 'CONFIRMAR ASISTENCIA'
+      GROUP BY a.id, p.id
       ORDER BY a.appointment_date ASC, CAST(NULLIF(a.report_id, '') AS INTEGER) ASC NULLS LAST
     `);
 
@@ -101,6 +105,8 @@ export async function createIngreso(formData: FormData) {
           [analysis_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, existingId]
         );
         aptId = existingId;
+        // Clean old analyses and insert new ones
+        await client.query("DELETE FROM appointment_analyses WHERE appointment_id = $1", [aptId]);
       } else {
         // Insert Appointment as Ingreso
         const aptRes = await client.query(
@@ -113,6 +119,26 @@ export async function createIngreso(formData: FormData) {
         );
         aptId = aptRes.rows[0].id;
       }
+
+    // Insert Analyses (Multiple)
+    const analysisNames = formData.getAll("analysis_name") as string[];
+    const analysisSubtypes = formData.getAll("aire_test_subtype") as string[];
+
+    if (analysisNames.length > 0) {
+      for (let i = 0; i < analysisNames.length; i++) {
+        if (analysisNames[i]) {
+          await client.query(
+            "INSERT INTO appointment_analyses (appointment_id, analysis_name, aire_test_subtype) VALUES ($1, $2, $3)",
+            [aptId, analysisNames[i], analysisSubtypes[i] || null]
+          );
+        }
+      }
+    } else if (analysis_type) {
+      await client.query(
+        "INSERT INTO appointment_analyses (appointment_id, analysis_name, aire_test_subtype) VALUES ($1, $2, $3)",
+        [aptId, analysis_type, null]
+      );
+    }
 
     // Handle File Uploads
     for (const file of files) {
@@ -211,7 +237,6 @@ export async function getNextReportId() {
 
 export async function updateInternalNote(id: string, note: string) {
   try {
-    console.log("Updating internal note for:", id, note);
     const res = await pool.query('SELECT a.*, p.name FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = $1', [id]);
     const details = res.rows[0];
 
@@ -231,7 +256,6 @@ export async function updateInternalNote(id: string, note: string) {
       note: note
     });
 
-    console.log("Internal note updated successfully");
     revalidatePath("/ingresos");
     return { success: true };
   } catch (error: any) {
@@ -242,7 +266,6 @@ export async function updateInternalNote(id: string, note: string) {
 
 export async function markInternalNoteAsRead(id: string) {
   try {
-    console.log("Marking note as read for:", id);
     const res = await pool.query('SELECT a.*, p.name FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = $1', [id]);
     const details = res.rows[0];
 
@@ -258,7 +281,6 @@ export async function markInternalNoteAsRead(id: string) {
       report_id: details?.report_id
     });
 
-    console.log("Internal note marked as read successfully");
     revalidatePath("/ingresos");
     return { success: true };
   } catch (error: any) {
