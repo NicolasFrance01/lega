@@ -98,7 +98,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
           <Search style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} size={20} />
           <input 
             type="text" 
-            placeholder="Buscar paciente por nombre o DNI..." 
+            placeholder="Buscar paciente por nombre, DNI o N° de Informe..." 
             style={{ ...inputStyle, paddingLeft: '3rem' }}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
