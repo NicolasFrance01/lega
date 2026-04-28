@@ -194,6 +194,8 @@ export default function EditAppointmentModal({ isOpen, onClose, ap }: { isOpen: 
                 style={inputStyle}
               />
             </div>
+          </div>
+
           {/* Multi-Analysis Selection */}
           <div style={{ background: 'rgba(0,0,0,0.05)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
