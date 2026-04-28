@@ -13,6 +13,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
   const [editingCell, setEditingCell] = useState<{ id: string, field: string } | null>(null);
   const [isAtToday, setIsAtToday] = useState(false);
   const [bellPopup, setBellPopup] = useState<{ id: string, note: string, status: string } | null>(null);
+  const [optimisticChecks, setOptimisticChecks] = useState<Record<string, boolean>>({});
 
   const handleJump = () => {
     if (!isAtToday) {
@@ -29,19 +30,29 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
   // Auto-scroll removed as per request
 
   async function handleToggleCheck(id: string, current: boolean) {
-    setLoadingId(id);
-    const res = await updateIngresoField(id, 'checkbox_checked', !current);
-    setLoadingId(null);
+    const newVal = !current;
+    // Optimistic Update
+    setOptimisticChecks(prev => ({ ...prev, [id]: newVal }));
+    
+    const res = await updateIngresoField(id, 'checkbox_checked', newVal);
+    if (res.success) {
+      onRefresh();
+    } else {
+      // Revert if failed
+      setOptimisticChecks(prev => ({ ...prev, [id]: current }));
+    }
   }
 
   async function handleDelete(id: string) {
     if (confirm("¿Estás seguro de eliminar este ingreso?")) {
-      await deleteIngreso(id);
+      const res = await deleteIngreso(id);
+      if (res.success) onRefresh();
     }
   }
 
   async function handleCellEdit(id: string, field: string, value: any) {
-    await updateIngresoField(id, field, value);
+    const res = await updateIngresoField(id, field, value);
+    if (res.success) onRefresh();
     setEditingCell(null);
   }
 
@@ -130,6 +141,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
               const showDate = currentDate !== lastDate;
               lastDate = currentDate;
               const isTodayRow = isToday(new Date(ing.appointment_date));
+              const isChecked = optimisticChecks[ing.id] ?? ing.checkbox_checked;
 
               return (
                 <tr 
@@ -137,7 +149,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
                   ref={isTodayRow ? todayRef : null}
                   style={{ 
                     borderBottom: '1px solid var(--glass-border)', 
-                    background: isTodayRow ? 'rgba(14, 165, 233, 0.15)' : (ing.checkbox_checked ? 'rgba(16, 185, 129, 0.1)' : 'transparent'),
+                    background: isTodayRow ? 'rgba(14, 165, 233, 0.15)' : (isChecked ? 'rgba(16, 185, 129, 0.1)' : 'transparent'),
                     transition: 'all 0.2s'
                   }}
                 >
@@ -172,17 +184,17 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
                     </div>
 
                     <button 
-                      onClick={() => handleToggleCheck(ing.id, ing.checkbox_checked)}
+                      onClick={() => handleToggleCheck(ing.id, isChecked)}
                       style={{ 
                         width: '20px', height: '20px', borderRadius: '4px', border: '2px solid var(--glass-border)',
-                        background: ing.checkbox_checked ? 'var(--success)' : 'transparent',
-                        borderColor: ing.checkbox_checked ? 'var(--success)' : 'var(--glass-border)',
+                        background: isChecked ? 'var(--success)' : 'transparent',
+                        borderColor: isChecked ? 'var(--success)' : 'var(--glass-border)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                         color: 'white',
                         margin: '0 auto'
                       }}
                     >
-                      {ing.checkbox_checked && <Check size={14} strokeWidth={3} />}
+                      {isChecked && <Check size={14} strokeWidth={3} />}
                     </button>
                   </td>
                   <td style={{ padding: '0.75rem 1rem', color: 'var(--text-main)', fontWeight: 600 }}>
