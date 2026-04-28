@@ -34,6 +34,7 @@ export const metadata: Metadata = {
 };
 
 import ShellLayout from "@/components/ShellLayout";
+import { headers } from "next/headers";
 
 export default async function RootLayout({
   children,
@@ -41,13 +42,18 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await getSession() as any;
+  const headerList = await headers();
+  const pathname = headerList.get('x-pathname') || '';
+  const isPortal = pathname.startsWith('/resultado');
+
   let userData = null;
   if (session) {
     const res = await getProfileData();
     userData = res.data;
   }
 
-  if (!session) {
+  // If it's the public portal, don't show the admin shell/nav ever
+  if (isPortal || !session) {
     return (
       <html lang="es">
         <head>
@@ -62,7 +68,7 @@ export default async function RootLayout({
           `}} />
         </head>
         <body>
-          <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={isPortal ? { minHeight: '100vh' } : { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {children}
           </div>
         </body>

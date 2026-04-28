@@ -8,6 +8,10 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('auth_token')?.value;
 
+  // Set pathname header for layout logic
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', pathname);
+
   // Allow public access to these paths
   if (
     pathname.startsWith('/resultado') ||
@@ -18,7 +22,11 @@ export async function proxy(request: NextRequest) {
     if (token && pathname.startsWith('/login')) {
       return NextResponse.redirect(new URL('/', request.url));
     }
-    return NextResponse.next();
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
 
   if (!token) {
@@ -27,7 +35,11 @@ export async function proxy(request: NextRequest) {
 
   try {
     await jwtVerify(token, SECRET_KEY);
-    return NextResponse.next();
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   } catch (e) {
     const res = NextResponse.redirect(new URL('/login', request.url));
     res.cookies.delete('auth_token');
