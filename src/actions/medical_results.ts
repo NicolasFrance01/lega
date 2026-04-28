@@ -59,8 +59,8 @@ export async function uploadMedicalResult(formData: FormData) {
 
     if (type === 'note') {
       await client.query(`
-        INSERT INTO medical_results (appointment_id, patient_id, result_type, content, uploaded_by)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO medical_results (appointment_id, patient_id, result_type, content, notes, uploaded_by)
+        VALUES ($1, $2, $3, $4, $4, $5)
       `, [appointmentId, patientId, type, noteContent, session.id]);
     } else {
       for (const file of files) {
@@ -70,9 +70,9 @@ export async function uploadMedicalResult(formData: FormData) {
           const blob = await put(path, file, { access: 'private' });
           
           await client.query(`
-            INSERT INTO medical_results (appointment_id, patient_id, result_type, content, filename, uploaded_by)
-            VALUES ($1, $2, $3, $4, $5, $6)
-          `, [appointmentId, patientId, type, blob.url, file.name, session.id]);
+            INSERT INTO medical_results (appointment_id, patient_id, result_type, content, filename, notes, uploaded_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `, [appointmentId, patientId, type, blob.url, file.name, noteContent, session.id]);
         }
       }
     }
@@ -103,7 +103,7 @@ export async function uploadMedicalResult(formData: FormData) {
 export async function getPatientResults(dni: string) {
   try {
     const res = await pool.query(`
-      SELECT mr.id, mr.result_type, mr.content, mr.filename, mr.created_at, mr.notified_at,
+      SELECT mr.id, mr.result_type, mr.content, mr.filename, mr.notes, mr.created_at, mr.notified_at,
              a.appointment_date, a.analysis_type, a.report_id,
              u.full_name as uploaded_by_name
       FROM medical_results mr
@@ -129,10 +129,11 @@ export async function getPatientPortalData(dni: string) {
     const patient = patientRes.rows[0];
     const results = await getPatientResults(dni);
     const appointments = await pool.query(`
-      SELECT id, appointment_date, status, analysis_type 
-      FROM appointments 
-      WHERE patient_id = $1 
-      ORDER BY appointment_date DESC
+      SELECT a.id, a.appointment_date, a.status, a.analysis_type, a.report_id,
+             (SELECT notes FROM medical_results WHERE appointment_id = a.id LIMIT 1) as notes
+      FROM appointments a
+      WHERE a.patient_id = $1 
+      ORDER BY a.appointment_date DESC
     `, [patient.id]);
 
     return { 

@@ -325,6 +325,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                   <th style={{ padding: '1.25rem 1rem' }}>Paciente</th>
                   <th style={{ padding: '1.25rem 1rem' }}>Turno</th>
                   <th style={{ padding: '1.25rem 1rem' }}>Tipo</th>
+                  <th style={{ padding: '1.25rem 1rem' }}>Notas</th>
                   <th style={{ padding: '1.25rem 1rem' }}>Cargado por</th>
                   <th style={{ padding: '1.25rem 1rem', textAlign: 'right' }}>Acción</th>
                 </tr>
@@ -366,6 +367,11 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                       }}>
                         {res.result_type}
                       </span>
+                    </td>
+                    <td style={{ padding: '1rem' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={res.notes}>
+                        {res.notes || '-'}
+                      </div>
                     </td>
                     <td style={{ padding: '1rem' }}>
                       <div style={{ fontWeight: 600 }}>{res.uploaded_by_name || 'Sistema'}</div>
