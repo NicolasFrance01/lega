@@ -402,8 +402,12 @@ export async function updateApross(id: number, data: any) {
     const session = await getSession() as any;
     if (!session) throw new Error("No autenticado");
 
-    const { fecha, paciente, dni, telefono, analisis, coseguro, particular, observaciones } = data;
-    const month_group = fecha ? fecha.substring(0, 7) : null;
+    // data could be an object (from Object.fromEntries) or FormData
+    const formData = data instanceof FormData ? data : null;
+    const fields = formData ? Object.fromEntries(formData) : data;
+
+    const { fecha, paciente, dni, telefono, analisis, coseguro, particular, observaciones } = fields;
+    const month_group = fecha ? String(fecha).substring(0, 7) : null;
     
     const parseNumeric = (val: any) => {
       if (val === undefined || val === null || val === "" || val === "-") return null;
@@ -419,11 +423,45 @@ export async function updateApross(id: number, data: any) {
        WHERE id = $10`,
       [fecha, paciente, dni, telefono, analisis, parseNumeric(coseguro), parseNumeric(particular), observaciones, month_group, id]
     );
+
+    // Handle NEW File Uploads if FormData was provided
+    if (formData) {
+      const files = formData.getAll("documents") as File[];
+      for (const file of files) {
+        if (file && file.size > 0) {
+          const path = `apross/${Date.now()}-${file.name}`;
+          const blob = await put(path, file, { access: 'private' });
+          await pool.query(
+            'INSERT INTO apross_documents (apross_id, document_url, filename) VALUES ($1, $2, $3)',
+            [id, blob.url, file.name]
+          );
+        }
+      }
+    }
     
     revalidatePath("/listados/apross");
     return { success: true };
   } catch (error: any) {
     console.error("UPDATE_APROSS_ERROR:", error);
+    return { error: error.message };
+  }
+}
+
+export async function deleteAprossDocument(id: number) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    // Get URL to delete from Blob
+    const res = await pool.query('SELECT document_url FROM apross_documents WHERE id = $1', [id]);
+    if (res.rows[0]) {
+       try { await del(res.rows[0].document_url); } catch (e) {}
+    }
+
+    await pool.query('DELETE FROM apross_documents WHERE id = $1', [id]);
+    revalidatePath("/listados/apross");
+    return { success: true };
+  } catch (error: any) {
     return { error: error.message };
   }
 }
