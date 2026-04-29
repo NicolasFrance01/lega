@@ -321,14 +321,7 @@ export async function getApross() {
       ORDER BY month_group DESC, fecha DESC
     `);
     return { 
-      data: res.rows.map(row => ({
-        ...row,
-        id: Number(row.id),
-        fecha: row.fecha ? new Date(row.fecha).toISOString() : null,
-        created_at: row.created_at ? new Date(row.created_at).toISOString() : null,
-        coseguro: row.coseguro ? row.coseguro.toString() : null,
-        particular: row.particular ? row.particular.toString() : null,
-      })), 
+      data: JSON.parse(JSON.stringify(res.rows)), 
       error: null 
     };
   } catch (error: any) {
