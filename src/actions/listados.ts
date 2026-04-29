@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { logAction } from "./audit";
 import { put } from "@vercel/blob";
 import { getPatients } from "./patients";
+import { format } from "date-fns";
 
 // --- PENDIENTES ---
 
