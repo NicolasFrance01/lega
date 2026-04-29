@@ -15,6 +15,7 @@ export default function AprossTable({ data }: { data: any[] }) {
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [openDocDropdown, setOpenDocDropdown] = useState<number | null>(null);
 
   useEffect(() => {
     setItems(data);
@@ -342,14 +343,33 @@ export default function AprossTable({ data }: { data: any[] }) {
                     <td style={{ padding: "1rem", fontWeight: 600, color: "var(--primary)" }}>{item.analisis}</td>
                     <td style={{ padding: "1rem", fontWeight: 700, color: "var(--success)" }}>{item.coseguro ? `$${item.coseguro}` : "-"}</td>
                     <td style={{ padding: "1rem", fontWeight: 700 }}>{item.particular ? `$${item.particular}` : "-"}</td>
-                    <td style={{ padding: "1rem" }}>
+                    <td style={{ padding: "1rem", position: "relative" }}>
                       {Array.isArray(item.documents) && item.documents.length > 0 ? (
-                        <div style={{ display: "flex", gap: "0.25rem" }}>
-                          {item.documents.map((d: any) => (
-                            <a key={d.id} href={d.url} target="_blank" title={d.filename} style={{ color: "var(--primary)" }}>
-                              <FileText size={18} />
-                            </a>
-                          ))}
+                        <div>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setOpenDocDropdown(openDocDropdown === item.id ? null : item.id); }}
+                            className="btn-primary" 
+                            style={{ padding: "0.3rem 0.8rem", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "0.3rem" }}
+                          >
+                            <FileText size={14} /> Ver pedido ({item.documents.length})
+                          </button>
+                          
+                          {openDocDropdown === item.id && (
+                            <div style={{ position: "absolute", top: "100%", right: 0, zIndex: 100, background: "var(--glass-bg)", border: "1px solid var(--glass-border)", borderRadius: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.2)", minWidth: "180px", padding: "0.5rem" }}>
+                              {item.documents.map((d: any) => (
+                                <a 
+                                  key={d.id} 
+                                  href={`/api/apross/doc/${d.id}`} 
+                                  target="_blank" 
+                                  style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem", color: "var(--primary)", textDecoration: "none", fontSize: "0.8rem", borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+                                  onMouseEnter={(e) => e.currentTarget.style.background = "rgba(14, 165, 233, 0.05)"}
+                                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                                >
+                                  <FileText size={14} /> {d.filename || "Ver Archivo"}
+                                </a>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ) : "-"}
                     </td>
@@ -428,6 +448,25 @@ export default function AprossTable({ data }: { data: any[] }) {
                 <label className="label-premium">Observación / Detalle</label>
                 <textarea name="observaciones" defaultValue={editingItem.observaciones} className="input-field" style={{ minHeight: "80px", resize: "none" }} />
               </div>
+
+              {/* Existing Documents in Edit Modal */}
+              {Array.isArray(editingItem.documents) && editingItem.documents.length > 0 && (
+                <div style={{ gridColumn: "span 2" }}>
+                  <label className="label-premium">Archivos Adjuntos Actuales</label>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.5rem" }}>
+                    {editingItem.documents.map((d: any) => (
+                      <a 
+                        key={d.id} 
+                        href={`/api/apross/doc/${d.id}`} 
+                        target="_blank"
+                        style={{ display: "flex", alignItems: "center", gap: "0.4rem", padding: "0.4rem 0.75rem", background: "rgba(14, 165, 233, 0.1)", borderRadius: "6px", color: "var(--primary)", fontSize: "0.75rem", textDecoration: "none" }}
+                      >
+                        <FileText size={14} /> {d.filename}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div style={{ gridColumn: "span 2", display: "flex", gap: "1rem" }}>
                 <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 1, padding: "1rem" }}>
