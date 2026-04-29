@@ -14,6 +14,7 @@ export default function AprossTable({ data }: { data: any[] }) {
   const [loading, setLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
+  const [editingItem, setEditingItem] = useState<any>(null);
 
   useEffect(() => {
     setItems(data);
@@ -36,6 +37,14 @@ export default function AprossTable({ data }: { data: any[] }) {
     const newFields = [...analisisFields];
     newFields[index] = value;
     setAnalisisFields(newFields);
+  };
+
+  const resetForm = () => {
+    setNewPaciente("");
+    setSelectedPatient(null);
+    setFiles([]);
+    setAnalisisFields([""]);
+    if (formRef.current) formRef.current.reset();
   };
 
   // Filtering
@@ -102,7 +111,7 @@ export default function AprossTable({ data }: { data: any[] }) {
             style={{ paddingLeft: "2.8rem" }}
           />
         </div>
-        <button onClick={() => setShowNewRow(true)} className="btn-primary" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <button onClick={() => { resetForm(); setShowNewRow(true); }} className="btn-primary" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <Plus size={18} /> Agregar Nuevo
         </button>
       </div>
@@ -347,7 +356,10 @@ export default function AprossTable({ data }: { data: any[] }) {
                     <td style={{ padding: "1rem", maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={item.observaciones}>
                       {item.observaciones || "-"}
                     </td>
-                    <td style={{ padding: "1rem", textAlign: "right" }}>
+                    <td style={{ padding: "1rem", textAlign: "right", display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                      <button onClick={() => setEditingItem(item)} style={{ padding: "0.4rem", borderRadius: "8px", background: "rgba(14, 165, 233, 0.1)", color: "var(--primary)", border: "none", cursor: "pointer" }}>
+                        <Plus size={16} style={{ transform: "rotate(45deg)" }} />
+                      </button>
                       <button onClick={() => handleDelete(item.id)} style={{ padding: "0.4rem", borderRadius: "8px", background: "rgba(239, 68, 68, 0.1)", color: "var(--danger)", border: "none", cursor: "pointer" }}>
                         <Trash2 size={16} />
                       </button>
@@ -360,6 +372,76 @@ export default function AprossTable({ data }: { data: any[] }) {
           </div>
         </div>
       ))}
+      {/* Editing Modal */}
+      {editingItem && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+          <div className="glass-panel shadow-premium" style={{ width: "100%", maxWidth: "800px", maxHeight: "90vh", overflow: "auto", padding: "2rem", position: "relative" }}>
+            <h3 style={{ margin: "0 0 1.5rem 0", fontSize: "1.2rem", fontWeight: 800, color: "var(--primary)" }}>Editar Carga Apross</h3>
+            <form action={async (fd) => {
+              setLoading(true);
+              const res = await updateApross(editingItem.id, Object.fromEntries(fd));
+              if (!res.error) {
+                setEditingItem(null);
+                setLoading(false);
+              } else {
+                alert("Error al actualizar: " + res.error);
+                setLoading(false);
+              }
+            }} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.5rem" }}>
+              
+              <div>
+                <label className="label-premium">Paciente</label>
+                <input name="paciente" defaultValue={editingItem.paciente} required className="input-field" />
+              </div>
+
+              <div>
+                <label className="label-premium">Fecha</label>
+                <input name="fecha" type="date" defaultValue={editingItem.fecha ? format(new Date(editingItem.fecha), "yyyy-MM-dd") : ""} required className="input-field" />
+              </div>
+
+              <div>
+                <label className="label-premium">DNI</label>
+                <input name="dni" defaultValue={editingItem.dni} className="input-field" />
+              </div>
+
+              <div>
+                <label className="label-premium">Teléfono</label>
+                <input name="telefono" defaultValue={editingItem.telefono} className="input-field" />
+              </div>
+
+              <div style={{ gridColumn: "span 2" }}>
+                <label className="label-premium">Análisis</label>
+                <input name="analisis" defaultValue={editingItem.analisis} required className="input-field" />
+              </div>
+
+              <div>
+                <label className="label-premium">Co.Seguro ($)</label>
+                <input name="coseguro" defaultValue={editingItem.coseguro} className="input-field" />
+              </div>
+
+              <div>
+                <label className="label-premium">Particular ($)</label>
+                <input name="particular" defaultValue={editingItem.particular} className="input-field" />
+              </div>
+
+              <div style={{ gridColumn: "span 2" }}>
+                <label className="label-premium">Observación / Detalle</label>
+                <textarea name="observaciones" defaultValue={editingItem.observaciones} className="input-field" style={{ minHeight: "80px", resize: "none" }} />
+              </div>
+
+              <div style={{ gridColumn: "span 2", display: "flex", gap: "1rem" }}>
+                <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 1, padding: "1rem" }}>
+                  {loading ? "ACTUALIZANDO..." : "GUARDAR CAMBIOS"}
+                </button>
+                <button type="button" onClick={() => setEditingItem(null)} style={{ padding: "1rem", borderRadius: "12px", background: "rgba(0,0,0,0.05)", border: "none", cursor: "pointer", fontWeight: 700 }}>
+                  CANCELAR
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {sortedMonths.length === 0 && !loading && (
         <div className="glass-panel" style={{ padding: "4rem", textAlign: "center", color: "var(--text-muted)" }}>
            No hay registros de Apross encontrados.

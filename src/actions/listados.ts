@@ -374,7 +374,13 @@ export async function createApross(formData: FormData) {
     for (const file of files) {
       if (file && file.size > 0) {
         const path = `apross/${Date.now()}-${file.name}`;
-        const blob = await put(path, file, { access: 'public' });
+        // More robust upload by using ArrayBuffer
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const blob = await put(path, buffer, { 
+          access: 'public',
+          contentType: file.type || 'application/octet-stream'
+        });
         await client.query(
           'INSERT INTO apross_documents (apross_id, document_url, filename) VALUES ($1, $2, $3)',
           [aprossId, blob.url, file.name]
@@ -402,14 +408,28 @@ export async function updateApross(id: number, data: any) {
     const session = await getSession() as any;
     if (!session) throw new Error("No autenticado");
 
-    const fields = Object.keys(data).map((k, i) => `${k} = $${i + 1}`).join(", ");
-    const values = Object.values(data);
+    const { fecha, paciente, dni, telefono, analisis, coseguro, particular, observaciones } = data;
+    const month_group = fecha ? fecha.substring(0, 7) : null;
+    
+    const parseNumeric = (val: any) => {
+      if (val === undefined || val === null || val === "" || val === "-") return null;
+      const cleaned = String(val).replace(/[^0.9.-]/g, "");
+      return isNaN(parseFloat(cleaned)) ? null : cleaned;
+    };
 
-    await pool.query(`UPDATE apross SET ${fields} WHERE id = $${values.length + 1}`, [...values, id]);
-
+    await pool.query(
+      `UPDATE apross SET 
+        fecha = $1, paciente = $2, dni = $3, telefono = $4, 
+        analisis = $5, coseguro = $6, particular = $7, 
+        observaciones = $8, month_group = COALESCE($9, month_group)
+       WHERE id = $10`,
+      [fecha, paciente, dni, telefono, analisis, parseNumeric(coseguro), parseNumeric(particular), observaciones, month_group, id]
+    );
+    
     revalidatePath("/listados/apross");
     return { success: true };
   } catch (error: any) {
+    console.error("UPDATE_APROSS_ERROR:", error);
     return { error: error.message };
   }
 }
