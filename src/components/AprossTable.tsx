@@ -18,6 +18,19 @@ export default function AprossTable({ data }: { data: any[] }) {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const [analisisFields, setAnalisisFields] = useState<string[]>([""]);
+
+  const addAnalisisField = () => setAnalisisFields([...analisisFields, ""]);
+  const removeAnalisisField = (index: number) => {
+    if (analisisFields.length > 1) {
+      setAnalisisFields(analisisFields.filter((_, i) => i !== index));
+    }
+  };
+  const updateAnalisisField = (index: number, value: string) => {
+    const newFields = [...analisisFields];
+    newFields[index] = value;
+    setAnalisisFields(newFields);
+  };
 
   // Filtering
   const filteredItems = items.filter(it => 
@@ -28,7 +41,11 @@ export default function AprossTable({ data }: { data: any[] }) {
 
   // Group by month
   const groups = filteredItems.reduce((acc: any, item: any) => {
-    const month = item.month_group || format(new Date(item.fecha), "yyyy-MM");
+    if (!item.fecha) return acc;
+    const dateObj = new Date(item.fecha);
+    if (isNaN(dateObj.getTime())) return acc;
+    
+    const month = item.month_group || format(dateObj, "yyyy-MM");
     if (!acc[month]) acc[month] = [];
     acc[month].push(item);
     return acc;
@@ -159,8 +176,31 @@ export default function AprossTable({ data }: { data: any[] }) {
             </div>
 
             <div style={{ gridColumn: "span 2" }}>
-              <label className="label-premium">Análisis (1 o varios)</label>
-              <input name="analisis" required className="input-field" placeholder="Ej: Hemograma, Glucemia..." />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                <label className="label-premium">Análisis</label>
+                <button type="button" onClick={addAnalisisField} style={{ background: "var(--primary)", color: "white", border: "none", borderRadius: "50%", width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                  <Plus size={16} />
+                </button>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {analisisFields.map((field, index) => (
+                  <div key={index} style={{ display: "flex", gap: "0.5rem" }}>
+                    <input 
+                      name="analisis" 
+                      value={field}
+                      onChange={(e) => updateAnalisisField(index, e.target.value)}
+                      required={index === 0} 
+                      className="input-field" 
+                      placeholder="Ej: Hemograma..." 
+                    />
+                    {analisisFields.length > 1 && (
+                      <button type="button" onClick={() => removeAnalisisField(index)} style={{ color: "var(--danger)", border: "none", background: "none", cursor: "pointer" }}>
+                        <X size={18} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div>
@@ -257,9 +297,13 @@ export default function AprossTable({ data }: { data: any[] }) {
                 </tr>
               </thead>
               <tbody>
-                {groups[month].map((item: any) => (
+                {groups[month].map((item: any) => {
+                  const dateObj = new Date(item.fecha);
+                  const formattedDate = isNaN(dateObj.getTime()) ? "Fecha inválida" : format(dateObj, "dd/MM/yyyy");
+                  
+                  return (
                   <tr key={item.id} style={{ borderBottom: "1px solid var(--glass-border)" }}>
-                    <td style={{ padding: "1rem", whiteSpace: "nowrap" }}>{format(new Date(item.fecha), "dd/MM/yyyy")}</td>
+                    <td style={{ padding: "1rem", whiteSpace: "nowrap" }}>{formattedDate}</td>
                     <td style={{ padding: "1rem", fontWeight: 700, color: "var(--text-main)" }}>{item.paciente}</td>
                     <td style={{ padding: "1rem" }}>
                       <div>{item.dni || "-"}</div>
@@ -288,7 +332,8 @@ export default function AprossTable({ data }: { data: any[] }) {
                       </button>
                     </td>
                   </tr>
-                ))}
+                );
+                })}
               </tbody>
             </table>
           </div>

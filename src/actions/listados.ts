@@ -319,7 +319,13 @@ export async function getApross() {
       FROM apross a 
       ORDER BY month_group DESC, fecha DESC
     `);
-    return { data: res.rows, error: null };
+    return { 
+      data: res.rows.map(row => ({
+        ...row,
+        fecha: row.fecha ? new Date(row.fecha).toISOString() : null,
+      })), 
+      error: null 
+    };
   } catch (error: any) {
     return { data: null, error: error.message };
   }
@@ -334,7 +340,8 @@ export async function createApross(formData: FormData) {
     const paciente = formData.get("paciente") as string;
     const dni = formData.get("dni") as string;
     const telefono = formData.get("telefono") as string;
-    const analisis = formData.get("analisis") as string;
+    const analisisList = formData.getAll("analisis") as string[];
+    const analisis = analisisList.filter(a => a.trim() !== "").join(", ");
     const coseguro = formData.get("coseguro") as string;
     const particular = formData.get("particular") as string;
     const observaciones = formData.get("observaciones") as string;
