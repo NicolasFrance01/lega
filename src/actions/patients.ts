@@ -52,3 +52,15 @@ export async function updatePatient(formData: FormData) {
     return { error: error.message };
   }
 }
+export async function searchPatients(query: string) {
+  try {
+    if (!query || query.length < 2) return { data: [], error: null };
+    const res = await pool.query(
+      "SELECT * FROM patients WHERE name ILIKE $1 OR dni ILIKE $1 LIMIT 10",
+      [`%${query}%`]
+    );
+    return { data: res.rows, error: null };
+  } catch (error: any) {
+    return { data: null, error: error.message };
+  }
+}

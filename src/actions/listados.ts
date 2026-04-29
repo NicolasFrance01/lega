@@ -4,6 +4,8 @@ import pool from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { logAction } from "./audit";
+import { put } from "@vercel/blob";
+import { getPatients } from "./patients";
 
 // --- PENDIENTES ---
 
@@ -300,6 +302,105 @@ export async function ensureCobranzasTable() {
     return { success: true };
   } catch (error: any) {
     console.error("Migration auto-run failed:", error);
+    return { error: error.message };
+  }
+}
+// --- APROSS ---
+
+export async function getApross() {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    const res = await pool.query(`
+      SELECT a.*, 
+             (SELECT json_agg(json_build_object('id', d.id, 'url', d.document_url, 'filename', d.filename))
+              FROM apross_documents d WHERE d.apross_id = a.id) as documents
+      FROM apross a 
+      ORDER BY month_group DESC, fecha DESC
+    `);
+    return { data: res.rows, error: null };
+  } catch (error: any) {
+    return { data: null, error: error.message };
+  }
+}
+
+export async function createApross(formData: FormData) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const fecha = formData.get("fecha") as string;
+    const paciente = formData.get("paciente") as string;
+    const dni = formData.get("dni") as string;
+    const telefono = formData.get("telefono") as string;
+    const analisis = formData.get("analisis") as string;
+    const coseguro = formData.get("coseguro") as string;
+    const particular = formData.get("particular") as string;
+    const observaciones = formData.get("observaciones") as string;
+    const files = formData.getAll("documents") as File[];
+
+    const month_group = fecha.substring(0, 7); // 'YYYY-MM'
+
+    const res = await client.query(
+      `INSERT INTO apross (fecha, paciente, dni, telefono, analisis, coseguro, particular, observaciones, month_group) 
+       VALUES ($1, $2, $3, $4, $5, NULLIF($6, '')::numeric, NULLIF($7, '')::numeric, $8, $9) 
+       RETURNING id`,
+      [fecha, paciente, dni, telefono, analisis, coseguro, particular, observaciones, month_group]
+    );
+
+    const aprossId = res.rows[0].id;
+
+    // Handle File Uploads
+    for (const file of files) {
+      if (file && file.size > 0) {
+        const path = `apross/${Date.now()}-${file.name}`;
+        const blob = await put(path, file, { access: 'private' });
+        await client.query(
+          'INSERT INTO apross_documents (apross_id, document_url, filename) VALUES ($1, $2, $3)',
+          [aprossId, blob.url, file.name]
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+    await logAction("CREATE_APROSS", { paciente, month_group });
+    revalidatePath("/listados/apross");
+    return { success: true };
+  } catch (error: any) {
+    await client.query('ROLLBACK');
+    return { error: error.message };
+  } finally {
+    client.release();
+  }
+}
+
+export async function updateApross(id: number, data: any) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    const fields = Object.keys(data).map((k, i) => `${k} = $${i + 1}`).join(", ");
+    const values = Object.values(data);
+
+    await pool.query(`UPDATE apross SET ${fields} WHERE id = $${values.length + 1}`, [...values, id]);
+
+    revalidatePath("/listados/apross");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function deleteApross(id: number) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    await pool.query("DELETE FROM apross WHERE id = $1", [id]);
+    revalidatePath("/listados/apross");
+    return { success: true };
+  } catch (error: any) {
     return { error: error.message };
   }
 }

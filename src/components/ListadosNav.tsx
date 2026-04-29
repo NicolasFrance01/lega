@@ -8,6 +8,7 @@ export default function ListadosNav() {
 
   const tabs = [
     { name: "Pendientes", href: "/listados/pendientes" },
+    { name: "Apross", href: "/listados/apross" },
     { name: "Cobranzas", href: "/listados/cobranzas" },
     { name: "Indicaciones WS", href: "/listados/indicaciones" },
     { name: "Codigos de Sistema", href: "/listados/codigos" },
