@@ -34,9 +34,9 @@ export default function AprossTable({ data }: { data: any[] }) {
 
   // Filtering
   const filteredItems = items.filter(it => 
-    it.paciente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    it.dni?.includes(searchTerm) ||
-    it.analisis?.toLowerCase().includes(searchTerm.toLowerCase())
+    (it.paciente?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+    (it.dni || "").includes(searchTerm) ||
+    (it.analisis?.toLowerCase() || "").includes(searchTerm.toLowerCase())
   );
 
   // Group by month
