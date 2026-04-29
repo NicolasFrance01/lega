@@ -345,7 +345,8 @@ export async function createApross(formData: FormData) {
     
     // Handle numeric fields that might contain "-"
     const coseguroRaw = formData.get("coseguro") as string;
-    const particularRaw = formData.get("particular") as string;
+    const particularEfvRaw = formData.get("particular_efv") as string;
+    const particularTarjetaRaw = formData.get("particular_tarjeta") as string;
     
     const parseNumeric = (val: string) => {
       if (!val || val === "-") return null;
@@ -354,7 +355,8 @@ export async function createApross(formData: FormData) {
     };
 
     const coseguro = parseNumeric(coseguroRaw);
-    const particular = parseNumeric(particularRaw);
+    const particular_efv = parseNumeric(particularEfvRaw);
+    const particular_tarjeta = parseNumeric(particularTarjetaRaw);
     
     const observaciones = formData.get("observaciones") as string;
     const files = formData.getAll("documents") as File[];
@@ -377,10 +379,10 @@ export async function createApross(formData: FormData) {
     // ---------------------------------
 
     const res = await client.query(
-      `INSERT INTO apross (fecha, paciente, dni, telefono, analisis, coseguro, particular, observaciones, month_group) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+      `INSERT INTO apross (fecha, paciente, dni, telefono, analisis, coseguro, particular_efv, particular_tarjeta, observaciones, month_group) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
        RETURNING id`,
-      [fecha, paciente, dni, telefono, analisis, coseguro, particular, observaciones, month_group]
+      [fecha, paciente, dni, telefono, analisis, coseguro, particular_efv, particular_tarjeta, observaciones, month_group]
     );
 
     const aprossId = res.rows[0].id;
@@ -421,7 +423,7 @@ export async function updateApross(id: number, data: any) {
     const formData = data instanceof FormData ? data : null;
     const fields = formData ? Object.fromEntries(formData) : data;
 
-    const { fecha, paciente, dni, telefono, analisis, coseguro, particular, observaciones } = fields;
+    const { fecha, paciente, dni, telefono, analisis, coseguro, particular_efv, particular_tarjeta, observaciones } = fields;
     const month_group = fecha ? String(fecha).substring(0, 7) : null;
     
     const parseNumeric = (val: any) => {
@@ -448,10 +450,10 @@ export async function updateApross(id: number, data: any) {
     await pool.query(
       `UPDATE apross SET 
         fecha = $1, paciente = $2, dni = $3, telefono = $4, 
-        analisis = $5, coseguro = $6, particular = $7, 
-        observaciones = $8, month_group = COALESCE($9, month_group)
-       WHERE id = $10`,
-      [fecha, paciente, dni, telefono, analisis, parseNumeric(coseguro), parseNumeric(particular), observaciones, month_group, id]
+        analisis = $5, coseguro = $6, particular_efv = $7, particular_tarjeta = $8,
+        observaciones = $9, month_group = COALESCE($10, month_group)
+       WHERE id = $11`,
+      [fecha, paciente, dni, telefono, analisis, parseNumeric(coseguro), parseNumeric(particular_efv), parseNumeric(particular_tarjeta), observaciones, month_group, id]
     );
 
     // Handle NEW File Uploads if FormData was provided

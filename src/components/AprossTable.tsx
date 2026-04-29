@@ -238,9 +238,20 @@ export default function AprossTable({ data }: { data: any[] }) {
             </div>
 
             <div>
-              <label className="label-premium">Particular ($)</label>
+              <label className="label-premium">Particular EFV ($)</label>
               <input 
-                name="particular" 
+                name="particular_efv" 
+                type="text" 
+                className="input-field" 
+                placeholder="Solo números o '-'"
+                onKeyPress={(e) => { if (!/[0-9.-]/.test(e.key)) e.preventDefault(); }}
+              />
+            </div>
+
+            <div>
+              <label className="label-premium">Particular TARJ ($)</label>
+              <input 
+                name="particular_tarjeta" 
                 type="text" 
                 className="input-field" 
                 placeholder="Solo números o '-'"
@@ -322,7 +333,8 @@ export default function AprossTable({ data }: { data: any[] }) {
                   <th style={{ padding: "1rem" }}>DNI / Tel</th>
                   <th style={{ padding: "1rem" }}>Análisis</th>
                   <th style={{ padding: "1rem" }}>Coseguro</th>
-                  <th style={{ padding: "1rem" }}>Particular</th>
+                  <th style={{ padding: "1rem" }}>Part. EFV</th>
+                  <th style={{ padding: "1rem" }}>Part. TARJ</th>
                   <th style={{ padding: "1rem" }}>Documentos</th>
                   <th style={{ padding: "1rem" }}>Obs / Detalle</th>
                   <th style={{ padding: "1rem", textAlign: "right" }}></th>
@@ -343,7 +355,8 @@ export default function AprossTable({ data }: { data: any[] }) {
                     </td>
                     <td style={{ padding: "1rem", fontWeight: 600, color: "var(--primary)" }}>{item.analisis}</td>
                     <td style={{ padding: "1rem", fontWeight: 700, color: "var(--success)" }}>{item.coseguro ? `$${item.coseguro}` : "-"}</td>
-                    <td style={{ padding: "1rem", fontWeight: 700 }}>{item.particular ? `$${item.particular}` : "-"}</td>
+                    <td style={{ padding: "1rem", fontWeight: 700 }}>{item.particular_efv ? `$${item.particular_efv}` : "-"}</td>
+                    <td style={{ padding: "1rem", fontWeight: 700, color: "#64748b" }}>{item.particular_tarjeta ? `$${item.particular_tarjeta}` : "-"}</td>
                     <td style={{ padding: "1rem", position: "relative" }}>
                       {Array.isArray(item.documents) && item.documents.length > 0 ? (
                         <div>
@@ -481,14 +494,18 @@ export default function AprossTable({ data }: { data: any[] }) {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", gridColumn: "span 2" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.5rem", gridColumn: "span 2" }}>
                 <div style={{ background: "rgba(16, 185, 129, 0.03)", padding: "1rem", borderRadius: "16px", border: "1px solid rgba(16, 185, 129, 0.1)" }}>
                   <label className="label-premium" style={{ color: "var(--success)" }}>Co.Seguro ($)</label>
                   <input name="coseguro" defaultValue={editingItem.coseguro} className="input-field" style={{ background: "white", color: "var(--success)", fontWeight: 800, fontSize: "1.1rem" }} />
                 </div>
                 <div style={{ background: "rgba(15, 23, 42, 0.03)", padding: "1rem", borderRadius: "16px", border: "1px solid rgba(0,0,0,0.05)" }}>
-                  <label className="label-premium">Particular ($)</label>
-                  <input name="particular" defaultValue={editingItem.particular} className="input-field" style={{ background: "white", fontWeight: 800, fontSize: "1.1rem" }} />
+                  <label className="label-premium">Particular EFV ($)</label>
+                  <input name="particular_efv" defaultValue={editingItem.particular_efv} className="input-field" style={{ background: "white", fontWeight: 800, fontSize: "1.1rem" }} />
+                </div>
+                <div style={{ background: "rgba(100, 116, 139, 0.03)", padding: "1rem", borderRadius: "16px", border: "1px solid rgba(100, 116, 139, 0.1)" }}>
+                  <label className="label-premium">Particular TARJ ($)</label>
+                  <input name="particular_tarjeta" defaultValue={editingItem.particular_tarjeta} className="input-field" style={{ background: "white", fontWeight: 800, fontSize: "1.1rem", color: "#475569" }} />
                 </div>
               </div>
 
