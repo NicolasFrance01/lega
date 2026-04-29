@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useTransition } from "react";
 import { createApross, deleteApross, updateApross } from "@/actions/listados";
 import { searchPatients } from "@/actions/patients";
 import { format } from "date-fns";
@@ -12,6 +12,8 @@ export default function AprossTable({ data }: { data: any[] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [showNewRow, setShowNewRow] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     setItems(data);
@@ -109,21 +111,29 @@ export default function AprossTable({ data }: { data: any[] }) {
       {showNewRow && (
         <div className="glass-panel shadow-premium" style={{ padding: "2rem", border: "2px solid var(--primary)", position: "relative" }}>
           <h3 style={{ margin: "0 0 1.5rem 0", fontSize: "1.2rem", fontWeight: 800, color: "var(--primary)" }}>Nueva Carga Apross</h3>
-          <form action={async (fd) => {
-            setLoading(true);
-            // Add files to FormData
-            files.forEach(f => fd.append("documents", f));
-            // Ensure phone and dni handle '-'
-            if (!fd.get("dni")) fd.set("dni", "-");
-            if (!fd.get("telefono")) fd.set("telefono", "-");
-            
-            const res = await createApross(fd) as any;
-            if (res && res.error) {
-              alert("Error al guardar: " + res.error);
-              setLoading(false);
-            }
-            // If success, the server will redirect us automatically
-          }} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.5rem" }}>
+          <form 
+            ref={formRef}
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setLoading(true);
+              const fd = new FormData(e.currentTarget);
+              files.forEach(f => fd.append("documents", f));
+              
+              startTransition(async () => {
+                try {
+                  const res = await createApross(fd) as any;
+                  if (res && res.error) {
+                    alert("Error al guardar: " + res.error);
+                  } else {
+                    setShowNewRow(false);
+                  }
+                } catch (err: any) {
+                  alert("Error crítico: " + err.message);
+                } finally {
+                  setLoading(false);
+                }
+              });
+            }} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.5rem" }}>
             
             <div style={{ position: "relative" }}>
               <label className="label-premium">Paciente</label>

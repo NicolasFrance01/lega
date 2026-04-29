@@ -383,17 +383,15 @@ export async function createApross(formData: FormData) {
 
     await client.query('COMMIT');
     await logAction("CREATE_APROSS", { paciente, month_group });
-    // We don't return here yet, we need to release first
+    revalidatePath("/listados/apross");
+    return { success: true };
   } catch (error: any) {
     try { await client.query('ROLLBACK'); } catch (e) {}
     console.error("CREATE_APROSS_ERROR:", error);
-    return { error: error.message || "Error desconocido al crear registro" };
+    return { error: String(error.message || error) };
   } finally {
     client.release();
   }
-
-  // Redirect must be called outside try-catch
-  redirect("/listados/apross");
 }
 
 export async function updateApross(id: number, data: any) {
