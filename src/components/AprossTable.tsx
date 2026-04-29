@@ -13,6 +13,10 @@ export default function AprossTable({ data }: { data: any[] }) {
   const [showNewRow, setShowNewRow] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    setItems(data);
+  }, [data]);
+
   // New item form state
   const [newPaciente, setNewPaciente] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -117,9 +121,7 @@ export default function AprossTable({ data }: { data: any[] }) {
             if (!res.error) {
               setShowNewRow(false);
               setLoading(false);
-              // Instead of reload, we can let revalidatePath work, 
-              // but if the user feels it's stuck, reload is a safe bet.
-              window.location.reload(); 
+              // revalidatePath will update the 'data' prop, and our useEffect will update 'items'
             } else {
               alert("Error al guardar: " + res.error);
               setLoading(false);
