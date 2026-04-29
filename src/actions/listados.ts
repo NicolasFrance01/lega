@@ -4,7 +4,7 @@ import pool from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { logAction } from "./audit";
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
 import { getPatients } from "./patients";
 import { format } from "date-fns";
 import { redirect } from "next/navigation";
