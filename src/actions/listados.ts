@@ -331,8 +331,9 @@ export async function getApross() {
 }
 
 export async function createApross(formData: FormData) {
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
 
     const fecha = formData.get("fecha") as string;
@@ -386,11 +387,13 @@ export async function createApross(formData: FormData) {
     revalidatePath("/listados/apross");
     return { success: true };
   } catch (error: any) {
-    try { await client.query('ROLLBACK'); } catch (e) {}
+    if (client) {
+      try { await client.query('ROLLBACK'); } catch (e) {}
+    }
     console.error("CREATE_APROSS_ERROR:", error);
     return { error: String(error.message || error) };
   } finally {
-    client.release();
+    if (client) client.release();
   }
 }
 
