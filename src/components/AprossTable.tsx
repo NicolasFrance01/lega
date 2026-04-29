@@ -343,7 +343,7 @@ export default function AprossTable({ data }: { data: any[] }) {
                     <td style={{ padding: "1rem", fontWeight: 700, color: "var(--success)" }}>{item.coseguro ? `$${item.coseguro}` : "-"}</td>
                     <td style={{ padding: "1rem", fontWeight: 700 }}>{item.particular ? `$${item.particular}` : "-"}</td>
                     <td style={{ padding: "1rem" }}>
-                      {item.documents?.length > 0 ? (
+                      {Array.isArray(item.documents) && item.documents.length > 0 ? (
                         <div style={{ display: "flex", gap: "0.25rem" }}>
                           {item.documents.map((d: any) => (
                             <a key={d.id} href={d.url} target="_blank" title={d.filename} style={{ color: "var(--primary)" }}>
