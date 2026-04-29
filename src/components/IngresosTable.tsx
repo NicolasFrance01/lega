@@ -133,6 +133,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
               <th style={{ padding: '0.75rem 1rem' }}>COSEGURO</th>
               <th style={{ padding: '0.75rem 1rem' }}>PARTICULAR</th>
               <th style={{ padding: '0.75rem 1rem' }}>PAGO</th>
+              <th style={{ padding: '0.75rem 1rem' }}>OBSERVACIONES / DETALLES</th>
               <th style={{ padding: '0.75rem 1rem', textAlign: 'right', position: 'sticky', right: 0, background: 'var(--table-sticky-bg, #ffffff)', color: 'var(--table-sticky-text, #000000)', zIndex: 31, borderLeft: '1px solid var(--glass-border)', borderBottom: '2px solid var(--glass-border)' }}>ACCIONES</th>
             </tr>
           </thead>
@@ -280,6 +281,9 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
                       type="select" 
                       options={['-', 'EFECTIVO', 'TRANSFERENCIA', 'TARJETA']} 
                     />
+                  </td>
+                  <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem', fontStyle: 'italic', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={ing.observations}>
+                    {ing.observations || '-'}
                   </td>
                   <td style={{ 
                     padding: '0.75rem 1rem', 
