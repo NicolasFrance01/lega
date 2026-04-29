@@ -17,6 +17,7 @@ export default function IngresosPage() {
   const [editingIngreso, setEditingIngreso] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"table" | "reports">("table");
+  const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'MMMM yyyy', { locale: es }));
 
   useEffect(() => {
     fetchData();
@@ -34,8 +35,34 @@ export default function IngresosPage() {
     setIsModalOpen(true);
   }
 
-  // Filter logic across all columns
+  // Get unique months from data for the "sub-modules"
+  const availableMonths = Array.from(new Set(ingresos.map(ing => 
+    format(new Date(ing.appointment_date), 'MMMM yyyy', { locale: es })
+  ))).sort((a, b) => {
+    const monthNames = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+    const [monthA, yearA] = a.split(' ');
+    const [monthB, yearB] = b.split(' ');
+    
+    if (yearA !== yearB) return parseInt(yearB) - parseInt(yearA);
+    return monthNames.indexOf(monthB) - monthNames.indexOf(monthA);
+  });
+
+  // If selectedMonth is not in availableMonths and data is loaded, we might want to default to the latest month
+  useEffect(() => {
+    if (!loading && ingresos.length > 0 && !availableMonths.includes(selectedMonth)) {
+        // Only change if the current month has NO data and there is data in other months
+        const currentMonth = format(new Date(), 'MMMM yyyy', { locale: es });
+        if (!availableMonths.includes(currentMonth) && availableMonths.length > 0) {
+            setSelectedMonth(availableMonths[0]);
+        }
+    }
+  }, [loading, ingresos, availableMonths, selectedMonth]);
+
+  // Filter logic across all columns AND selected month
   const filteredIngresos = ingresos.filter(ing => {
+    const monthYear = format(new Date(ing.appointment_date), 'MMMM yyyy', { locale: es });
+    if (monthYear !== selectedMonth) return false;
+    
     if (!searchTerm) return true;
     const s = searchTerm.toLowerCase();
     return (
@@ -90,6 +117,38 @@ export default function IngresosPage() {
           )}
         </div>
       </div>
+
+      {view === 'table' && (
+        <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', scrollbarWidth: 'none' }}>
+          {availableMonths.length === 0 && !loading && (
+             <div className="glass-panel" style={{ padding: '0.5rem 1.5rem', borderRadius: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>
+               No hay datos históricos
+             </div>
+          )}
+          {availableMonths.map(month => (
+            <button
+              key={month}
+              onClick={() => setSelectedMonth(month)}
+              style={{
+                padding: '0.6rem 1.2rem',
+                borderRadius: '12px',
+                border: '1px solid var(--glass-border)',
+                background: selectedMonth === month ? 'var(--primary)' : 'var(--glass-bg)',
+                color: selectedMonth === month ? 'white' : 'var(--text-main)',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s',
+                textTransform: 'capitalize',
+                boxShadow: selectedMonth === month ? '0 4px 12px rgba(14, 165, 233, 0.3)' : 'none'
+              }}
+            >
+              {month}
+            </button>
+          ))}
+        </div>
+      )}
 
       {view === 'table' ? (
         <>
