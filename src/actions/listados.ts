@@ -361,6 +361,21 @@ export async function createApross(formData: FormData) {
 
     const month_group = fecha ? fecha.substring(0, 7) : format(new Date(), "yyyy-MM");
 
+    // --- Patient Persistence Logic ---
+    const dni_clean = dni ? String(dni).trim() : "-";
+    if (dni_clean !== "-") {
+      await client.query(
+        `INSERT INTO patients (id, name, dni, phone, health_insurance)
+         VALUES (gen_random_uuid(), $1, $2, $3, 'APROSS')
+         ON CONFLICT (dni) DO UPDATE SET
+            name = EXCLUDED.name,
+            phone = EXCLUDED.phone,
+            health_insurance = EXCLUDED.health_insurance`,
+        [paciente, dni_clean, telefono]
+      );
+    }
+    // ---------------------------------
+
     const res = await client.query(
       `INSERT INTO apross (fecha, paciente, dni, telefono, analisis, coseguro, particular, observaciones, month_group) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
@@ -414,6 +429,21 @@ export async function updateApross(id: number, data: any) {
       const cleaned = String(val).replace(/[^0.9.-]/g, "");
       return isNaN(parseFloat(cleaned)) ? null : cleaned;
     };
+
+    // --- Patient Persistence Logic ---
+    const dni_clean = dni ? String(dni).trim() : "-";
+    if (dni_clean !== "-") {
+      await pool.query(
+        `INSERT INTO patients (id, name, dni, phone, health_insurance)
+         VALUES (gen_random_uuid(), $1, $2, $3, 'APROSS')
+         ON CONFLICT (dni) DO UPDATE SET
+            name = EXCLUDED.name,
+            phone = EXCLUDED.phone,
+            health_insurance = EXCLUDED.health_insurance`,
+        [paciente, dni_clean, telefono]
+      );
+    }
+    // ---------------------------------
 
     await pool.query(
       `UPDATE apross SET 
