@@ -342,20 +342,32 @@ export async function createApross(formData: FormData) {
 
     const fecha = formData.get("fecha") as string;
     const paciente = formData.get("paciente") as string;
-    const dni = formData.get("dni") as string;
-    const telefono = formData.get("telefono") as string;
+    const dni = formData.get("dni") as string || "-";
+    const telefono = formData.get("telefono") as string || "-";
     const analisisList = formData.getAll("analisis") as string[];
-    const analisis = analisisList.filter(a => a.trim() !== "").join(", ");
-    const coseguro = formData.get("coseguro") as string;
-    const particular = formData.get("particular") as string;
+    const analisis = analisisList.filter(a => a && a.trim() !== "").join(", ");
+    
+    // Handle numeric fields that might contain "-"
+    const coseguroRaw = formData.get("coseguro") as string;
+    const particularRaw = formData.get("particular") as string;
+    
+    const parseNumeric = (val: string) => {
+      if (!val || val === "-") return null;
+      const cleaned = val.replace(/[^0.9.-]/g, "");
+      return isNaN(parseFloat(cleaned)) ? null : cleaned;
+    };
+
+    const coseguro = parseNumeric(coseguroRaw);
+    const particular = parseNumeric(particularRaw);
+    
     const observaciones = formData.get("observaciones") as string;
     const files = formData.getAll("documents") as File[];
 
-    const month_group = fecha.substring(0, 7); // 'YYYY-MM'
+    const month_group = fecha ? fecha.substring(0, 7) : format(new Date(), "yyyy-MM");
 
     const res = await client.query(
       `INSERT INTO apross (fecha, paciente, dni, telefono, analisis, coseguro, particular, observaciones, month_group) 
-       VALUES ($1, $2, $3, $4, $5, NULLIF($6, '')::numeric, NULLIF($7, '')::numeric, $8, $9) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
        RETURNING id`,
       [fecha, paciente, dni, telefono, analisis, coseguro, particular, observaciones, month_group]
     );
@@ -379,8 +391,9 @@ export async function createApross(formData: FormData) {
     revalidatePath("/listados/apross");
     return { success: true };
   } catch (error: any) {
-    await client.query('ROLLBACK');
-    return { error: error.message };
+    try { await client.query('ROLLBACK'); } catch (e) {}
+    console.error("CREATE_APROSS_ERROR:", error);
+    return { error: error.message || "Error desconocido al crear registro" };
   } finally {
     client.release();
   }

@@ -115,9 +115,13 @@ export default function AprossTable({ data }: { data: any[] }) {
             
             const res = await createApross(fd);
             if (!res.error) {
-              window.location.reload();
+              setShowNewRow(false);
+              setLoading(false);
+              // Instead of reload, we can let revalidatePath work, 
+              // but if the user feels it's stuck, reload is a safe bet.
+              window.location.reload(); 
             } else {
-              alert(res.error);
+              alert("Error al guardar: " + res.error);
               setLoading(false);
             }
           }} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.5rem" }}>
