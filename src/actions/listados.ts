@@ -314,15 +314,19 @@ export async function getApross() {
 
     const res = await pool.query(`
       SELECT a.*, 
-             (SELECT json_agg(json_build_object('id', d.id, 'url', d.document_url, 'filename', d.filename))
-              FROM apross_documents d WHERE d.apross_id = a.id) as documents
+             COALESCE((SELECT json_agg(json_build_object('id', d.id, 'url', d.document_url, 'filename', d.filename))
+              FROM apross_documents d WHERE d.apross_id = a.id), '[]'::json) as documents
       FROM apross a 
       ORDER BY month_group DESC, fecha DESC
     `);
     return { 
       data: res.rows.map(row => ({
         ...row,
+        id: Number(row.id),
         fecha: row.fecha ? new Date(row.fecha).toISOString() : null,
+        created_at: row.created_at ? new Date(row.created_at).toISOString() : null,
+        coseguro: row.coseguro ? row.coseguro.toString() : null,
+        particular: row.particular ? row.particular.toString() : null,
       })), 
       error: null 
     };
@@ -362,7 +366,7 @@ export async function createApross(formData: FormData) {
     for (const file of files) {
       if (file && file.size > 0) {
         const path = `apross/${Date.now()}-${file.name}`;
-        const blob = await put(path, file, { access: 'private' });
+        const blob = await put(path, file, { access: 'public' });
         await client.query(
           'INSERT INTO apross_documents (apross_id, document_url, filename) VALUES ($1, $2, $3)',
           [aprossId, blob.url, file.name]

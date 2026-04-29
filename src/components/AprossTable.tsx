@@ -278,7 +278,15 @@ export default function AprossTable({ data }: { data: any[] }) {
         <div key={month} className="glass-panel" style={{ overflow: "hidden" }}>
           <div style={{ padding: "1rem 1.5rem", background: "linear-gradient(90deg, var(--primary) 0%, #0ea5e9 100%)", color: "white" }}>
             <h4 style={{ margin: 0, textTransform: "capitalize", fontWeight: 800 }}>
-              {format(new Date(month + "-02"), "MMMM yyyy", { locale: es })}
+              {(() => {
+                try {
+                  const date = new Date(month + "-02");
+                  if (isNaN(date.getTime())) return month;
+                  return format(date, "MMMM yyyy", { locale: es });
+                } catch (e) {
+                  return month;
+                }
+              })()}
             </h4>
           </div>
           <div className="table-responsive">
