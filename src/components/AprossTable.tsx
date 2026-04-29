@@ -126,7 +126,6 @@ export default function AprossTable({ data }: { data: any[] }) {
               e.preventDefault();
               setLoading(true);
               const fd = new FormData(e.currentTarget);
-              files.forEach(f => fd.append("documents", f));
               
               startTransition(async () => {
                 try {
@@ -262,6 +261,7 @@ export default function AprossTable({ data }: { data: any[] }) {
                 <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 600 }}>Click para subir archivos</p>
                 <input 
                   id="file-input"
+                  name="documents"
                   type="file" 
                   multiple 
                   accept="image/*,application/pdf" 

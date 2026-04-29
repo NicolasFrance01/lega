@@ -374,13 +374,7 @@ export async function createApross(formData: FormData) {
     for (const file of files) {
       if (file && file.size > 0) {
         const path = `apross/${Date.now()}-${file.name}`;
-        // More robust upload by using ArrayBuffer
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const blob = await put(path, buffer, { 
-          access: 'public',
-          contentType: file.type || 'application/octet-stream'
-        });
+        const blob = await put(path, file, { access: 'public' });
         await client.query(
           'INSERT INTO apross_documents (apross_id, document_url, filename) VALUES ($1, $2, $3)',
           [aprossId, blob.url, file.name]
