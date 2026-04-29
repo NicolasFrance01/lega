@@ -117,15 +117,12 @@ export default function AprossTable({ data }: { data: any[] }) {
             if (!fd.get("dni")) fd.set("dni", "-");
             if (!fd.get("telefono")) fd.set("telefono", "-");
             
-            const res = await createApross(fd);
-            if (!res.error) {
-              setShowNewRow(false);
-              setLoading(false);
-              // revalidatePath will update the 'data' prop, and our useEffect will update 'items'
-            } else {
+            const res = await createApross(fd) as any;
+            if (res && res.error) {
               alert("Error al guardar: " + res.error);
               setLoading(false);
             }
+            // If success, the server will redirect us automatically
           }} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.5rem" }}>
             
             <div style={{ position: "relative" }}>

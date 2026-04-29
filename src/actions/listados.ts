@@ -7,6 +7,7 @@ import { logAction } from "./audit";
 import { put } from "@vercel/blob";
 import { getPatients } from "./patients";
 import { format } from "date-fns";
+import { redirect } from "next/navigation";
 
 // --- PENDIENTES ---
 
@@ -382,8 +383,7 @@ export async function createApross(formData: FormData) {
 
     await client.query('COMMIT');
     await logAction("CREATE_APROSS", { paciente, month_group });
-    revalidatePath("/listados/apross");
-    return { success: true };
+    // We don't return here yet, we need to release first
   } catch (error: any) {
     try { await client.query('ROLLBACK'); } catch (e) {}
     console.error("CREATE_APROSS_ERROR:", error);
@@ -391,6 +391,9 @@ export async function createApross(formData: FormData) {
   } finally {
     client.release();
   }
+
+  // Redirect must be called outside try-catch
+  redirect("/listados/apross");
 }
 
 export async function updateApross(id: number, data: any) {
