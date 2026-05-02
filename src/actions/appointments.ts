@@ -215,8 +215,9 @@ export async function updateAppointment(formData: FormData) {
     
     const id = formData.get("id");
     const appointment_date = formData.get("appointment_date") as string;
-    const analysis_type = formData.get("analysis_type") as string;
-    const aire_test_type = formData.get("aire_test_type") as string;
+    const analysisNamesRaw = formData.getAll("analysis_name") as string[];
+    const analysis_type = (formData.get("analysis_type") as string) || analysisNamesRaw[0] || null;
+    const aire_test_type = (formData.get("aire_test_type") as string) || (formData.getAll("aire_test_subtype") as string[])[0] || null;
     const health_insurance = formData.get("health_insurance") as string;
     const observations = formData.get("observations") as string;
     const is_domicilio = formData.get("is_domicilio") === "true";
@@ -245,7 +246,7 @@ export async function updateAppointment(formData: FormData) {
     );
 
     // Sync Multiple Analyses
-    const analysisNames = formData.getAll("analysis_name") as string[];
+    const analysisNames = analysisNamesRaw;
     const analysisSubtypes = formData.getAll("aire_test_subtype") as string[];
 
     if (analysisNames.length > 0) {
