@@ -6,7 +6,8 @@ import { es } from "date-fns/locale";
 import { Check, Edit2, Trash2, Search, Filter, Calendar as CalendarIcon, Clock, User, Shield, CreditCard, DollarSign, Mail, MapPin, ArrowDown, ArrowUp, Bell } from "lucide-react";
 import { updateIngresoField, deleteIngreso, updateInternalNote, markInternalNoteAsRead, updateBiochemicalNotice } from "@/actions/ingresos";
 
-export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: { ingresos: any[], onEdit: (ingreso: any) => void, onRefresh: () => void, period: string }) {
+export default function IngresosTable({ ingresos, onEdit, onRefresh, period, userRole }: { ingresos: any[], onEdit: (ingreso: any) => void, onRefresh: () => void, period: string, userRole?: string }) {
+  const isBioq = userRole === 'bioquimico';
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const todayRef = useRef<HTMLTableRowElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -56,9 +57,17 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
     setEditingCell(null);
   }
 
-  const EditableCell = ({ id, field, value, type = "text", options = [] }: any) => {
+  const EditableCell = ({ id, field, value, type = "text", options = [], isReadOnly = false }: any) => {
     const isEditing = editingCell?.id === id && editingCell?.field === field;
     const [localValue, setLocalValue] = useState(value);
+
+    if (isReadOnly) {
+      return (
+        <div style={{ minHeight: '1.2rem', minWidth: '2rem' }}>
+          {type === "number" && value ? `$${value}` : (value || '-')}
+        </div>
+      );
+    }
 
     if (isEditing) {
       if (type === "select") {
@@ -168,7 +177,24 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
                     {showDate ? currentDate : ""}
                   </td>
                   <td style={{ padding: '0.75rem 1rem' }}>
-                    {ing.result_date ? format(new Date(ing.result_date), "dd/MM") : '-'}
+                    {editingCell?.id === ing.id && editingCell?.field === 'result_date' ? (
+                      <input
+                        autoFocus
+                        type="date"
+                        defaultValue={ing.result_date ? format(new Date(ing.result_date), 'yyyy-MM-dd') : ''}
+                        onBlur={(e) => handleCellEdit(ing.id, 'result_date', e.target.value || null)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleCellEdit(ing.id, 'result_date', (e.target as HTMLInputElement).value || null)}
+                        style={{ padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid var(--primary)', fontSize: '0.85rem', background: 'var(--glass-bg)', color: 'var(--text-main)' }}
+                      />
+                    ) : (
+                      <div
+                        onClick={() => setEditingCell({ id: ing.id, field: 'result_date' })}
+                        style={{ cursor: 'pointer', minHeight: '1.2rem', minWidth: '2rem' }}
+                        className="editable-cell-hover"
+                      >
+                        {ing.result_date ? format(new Date(ing.result_date), "dd/MM") : '-'}
+                      </div>
+                    )}
                   </td>
                   <td style={{ padding: '0.75rem 1rem' }}>
                     <select
@@ -225,7 +251,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
                     </button>
                   </td>
                   <td style={{ padding: '0.75rem 1rem', color: 'var(--text-main)', fontWeight: 600 }}>
-                    <EditableCell id={ing.id} field="report_id" value={ing.report_id} />
+                    <EditableCell id={ing.id} field="report_id" value={ing.report_id} isReadOnly={isBioq} />
                   </td>
                   <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-main)' }}>
                     {ing.name}
@@ -246,7 +272,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
                     {ing.phone || '-'}
                   </td>
                   <td style={{ padding: '0.75rem 1rem', color: 'var(--text-main)' }}>
-                    <EditableCell id={ing.id} field="professional_name" value={ing.professional_name} />
+                    <EditableCell id={ing.id} field="professional_name" value={ing.professional_name} isReadOnly={isBioq} />
                   </td>
                   <td style={{ padding: '0.75rem 1rem', color: 'var(--primary)', fontWeight: 700 }}>
                     {ing.analyses && ing.analyses.length > 0 ? (
@@ -268,18 +294,19 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
                     </span>
                   </td>
                   <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--success)' }}>
-                    <EditableCell id={ing.id} field="coseguro" value={ing.coseguro} type="number" />
+                    <EditableCell id={ing.id} field="coseguro" value={ing.coseguro} type="number" isReadOnly={isBioq} />
                   </td>
                   <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>
-                    <EditableCell id={ing.id} field="particular_price" value={ing.particular_price} type="number" />
+                    <EditableCell id={ing.id} field="particular_price" value={ing.particular_price} type="number" isReadOnly={isBioq} />
                   </td>
                   <td style={{ padding: '0.75rem 1rem' }}>
-                    <EditableCell 
-                      id={ing.id} 
-                      field="payment_method" 
-                      value={ing.payment_method} 
-                      type="select" 
-                      options={['-', 'EFECTIVO', 'TRANSFERENCIA', 'TARJETA']} 
+                    <EditableCell
+                      id={ing.id}
+                      field="payment_method"
+                      value={ing.payment_method}
+                      type="select"
+                      options={['-', 'EFECTIVO', 'TRANSFERENCIA', 'TARJETA']}
+                      isReadOnly={isBioq}
                     />
                   </td>
                   <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem', fontStyle: 'italic', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={ing.observations}>
@@ -296,22 +323,24 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period }: {
                     borderLeft: '1px solid var(--glass-border)',
                     borderBottom: '1px solid var(--glass-border)'
                   }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                      <button 
-                        onClick={() => onEdit(ing)}
-                        style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(14, 165, 233, 0.1)', color: 'var(--primary)', border: 'none', cursor: 'pointer' }}
-                        title="Editar"
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(ing.id)}
-                        style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: 'none', cursor: 'pointer' }}
-                        title="Eliminar"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+                    {!isBioq && (
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                        <button
+                          onClick={() => onEdit(ing)}
+                          style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(14, 165, 233, 0.1)', color: 'var(--primary)', border: 'none', cursor: 'pointer' }}
+                          title="Editar"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(ing.id)}
+                          style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: 'none', cursor: 'pointer' }}
+                          title="Eliminar"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               );

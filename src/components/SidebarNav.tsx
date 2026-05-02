@@ -9,23 +9,33 @@ import { IngresosIcon } from "./icons/IngresosIcon";
 export default function SidebarNav({ userRole, isCollapsed }: { userRole?: string, isCollapsed?: boolean }) {
   const pathname = usePathname();
 
-  const navItems = [
-    { name: "Turnos en Lista", path: "/", icon: <CalendarDays size={20} /> },
-    { name: "Ingresos", path: "/ingresos", icon: <IngresosIcon size={20} /> },
-    { name: "Pacientes", path: "/pacientes", icon: <Users size={20} /> },
-    { name: "Calendario Interno", path: "/calendario", icon: <Calendar size={20} /> },
-    { name: "Turnos Aire", path: "/calendario-aire", icon: <Wind size={20} /> },
-    { name: "Domicilio", path: "/calendario-domicilio", icon: <Car size={20} /> },
-    { name: "Listados", path: "/listados", icon: <ListTodo size={20} /> },
-  ];
+  const isBioq = userRole === 'bioquimico';
 
-  if (userRole === 'admin') {
+  const navItems = isBioq
+    ? [
+        { name: "Ingresos", path: "/ingresos", icon: <IngresosIcon size={20} /> },
+        { name: "Pacientes", path: "/pacientes", icon: <Users size={20} /> },
+        { name: "Mi Perfil", path: "/perfil", icon: <UserCircle size={20} /> },
+      ]
+    : [
+        { name: "Turnos en Lista", path: "/", icon: <CalendarDays size={20} /> },
+        { name: "Ingresos", path: "/ingresos", icon: <IngresosIcon size={20} /> },
+        { name: "Pacientes", path: "/pacientes", icon: <Users size={20} /> },
+        { name: "Calendario Interno", path: "/calendario", icon: <Calendar size={20} /> },
+        { name: "Turnos Aire", path: "/calendario-aire", icon: <Wind size={20} /> },
+        { name: "Domicilio", path: "/calendario-domicilio", icon: <Car size={20} /> },
+        { name: "Listados", path: "/listados", icon: <ListTodo size={20} /> },
+      ];
+
+  if (!isBioq && userRole === 'admin') {
     navItems.push({ name: "Prestaciones", path: "/prestaciones", icon: <PrestacionesIcon size={20} /> });
     navItems.push({ name: "Resumen Médico", path: "/resumen-medico", icon: <ClipboardList size={20} /> });
     navItems.push({ name: "Usuarios", path: "/usuarios", icon: <Users size={20} /> });
   }
 
-  navItems.push({ name: "Mi Perfil", path: "/perfil", icon: <UserCircle size={20} /> });
+  if (!isBioq) {
+    navItems.push({ name: "Mi Perfil", path: "/perfil", icon: <UserCircle size={20} /> });
+  }
 
   return (
     <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

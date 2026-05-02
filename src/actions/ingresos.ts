@@ -39,8 +39,11 @@ export async function getIngresos(search?: string) {
 
 import { logAction } from './audit';
 import { put } from '@vercel/blob';
+import { getSession } from '@/lib/auth';
 
 export async function createIngreso(formData: FormData) {
+  const session = await getSession() as any;
+  if (session?.role === 'bioquimico') return { error: 'Sin permiso' };
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -188,6 +191,8 @@ export async function createIngreso(formData: FormData) {
 }
 
 export async function deleteIngreso(id: string) {
+  const session = await getSession() as any;
+  if (session?.role === 'bioquimico') return { error: 'Sin permiso' };
   try {
     const res = await pool.query('SELECT a.*, p.name FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = $1', [id]);
     const details = res.rows[0];
@@ -207,7 +212,13 @@ export async function deleteIngreso(id: string) {
   }
 }
 
+const BIOQ_ALLOWED_FIELDS = ['result_date', 'checkbox_checked'];
+
 export async function updateIngresoField(id: string, field: string, value: any) {
+  const session = await getSession() as any;
+  if (session?.role === 'bioquimico' && !BIOQ_ALLOWED_FIELDS.includes(field)) {
+    return { error: 'Sin permiso' };
+  }
   try {
     const res = await pool.query('SELECT a.*, p.name FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = $1', [id]);
     const details = res.rows[0];
