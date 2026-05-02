@@ -33,8 +33,21 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  const BIOQUIMICO_ALLOWED = ['/ingresos', '/pacientes', '/perfil'];
+
   try {
-    await jwtVerify(token, SECRET_KEY);
+    const { payload } = await jwtVerify(token, SECRET_KEY);
+    const role = (payload as any).role;
+
+    if (role === 'bioquimico') {
+      const isAllowed = BIOQUIMICO_ALLOWED.some(
+        (allowed) => pathname === allowed || pathname.startsWith(allowed + '/')
+      );
+      if (!isAllowed) {
+        return NextResponse.redirect(new URL('/ingresos', request.url));
+      }
+    }
+
     return NextResponse.next({
       request: {
         headers: requestHeaders,
