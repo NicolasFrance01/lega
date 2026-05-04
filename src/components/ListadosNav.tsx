@@ -8,7 +8,6 @@ export default function ListadosNav() {
 
   const tabs = [
     { name: "Pendientes", href: "/listados/pendientes" },
-    { name: "Obras Sociales", href: "/listados/facturacion" },
     { name: "Apross", href: "/listados/apross" },
     { name: "Cobranzas", href: "/listados/cobranzas" },
     { name: "Indicaciones WS", href: "/listados/indicaciones" },

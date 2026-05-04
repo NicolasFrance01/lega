@@ -573,7 +573,7 @@ export async function createFacturacionOS(formData: FormData) {
 
     await client.query('COMMIT');
     await logAction("CREATE_FACTURACION_OS", { obra_social, nro_factura, fecha });
-    revalidatePath("/listados/facturacion");
+    revalidatePath("/facturacion");
     return { success: true };
   } catch (error: any) {
     if (client) await client.query('ROLLBACK');
@@ -626,7 +626,7 @@ export async function updateFacturacionOS(id: number, formData: FormData) {
     }
 
     await client.query('COMMIT');
-    revalidatePath("/listados/facturacion");
+    revalidatePath("/facturacion");
     return { success: true };
   } catch (error: any) {
     if (client) await client.query('ROLLBACK');
@@ -643,7 +643,7 @@ export async function updateFacturacionOSSeguimiento(id: number, seguimiento: st
     if (!['admin', 'gerente'].includes(session.role)) throw new Error("Sin permiso");
 
     await pool.query(`UPDATE facturacion_os SET seguimiento = $1 WHERE id = $2`, [seguimiento, id]);
-    revalidatePath("/listados/facturacion");
+    revalidatePath("/facturacion");
     return { success: true };
   } catch (error: any) {
     return { error: error.message };
@@ -657,7 +657,7 @@ export async function deleteFacturacionOS(id: number) {
     if (session.role === 'bioquimico') throw new Error("Sin permiso");
 
     await pool.query("DELETE FROM facturacion_os WHERE id = $1", [id]);
-    revalidatePath("/listados/facturacion");
+    revalidatePath("/facturacion");
     return { success: true };
   } catch (error: any) {
     return { error: error.message };
@@ -674,7 +674,7 @@ export async function deleteFacturacionOSDocument(id: number) {
       try { await del(res.rows[0].document_url); } catch (e) {}
     }
     await pool.query('DELETE FROM facturacion_os_documents WHERE id = $1', [id]);
-    revalidatePath("/listados/facturacion");
+    revalidatePath("/facturacion");
     return { success: true };
   } catch (error: any) {
     return { error: error.message };

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Users, UserCircle, Calendar, Wind, ListTodo, Car, ClipboardList, LogIn } from "lucide-react";
+import { CalendarDays, Users, UserCircle, Calendar, Wind, ListTodo, Car, ClipboardList, LogIn, Receipt } from "lucide-react";
 import { PrestacionesIcon } from "./icons/PrestacionesIcon";
 import { IngresosIcon } from "./icons/IngresosIcon";
 
@@ -25,6 +25,7 @@ export default function SidebarNav({ userRole, isCollapsed }: { userRole?: strin
         { name: "Turnos Aire", path: "/calendario-aire", icon: <Wind size={20} /> },
         { name: "Domicilio", path: "/calendario-domicilio", icon: <Car size={20} /> },
         { name: "Listados", path: "/listados", icon: <ListTodo size={20} /> },
+        { name: "Facturacion", path: "/facturacion", icon: <Receipt size={20} /> },
       ];
 
   if (!isBioq && userRole === 'admin') {
