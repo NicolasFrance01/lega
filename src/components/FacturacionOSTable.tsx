@@ -39,7 +39,7 @@ export default function FacturacionOSTable({ allData, userRole }: Props) {
   const [openDocDropdown, setOpenDocDropdown] = useState<number | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
 
   const canEditSeguimiento = userRole === 'admin' || userRole === 'gerente';
@@ -141,10 +141,10 @@ export default function FacturacionOSTable({ allData, userRole }: Props) {
         ))}
       </div>
 
-      {/* Search + Filters + New button */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", flex: 1, alignItems: "center" }}>
-          {/* Year filter */}
+      {/* Filters + New button */}
+      <div className="glass-panel" style={{ padding: "1.25rem 1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+        {/* Row 1: year selector + search + new button */}
+        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
           <select
             value={filterYear}
             onChange={(e) => { setFilterYear(e.target.value); setFilterMonth(""); }}
@@ -155,29 +155,15 @@ export default function FacturacionOSTable({ allData, userRole }: Props) {
             {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
 
-          {/* Month filter */}
-          <select
-            value={filterMonth}
-            onChange={(e) => setFilterMonth(e.target.value)}
-            className="input-field"
-            style={{ width: "auto", minWidth: "130px" }}
-          >
-            <option value="">Todos los meses</option>
-            {MONTH_NAMES.map((name, i) => (
-              <option key={i} value={String(i + 1).padStart(2, "0")}>{name}</option>
-            ))}
-          </select>
-
-          {/* Text search */}
-          <div style={{ position: "relative", flex: 1, maxWidth: "360px" }}>
-            <Search size={18} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+          <div style={{ position: "relative", flex: 1, maxWidth: "340px" }}>
+            <Search size={16} style={{ position: "absolute", left: "0.9rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
             <input
               type="text"
               placeholder="Buscar factura, detalle..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="input-field"
-              style={{ paddingLeft: "2.8rem" }}
+              style={{ paddingLeft: "2.5rem" }}
             />
           </div>
 
@@ -186,18 +172,66 @@ export default function FacturacionOSTable({ allData, userRole }: Props) {
               onClick={() => { setFilterYear(""); setFilterMonth(""); setSearchTerm(""); }}
               style={{ fontSize: "0.8rem", color: "var(--text-muted)", background: "none", border: "1px solid var(--glass-border)", borderRadius: "8px", padding: "0.4rem 0.8rem", cursor: "pointer" }}
             >
-              Limpiar filtros
+              Limpiar
             </button>
           )}
+
+          <div style={{ marginLeft: "auto" }}>
+            <button
+              onClick={() => { resetNewForm(); setShowNewModal(true); }}
+              className="btn-primary"
+              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+            >
+              <Plus size={18} /> Nueva Facturacion
+            </button>
+          </div>
         </div>
 
-        <button
-          onClick={() => { resetNewForm(); setShowNewModal(true); }}
-          className="btn-primary"
-          style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-        >
-          <Plus size={18} /> Nueva Facturacion
-        </button>
+        {/* Row 2: month buttons */}
+        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+          {MONTH_NAMES.map((name, i) => {
+            const mm = String(i + 1).padStart(2, "0");
+            const isActive = filterMonth === mm;
+            // count records for this month (respecting year filter)
+            const count = items.filter(it => {
+              const mg: string = it.month_group || "";
+              if (filterYear && !mg.startsWith(filterYear)) return false;
+              return mg.substring(5, 7) === mm;
+            }).length;
+            return (
+              <button
+                key={mm}
+                onClick={() => setFilterMonth(isActive ? "" : mm)}
+                style={{
+                  padding: "0.35rem 0.75rem",
+                  borderRadius: "20px",
+                  border: isActive ? "none" : "1px solid var(--glass-border)",
+                  cursor: "pointer",
+                  fontWeight: isActive ? 700 : 500,
+                  fontSize: "0.8rem",
+                  transition: "all 0.15s",
+                  background: isActive ? "var(--primary)" : count > 0 ? "var(--glass-bg)" : "transparent",
+                  color: isActive ? "white" : count > 0 ? "var(--text-main)" : "var(--text-muted)",
+                  opacity: count === 0 && !isActive ? 0.45 : 1,
+                }}
+              >
+                {name.substring(0, 3)}
+                {count > 0 && (
+                  <span style={{
+                    marginLeft: "0.35rem",
+                    padding: "0.05rem 0.35rem",
+                    borderRadius: "10px",
+                    fontSize: "0.7rem",
+                    background: isActive ? "rgba(255,255,255,0.25)" : "rgba(14,165,233,0.15)",
+                    color: isActive ? "white" : "var(--primary)",
+                  }}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* New Entry Modal */}
