@@ -513,7 +513,7 @@ export async function deleteApross(id: number) {
 
 // --- FACTURACION OBRAS SOCIALES ---
 
-const OBRAS_SOCIALES = ['OSDE', 'SWISS MEDICAL', 'GALENO', 'MEDIFE', 'CIBIC', 'METABOLOMICA', 'FEDERACION'];
+// defined in src/lib/constants.ts — not re-exported here (use server files can only export async functions)
 
 export async function getFacturacionOS(obraSocial: string) {
   try {
@@ -681,4 +681,3 @@ export async function deleteFacturacionOSDocument(id: number) {
   }
 }
 
-export { OBRAS_SOCIALES };

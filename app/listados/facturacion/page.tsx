@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getFacturacionOS, OBRAS_SOCIALES } from "@/actions/listados";
+import { getFacturacionOS } from "@/actions/listados";
+import { OBRAS_SOCIALES } from "@/lib/constants";
 import FacturacionOSTable from "@/components/FacturacionOSTable";
 
 export default async function FacturacionOSPage() {
