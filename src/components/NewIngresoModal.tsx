@@ -260,8 +260,8 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
   );
 }
 
-function IngresoForm({ 
-  mode, nextReportId, selectedPatient, editingIngreso, setSelectedPatient, handleSubmit, loading, error, inputStyle, searchResults, searchQuery, setSearchQuery, autofillPatient, onClose, analyses, setAnalyses 
+function IngresoForm({
+  mode, nextReportId, selectedPatient, editingIngreso, setSelectedPatient, handleSubmit, loading, error, inputStyle, searchResults, searchQuery, setSearchQuery, autofillPatient, onClose, analyses, setAnalyses
 }: any) {
   const addAnalysis = () => setAnalyses([...analyses, { name: "", subtype: "" }]);
   const removeAnalysis = (index: number) => setAnalyses(analyses.filter((_: any, i: number) => i !== index));
@@ -270,6 +270,16 @@ function IngresoForm({
     newAnalyses[index] = { ...newAnalyses[index], [field]: value };
     setAnalyses(newAnalyses);
   };
+
+  const defaultAppointmentDate = (() => {
+    const src = editingIngreso || selectedPatient;
+    if (src?.appointment_date) {
+      return new Date(src.appointment_date).toISOString().split('T')[0];
+    }
+    return new Date().toISOString().split('T')[0];
+  })();
+  const [appointmentDate, setAppointmentDate] = useState(defaultAppointmentDate);
+
   return (
     <form 
       key={selectedPatient?.id || 'new'} 
@@ -410,19 +420,32 @@ function IngresoForm({
             ))}
           </datalist>
         </div>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>N° INFORME</label>
-          <input 
-            name="report_id" 
-            key={selectedPatient?.report_id || nextReportId} 
-            defaultValue={selectedPatient?.report_id || nextReportId} 
-            style={inputStyle} 
-            placeholder="Ej: 94113" 
-          />
-        </div>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Fecha de Resultado</label>
-          <input name="result_date" type="date" defaultValue={selectedPatient?.result_date ? new Date(selectedPatient.result_date).toISOString().split('T')[0] : ''} style={inputStyle} />
+        <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Fecha de Ingreso</label>
+            <input
+              name="appointment_date"
+              type="date"
+              value={appointmentDate}
+              onChange={(e) => setAppointmentDate(e.target.value)}
+              required
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>N° INFORME</label>
+            <input
+              name="report_id"
+              key={selectedPatient?.report_id || nextReportId}
+              defaultValue={selectedPatient?.report_id || nextReportId}
+              style={inputStyle}
+              placeholder="Ej: 94113"
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Fecha de Resultado</label>
+            <input name="result_date" type="date" defaultValue={selectedPatient?.result_date ? new Date(selectedPatient.result_date).toISOString().split('T')[0] : ''} style={inputStyle} />
+          </div>
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Profesional</label>

@@ -111,13 +111,14 @@ export async function createIngreso(formData: FormData) {
       if (existingId) {
         // Update existing appointment
         await client.query(
-          `UPDATE appointments SET 
+          `UPDATE appointments SET
             analysis_type = $1, aire_test_type = $2, observations = $3, status = 'CONFIRMAR ASISTENCIA',
-            report_id = $4, result_date = NULLIF($5, '')::timestamp, 
-            coseguro = NULLIF($6, '')::numeric, particular_price = NULLIF($7, '')::numeric, 
-            payment_method = $8, professional_name = $9, is_ingreso = TRUE
+            report_id = $4, result_date = NULLIF($5, '')::timestamp,
+            coseguro = NULLIF($6, '')::numeric, particular_price = NULLIF($7, '')::numeric,
+            payment_method = $8, professional_name = $9, is_ingreso = TRUE,
+            appointment_date = COALESCE(NULLIF($11, '')::timestamp, appointment_date)
            WHERE id = $10`,
-          [analysis_type, aire_test_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, existingId]
+          [analysis_type, aire_test_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, existingId, appointment_date]
         );
         aptId = existingId;
         // Clean old analyses and insert new ones
