@@ -20,7 +20,7 @@ export async function getIngresos(search?: string) {
       WHERE a.is_ingreso = TRUE 
          OR a.status = 'COMPLETADO' 
          OR a.status = 'CONFIRMAR ASISTENCIA'
-      ORDER BY a.appointment_date::date ASC, CAST(NULLIF(a.report_id, '') AS INTEGER) ASC NULLS LAST
+      ORDER BY a.appointment_date::date ASC, CASE WHEN a.report_id ~ '^[0-9]+$' THEN a.report_id::INTEGER ELSE NULL END ASC NULLS LAST
     `);
 
     return { 
