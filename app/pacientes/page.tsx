@@ -4,10 +4,13 @@ import { format } from "date-fns";
 import PatientFilters from "@/components/PatientFilters";
 import PatientTableActions from "@/components/PatientTableActions";
 import { Suspense } from "react";
+import { getSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function PacientesPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const session = await getSession() as any;
+  const userRole: string = session?.role || 'staff';
   const { data: allPatients, error } = await getPatients();
   const { q } = await searchParams;
 
@@ -40,17 +43,17 @@ export default async function PacientesPage({ searchParams }: { searchParams: Pr
 
         {error && <div style={{ color: 'var(--danger)', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px' }}>Error cargando base de datos: {error}</div>}
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <div style={{ overflowX: 'scroll' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
-                <th style={{ padding: '1rem', fontWeight: 500 }}>Nombre</th>
-                <th style={{ padding: '1rem', fontWeight: 500 }}>DNI</th>
-                <th style={{ padding: '1rem', fontWeight: 500 }}>Teléfono</th>
-                <th style={{ padding: '1rem', fontWeight: 500 }}>Obra Social</th>
-                <th style={{ padding: '1rem', fontWeight: 500 }}>Fecha Nacimiento</th>
-                <th style={{ padding: '1rem', fontWeight: 500 }}>Email</th>
-                <th style={{ padding: '1rem', fontWeight: 500, textAlign: 'right' }}>Acciones</th>
+                <th style={{ padding: '0.65rem 0.75rem', fontWeight: 500, whiteSpace: 'nowrap' }}>Nombre</th>
+                <th style={{ padding: '0.65rem 0.75rem', fontWeight: 500, whiteSpace: 'nowrap' }}>DNI</th>
+                <th style={{ padding: '0.65rem 0.75rem', fontWeight: 500, whiteSpace: 'nowrap' }}>Teléfono</th>
+                <th style={{ padding: '0.65rem 0.75rem', fontWeight: 500, whiteSpace: 'nowrap' }}>Obra Social</th>
+                <th style={{ padding: '0.65rem 0.75rem', fontWeight: 500, whiteSpace: 'nowrap' }}>Nacimiento</th>
+                <th style={{ padding: '0.65rem 0.75rem', fontWeight: 500, whiteSpace: 'nowrap' }}>Email</th>
+                <th style={{ padding: '0.65rem 0.75rem', fontWeight: 500, textAlign: 'right', whiteSpace: 'nowrap' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -66,22 +69,22 @@ export default async function PacientesPage({ searchParams }: { searchParams: Pr
               ) : (
                 patients.map((p: any) => (
                   <tr key={p.id} className="hoverable-row" style={{ borderBottom: '1px solid var(--glass-border)', transition: 'background 0.2s ease' }}>
-                    <td style={{ padding: '1rem', fontWeight: 600 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ width: '30px', height: '30px', background: 'var(--primary)', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }}>
+                    <td style={{ padding: '0.65rem 0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ width: '26px', height: '26px', flexShrink: 0, background: 'var(--primary)', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem' }}>
                           {p.name ? p.name.charAt(0).toUpperCase() : '?'}
                         </div>
                         {p.name || 'Sin nombre'}
                       </div>
                     </td>
-                    <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{p.dni}</td>
-                    <td style={{ padding: '1rem', color: 'var(--text-muted)', fontWeight: 500 }}>{p.phone || '-'}</td>
-                    <td style={{ padding: '1rem' }}>
-                      <span style={{ background: 'rgba(0,0,0,0.05)', padding: '0.25rem 0.75rem', borderRadius: '12px', fontSize: '0.875rem', fontWeight: 500 }}>
+                    <td style={{ padding: '0.65rem 0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{p.dni}</td>
+                    <td style={{ padding: '0.65rem 0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{p.phone || '-'}</td>
+                    <td style={{ padding: '0.65rem 0.75rem' }}>
+                      <span style={{ background: 'rgba(0,0,0,0.05)', padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 500, whiteSpace: 'nowrap' }}>
                         {p.health_insurance}
                       </span>
                     </td>
-                    <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>
+                    <td style={{ padding: '0.65rem 0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                       {(() => {
                         try {
                           if (!p.birth_date) return "-";
@@ -93,9 +96,11 @@ export default async function PacientesPage({ searchParams }: { searchParams: Pr
                         }
                       })()}
                     </td>
-                    <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{p.email || '-'}</td>
-                    <td style={{ padding: '1rem', textAlign: 'right' }}>
-                      <PatientTableActions patient={p} />
+                    <td style={{ padding: '0.65rem 0.75rem', color: 'var(--text-muted)', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={p.email || ''}>
+                      {p.email || '-'}
+                    </td>
+                    <td style={{ padding: '0.65rem 0.75rem', textAlign: 'right' }}>
+                      <PatientTableActions patient={p} userRole={userRole} />
                     </td>
                   </tr>
                 ))

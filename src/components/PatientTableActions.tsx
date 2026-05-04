@@ -5,9 +5,10 @@ import { History, CalendarPlus, UserCog } from "lucide-react";
 import AppointmentModal from "./AppointmentModal";
 import EditPatientModal from "./EditPatientModal";
 
-export default function PatientTableActions({ patient }: { patient: any }) {
+export default function PatientTableActions({ patient, userRole }: { patient: any, userRole?: string }) {
   const [isAptModalOpen, setIsAptModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const isBioq = userRole === 'bioquimico';
 
   return (
     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
@@ -42,20 +43,22 @@ export default function PatientTableActions({ patient }: { patient: any }) {
         <UserCog size={14} color="var(--primary)" /> Editar
       </button>
       
-      <button 
-        onClick={() => setIsAptModalOpen(true)}
-        style={{
-          display: 'flex', alignItems: 'center', gap: '0.4rem', 
-          padding: '0.4rem 0.8rem', background: 'var(--primary)', 
-          color: 'white', fontWeight: 600, fontSize: '0.8rem', 
-          borderRadius: '6px', transition: 'all 0.2s', border: 'none',
-          cursor: 'pointer', boxShadow: '0 2px 4px rgba(14, 165, 233, 0.2)'
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-        onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-      >
-        <CalendarPlus size={14} /> Reagendar
-      </button>
+      {!isBioq && (
+        <button
+          onClick={() => setIsAptModalOpen(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '0.4rem',
+            padding: '0.4rem 0.8rem', background: 'var(--primary)',
+            color: 'white', fontWeight: 600, fontSize: '0.8rem',
+            borderRadius: '6px', transition: 'all 0.2s', border: 'none',
+            cursor: 'pointer', boxShadow: '0 2px 4px rgba(14, 165, 233, 0.2)'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          <CalendarPlus size={14} /> Reagendar
+        </button>
+      )}
 
       <AppointmentModal 
         key={patient.id + isAptModalOpen}
