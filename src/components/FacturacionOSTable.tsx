@@ -26,10 +26,14 @@ interface Props {
   userRole: string;
 }
 
+const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
 export default function FacturacionOSTable({ allData, userRole }: Props) {
   const [activeOS, setActiveOS] = useState(OBRAS_SOCIALES[0]);
   const [dataByOS, setDataByOS] = useState<Record<string, any[]>>(allData);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterYear, setFilterYear] = useState<string>("");
+  const [filterMonth, setFilterMonth] = useState<string>("");
   const [showNewModal, setShowNewModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [openDocDropdown, setOpenDocDropdown] = useState<number | null>(null);
@@ -41,12 +45,26 @@ export default function FacturacionOSTable({ allData, userRole }: Props) {
   const canEditSeguimiento = userRole === 'admin' || userRole === 'gerente';
   const items = dataByOS[activeOS] || [];
 
-  const filteredItems = items.filter(it =>
-    (it.nro_factura || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (it.detalle || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (it.seguimiento || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (it.fecha || "").includes(searchTerm)
-  );
+  // Derive available years from current OS data
+  const availableYears = Array.from(new Set(
+    items.map(it => (it.month_group || "").substring(0, 4)).filter(Boolean)
+  )).sort((a, b) => b.localeCompare(a));
+
+  const filteredItems = items.filter(it => {
+    const mg: string = it.month_group || format(new Date(it.fecha), "yyyy-MM");
+    if (filterYear && !mg.startsWith(filterYear)) return false;
+    if (filterMonth && mg.substring(5, 7) !== filterMonth) return false;
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      return (
+        (it.nro_factura || "").toLowerCase().includes(q) ||
+        (it.detalle || "").toLowerCase().includes(q) ||
+        (it.seguimiento || "").toLowerCase().includes(q) ||
+        (it.fecha || "").includes(q)
+      );
+    }
+    return true;
+  });
 
   const groups = filteredItems.reduce((acc: any, item: any) => {
     const month = item.month_group || format(new Date(item.fecha), "yyyy-MM");
@@ -94,7 +112,7 @@ export default function FacturacionOSTable({ allData, userRole }: Props) {
         {OBRAS_SOCIALES.map(os => (
           <button
             key={os}
-            onClick={() => { setActiveOS(os); setSearchTerm(""); setOpenDocDropdown(null); }}
+            onClick={() => { setActiveOS(os); setSearchTerm(""); setFilterYear(""); setFilterMonth(""); setOpenDocDropdown(null); }}
             style={{
               padding: "0.5rem 1rem",
               borderRadius: "8px",
@@ -123,19 +141,57 @@ export default function FacturacionOSTable({ allData, userRole }: Props) {
         ))}
       </div>
 
-      {/* Search + New button */}
+      {/* Search + Filters + New button */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
-        <div style={{ position: "relative", flex: 1, maxWidth: "400px" }}>
-          <Search size={18} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-          <input
-            type="text"
-            placeholder="Buscar por factura, detalle, seguimiento..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", flex: 1, alignItems: "center" }}>
+          {/* Year filter */}
+          <select
+            value={filterYear}
+            onChange={(e) => { setFilterYear(e.target.value); setFilterMonth(""); }}
             className="input-field"
-            style={{ paddingLeft: "2.8rem" }}
-          />
+            style={{ width: "auto", minWidth: "110px" }}
+          >
+            <option value="">Todos los años</option>
+            {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+
+          {/* Month filter — only enabled when a year is selected */}
+          <select
+            value={filterMonth}
+            onChange={(e) => setFilterMonth(e.target.value)}
+            className="input-field"
+            style={{ width: "auto", minWidth: "130px" }}
+            disabled={!filterYear}
+          >
+            <option value="">Todos los meses</option>
+            {MONTH_NAMES.map((name, i) => (
+              <option key={i} value={String(i + 1).padStart(2, "0")}>{name}</option>
+            ))}
+          </select>
+
+          {/* Text search */}
+          <div style={{ position: "relative", flex: 1, maxWidth: "360px" }}>
+            <Search size={18} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+            <input
+              type="text"
+              placeholder="Buscar factura, detalle..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input-field"
+              style={{ paddingLeft: "2.8rem" }}
+            />
+          </div>
+
+          {(filterYear || filterMonth || searchTerm) && (
+            <button
+              onClick={() => { setFilterYear(""); setFilterMonth(""); setSearchTerm(""); }}
+              style={{ fontSize: "0.8rem", color: "var(--text-muted)", background: "none", border: "1px solid var(--glass-border)", borderRadius: "8px", padding: "0.4rem 0.8rem", cursor: "pointer" }}
+            >
+              Limpiar filtros
+            </button>
+          )}
         </div>
+
         <button
           onClick={() => { resetNewForm(); setShowNewModal(true); }}
           className="btn-primary"
