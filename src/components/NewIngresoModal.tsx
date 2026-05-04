@@ -273,10 +273,9 @@ function IngresoForm({
 
   const defaultAppointmentDate = (() => {
     const src = editingIngreso || selectedPatient;
-    if (src?.appointment_date) {
-      return new Date(src.appointment_date).toISOString().split('T')[0];
-    }
-    return new Date().toISOString().split('T')[0];
+    const d = src?.appointment_date ? new Date(src.appointment_date) : new Date();
+    // Use local date components (not UTC) so the default is correct for Argentina timezone
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   })();
   const [appointmentDate, setAppointmentDate] = useState(defaultAppointmentDate);
 

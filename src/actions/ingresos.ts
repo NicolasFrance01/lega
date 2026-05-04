@@ -57,7 +57,11 @@ export async function createIngreso(formData: FormData) {
     const birth_date = formData.get("birth_date") as string;
     const health_insurance = formData.get("health_insurance") as string;
     
-    const appointment_date = formData.get("appointment_date") as string;
+    const appointment_date_raw = formData.get("appointment_date") as string;
+    // Append noon so pure date strings (YYYY-MM-DD) stay in the correct day regardless of DB timezone
+    const appointment_date = appointment_date_raw?.length === 10
+      ? `${appointment_date_raw}T12:00:00`
+      : appointment_date_raw;
     const analysisNames = formData.getAll("analysis_name") as string[];
     const analysisSubtypes = formData.getAll("aire_test_subtype") as string[];
     const analysis_type = analysisNames[0] || ""; // Legacy fallback
