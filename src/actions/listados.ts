@@ -510,3 +510,175 @@ export async function deleteApross(id: number) {
     return { error: error.message };
   }
 }
+
+// --- FACTURACION OBRAS SOCIALES ---
+
+const OBRAS_SOCIALES = ['OSDE', 'SWISS MEDICAL', 'GALENO', 'MEDIFE', 'CIBIC', 'METABOLOMICA', 'FEDERACION'];
+
+export async function getFacturacionOS(obraSocial: string) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+    if (session.role === 'bioquimico') throw new Error("Sin permiso");
+
+    const res = await pool.query(`
+      SELECT f.*,
+             COALESCE((SELECT json_agg(json_build_object('id', d.id, 'url', d.document_url, 'filename', d.filename))
+              FROM facturacion_os_documents d WHERE d.facturacion_id = f.id), '[]'::json) as documents
+      FROM facturacion_os f
+      WHERE f.obra_social = $1
+      ORDER BY f.month_group DESC, f.fecha DESC
+    `, [obraSocial]);
+    return { data: JSON.parse(JSON.stringify(res.rows)), error: null };
+  } catch (error: any) {
+    return { data: null, error: error.message };
+  }
+}
+
+export async function createFacturacionOS(formData: FormData) {
+  let client;
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+    if (session.role === 'bioquimico') throw new Error("Sin permiso");
+
+    client = await pool.connect();
+    await client.query('BEGIN');
+
+    const obra_social = formData.get("obra_social") as string;
+    const fecha = formData.get("fecha") as string;
+    const nro_factura = formData.get("nro_factura") as string;
+    const detalle = formData.get("detalle") as string;
+    const seguimiento = formData.get("seguimiento") as string || 'Falta Pagos';
+    const files = formData.getAll("documents") as File[];
+    const month_group = fecha ? fecha.substring(0, 7) : format(new Date(), "yyyy-MM");
+
+    const res = await client.query(
+      `INSERT INTO facturacion_os (obra_social, fecha, nro_factura, detalle, seguimiento, month_group)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+      [obra_social, fecha, nro_factura || null, detalle || null, seguimiento, month_group]
+    );
+    const facturacionId = res.rows[0].id;
+
+    for (const file of files) {
+      if (file && file.size > 0) {
+        const path = `facturacion-os/${Date.now()}-${file.name}`;
+        const blob = await put(path, file, { access: 'private' });
+        await client.query(
+          'INSERT INTO facturacion_os_documents (facturacion_id, document_url, filename) VALUES ($1, $2, $3)',
+          [facturacionId, blob.url, file.name]
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+    await logAction("CREATE_FACTURACION_OS", { obra_social, nro_factura, fecha });
+    revalidatePath("/listados/facturacion");
+    return { success: true };
+  } catch (error: any) {
+    if (client) await client.query('ROLLBACK');
+    return { error: error.message };
+  } finally {
+    if (client) client.release();
+  }
+}
+
+export async function updateFacturacionOS(id: number, formData: FormData) {
+  let client;
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+    if (session.role === 'bioquimico') throw new Error("Sin permiso");
+
+    client = await pool.connect();
+    await client.query('BEGIN');
+
+    const fecha = formData.get("fecha") as string;
+    const nro_factura = formData.get("nro_factura") as string;
+    const detalle = formData.get("detalle") as string;
+    const seguimiento = formData.get("seguimiento") as string;
+    const files = formData.getAll("documents") as File[];
+    const month_group = fecha ? fecha.substring(0, 7) : format(new Date(), "yyyy-MM");
+
+    const canEditSeguimiento = session.role === 'admin' || session.role === 'gerente';
+
+    if (canEditSeguimiento) {
+      await client.query(
+        `UPDATE facturacion_os SET fecha = $1, nro_factura = $2, detalle = $3, seguimiento = $4, month_group = $5 WHERE id = $6`,
+        [fecha, nro_factura || null, detalle || null, seguimiento, month_group, id]
+      );
+    } else {
+      await client.query(
+        `UPDATE facturacion_os SET fecha = $1, nro_factura = $2, detalle = $3, month_group = $4 WHERE id = $5`,
+        [fecha, nro_factura || null, detalle || null, month_group, id]
+      );
+    }
+
+    for (const file of files) {
+      if (file && file.size > 0) {
+        const path = `facturacion-os/${Date.now()}-${file.name}`;
+        const blob = await put(path, file, { access: 'private' });
+        await client.query(
+          'INSERT INTO facturacion_os_documents (facturacion_id, document_url, filename) VALUES ($1, $2, $3)',
+          [id, blob.url, file.name]
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+    revalidatePath("/listados/facturacion");
+    return { success: true };
+  } catch (error: any) {
+    if (client) await client.query('ROLLBACK');
+    return { error: error.message };
+  } finally {
+    if (client) client.release();
+  }
+}
+
+export async function updateFacturacionOSSeguimiento(id: number, seguimiento: string) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+    if (!['admin', 'gerente'].includes(session.role)) throw new Error("Sin permiso");
+
+    await pool.query(`UPDATE facturacion_os SET seguimiento = $1 WHERE id = $2`, [seguimiento, id]);
+    revalidatePath("/listados/facturacion");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function deleteFacturacionOS(id: number) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+    if (session.role === 'bioquimico') throw new Error("Sin permiso");
+
+    await pool.query("DELETE FROM facturacion_os WHERE id = $1", [id]);
+    revalidatePath("/listados/facturacion");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function deleteFacturacionOSDocument(id: number) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    const res = await pool.query('SELECT document_url FROM facturacion_os_documents WHERE id = $1', [id]);
+    if (res.rows[0]) {
+      try { await del(res.rows[0].document_url); } catch (e) {}
+    }
+    await pool.query('DELETE FROM facturacion_os_documents WHERE id = $1', [id]);
+    revalidatePath("/listados/facturacion");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export { OBRAS_SOCIALES };
