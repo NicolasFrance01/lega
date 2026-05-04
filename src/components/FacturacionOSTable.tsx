@@ -155,13 +155,12 @@ export default function FacturacionOSTable({ allData, userRole }: Props) {
             {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
 
-          {/* Month filter — only enabled when a year is selected */}
+          {/* Month filter */}
           <select
             value={filterMonth}
             onChange={(e) => setFilterMonth(e.target.value)}
             className="input-field"
             style={{ width: "auto", minWidth: "130px" }}
-            disabled={!filterYear}
           >
             <option value="">Todos los meses</option>
             {MONTH_NAMES.map((name, i) => (
@@ -197,7 +196,7 @@ export default function FacturacionOSTable({ allData, userRole }: Props) {
           className="btn-primary"
           style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
         >
-          <Plus size={18} /> Nuevo Pendiente
+          <Plus size={18} /> Nueva Facturacion
         </button>
       </div>
 
@@ -208,7 +207,7 @@ export default function FacturacionOSTable({ allData, userRole }: Props) {
             <button onClick={() => setShowNewModal(false)} style={{ position: "absolute", top: "1.5rem", right: "1.5rem", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
               <X size={24} />
             </button>
-            <h3 style={{ margin: "0 0 0.25rem 0", fontSize: "1.5rem", fontWeight: 900 }}>Nuevo Pendiente</h3>
+            <h3 style={{ margin: "0 0 0.25rem 0", fontSize: "1.5rem", fontWeight: 900 }}>Nueva Facturacion</h3>
             <p style={{ margin: "0 0 2rem 0", color: "var(--text-muted)", fontSize: "0.9rem" }}>{activeOS}</p>
 
             <form
@@ -312,7 +311,7 @@ export default function FacturacionOSTable({ allData, userRole }: Props) {
             <button onClick={() => setEditingItem(null)} style={{ position: "absolute", top: "1.5rem", right: "1.5rem", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
               <X size={24} />
             </button>
-            <h3 style={{ margin: "0 0 0.25rem 0", fontSize: "1.5rem", fontWeight: 900 }}>Editar Pendiente</h3>
+            <h3 style={{ margin: "0 0 0.25rem 0", fontSize: "1.5rem", fontWeight: 900 }}>Editar Facturacion</h3>
             <p style={{ margin: "0 0 2rem 0", color: "var(--text-muted)", fontSize: "0.9rem" }}>{activeOS}</p>
 
             <form
