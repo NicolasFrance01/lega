@@ -29,7 +29,7 @@ export async function createPendiente(formData: FormData) {
     if (!session) throw new Error("No autenticado");
 
     const fecha = formData.get("fecha") as string;
-    const paciente = formData.get("paciente") as string;
+    const paciente = (formData.get("paciente") as string)?.toUpperCase().trim();
     const pendiente = formData.get("pendiente") as string;
     const detalle = formData.get("detalle") as string;
     const seguimiento = formData.get("seguimiento") as string;
@@ -235,7 +235,7 @@ export async function createCobranza(formData: FormData) {
     if (!session) throw new Error("No autenticado");
 
     const fecha = formData.get("fecha") as string;
-    const paciente = formData.get("paciente") as string;
+    const paciente = (formData.get("paciente") as string)?.toUpperCase().trim();
     const dni = formData.get("dni") as string;
     const factura = formData.get("factura") as string;
     const observacion = formData.get("observacion") as string;
@@ -337,7 +337,7 @@ export async function createApross(formData: FormData) {
     await client.query('BEGIN');
 
     const fecha = formData.get("fecha") as string;
-    const paciente = formData.get("paciente") as string;
+    const paciente = (formData.get("paciente") as string)?.toUpperCase().trim();
     const dni = formData.get("dni") as string || "-";
     const telefono = formData.get("telefono") as string || "-";
     const analisisList = formData.getAll("analisis") as string[];

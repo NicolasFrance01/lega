@@ -6,11 +6,12 @@ import { revalidatePath } from 'next/cache';
 export async function getPatients() {
   try {
     const res = await pool.query('SELECT * FROM patients ORDER BY name ASC');
-    return { 
+    return {
       data: res.rows.map(row => ({
         ...row,
+        name: row.name ? row.name.toUpperCase() : row.name,
         birth_date: row.birth_date ? new Date(row.birth_date).toISOString() : null
-      })), 
+      })),
       error: null 
     };
   } catch (error: any) {
@@ -22,7 +23,7 @@ export async function getPatients() {
 export async function updatePatient(formData: FormData) {
   try {
     const id = formData.get("id");
-    const name = formData.get("name") as string;
+    const name = (formData.get("name") as string)?.toUpperCase().trim();
     const dni = formData.get("dni") as string;
     const phone = formData.get("phone") as string;
     const email = formData.get("email") as string;

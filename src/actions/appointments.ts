@@ -74,7 +74,7 @@ export async function createAppointment(formData: FormData) {
   try {
     await client.query('BEGIN');
     
-    const name = formData.get("name") as string;
+    const name = (formData.get("name") as string)?.toUpperCase().trim();
     const dni = formData.get("dni") as string;
     const phone = formData.get("phone") as string;
     const email = formData.get("email") as string;
@@ -103,7 +103,7 @@ export async function createAppointment(formData: FormData) {
     // Find or Create patient. 
     // We search by DNI AND Name to allow multiple people to share a DNI (like a placeholder '.')
     let patientRes = await client.query(
-      "SELECT id FROM patients WHERE dni = $1 AND name = $2",
+      "SELECT id FROM patients WHERE dni = $1 AND UPPER(name) = UPPER($2)",
       [dni, name]
     );
 

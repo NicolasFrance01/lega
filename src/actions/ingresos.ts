@@ -23,12 +23,13 @@ export async function getIngresos(search?: string) {
       ORDER BY a.appointment_date::date ASC, CASE WHEN a.report_id ~ '^[0-9]+$' THEN a.report_id::INTEGER ELSE NULL END ASC NULLS LAST
     `);
 
-    return { 
+    return {
       data: res.rows.map(row => ({
         ...row,
+        name: row.name ? row.name.toUpperCase() : row.name,
         appointment_date: row.appointment_date ? new Date(row.appointment_date).toISOString() : null,
         result_date: row.result_date ? new Date(row.result_date).toISOString() : null,
-      })), 
+      })),
       error: null 
     };
   } catch (error: any) {
@@ -49,7 +50,7 @@ export async function createIngreso(formData: FormData) {
     await client.query('BEGIN');
     
     const existingId = formData.get("id") as string;
-    const name = formData.get("name") as string;
+    const name = (formData.get("name") as string)?.toUpperCase().trim();
     const dni = formData.get("dni") as string;
     const phone = formData.get("phone") as string;
     const email = formData.get("email") as string;
@@ -86,7 +87,7 @@ export async function createIngreso(formData: FormData) {
     // Find or Create patient. 
     // We search by DNI AND Name to allow multiple people to share a DNI (like a placeholder '.')
     let patientRes = await client.query(
-      "SELECT id FROM patients WHERE dni = $1 AND name = $2",
+      "SELECT id FROM patients WHERE dni = $1 AND UPPER(name) = UPPER($2)",
       [dni, name]
     );
 
