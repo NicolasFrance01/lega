@@ -84,46 +84,60 @@ export async function createIngreso(formData: FormData) {
     const observations = formData.get("observations") as string;
     const files = formData.getAll("document") as File[];
 
-    // Find or Create patient. 
-    // We search by DNI AND Name to allow multiple people to share a DNI (like a placeholder '.')
-    let patientRes = await client.query(
-      "SELECT id FROM patients WHERE dni = $1 AND UPPER(name) = UPPER($2)",
-      [dni, name]
-    );
-
     let patientId;
-    if (patientRes.rows.length > 0) {
-      patientId = patientRes.rows[0].id;
-      // Update other details if changed
-      await client.query(
-        `UPDATE patients SET 
-          email = $1, phone = $2, health_insurance = $3, 
-          birth_date = NULLIF($4, '')::date, address = $5 
-         WHERE id = $6`,
-        [email, phone, health_insurance, birth_date, address, patientId]
-      );
+
+    if (existingId) {
+      // Editing an existing ingreso: get the patient_id from the appointment and update that patient directly.
+      // This prevents creating a duplicate when the name changes.
+      const existingApt = await client.query("SELECT patient_id FROM appointments WHERE id = $1", [existingId]);
+      patientId = existingApt.rows[0]?.patient_id;
+      if (patientId) {
+        await client.query(
+          `UPDATE patients SET name = $1, dni = $2, email = $3, phone = $4, health_insurance = $5,
+            birth_date = NULLIF($6, '')::date, address = $7
+           WHERE id = $8`,
+          [name, dni, email, phone, health_insurance, birth_date, address, patientId]
+        );
+      }
     } else {
-      const newPatientRes = await client.query(
-        `INSERT INTO patients (name, dni, email, phone, health_insurance, birth_date, address) 
-         VALUES ($1, $2, $3, $4, $5, NULLIF($6, '')::date, $7) 
-         RETURNING id`,
-        [name, dni, email, phone, health_insurance, birth_date, address]
+      // New ingreso: find by DNI + name to allow multiple people to share a DNI placeholder ('.')
+      const patientRes = await client.query(
+        "SELECT id FROM patients WHERE dni = $1 AND UPPER(name) = UPPER($2)",
+        [dni, name]
       );
-      patientId = newPatientRes.rows[0].id;
+      if (patientRes.rows.length > 0) {
+        patientId = patientRes.rows[0].id;
+        await client.query(
+          `UPDATE patients SET
+            email = $1, phone = $2, health_insurance = $3,
+            birth_date = NULLIF($4, '')::date, address = $5
+           WHERE id = $6`,
+          [email, phone, health_insurance, birth_date, address, patientId]
+        );
+      } else {
+        const newPatientRes = await client.query(
+          `INSERT INTO patients (name, dni, email, phone, health_insurance, birth_date, address)
+           VALUES ($1, $2, $3, $4, $5, NULLIF($6, '')::date, $7)
+           RETURNING id`,
+          [name, dni, email, phone, health_insurance, birth_date, address]
+        );
+        patientId = newPatientRes.rows[0].id;
+      }
     }
 
     let aptId;
       if (existingId) {
-        // Update existing appointment
+        // Update existing appointment — also update patient_id in case the linked patient changed
         await client.query(
           `UPDATE appointments SET
-            analysis_type = $1, aire_test_type = $2, observations = $3, status = 'CONFIRMAR ASISTENCIA',
-            report_id = $4, result_date = NULLIF($5, '')::timestamp,
-            coseguro = NULLIF($6, '')::numeric, particular_price = NULLIF($7, '')::numeric,
-            payment_method = $8, professional_name = $9, is_ingreso = TRUE,
-            appointment_date = COALESCE(NULLIF($11, '')::timestamp, appointment_date)
-           WHERE id = $10`,
-          [analysis_type, aire_test_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, existingId, appointment_date]
+            patient_id = $1, analysis_type = $2, aire_test_type = $3, observations = $4,
+            status = 'CONFIRMAR ASISTENCIA',
+            report_id = $5, result_date = NULLIF($6, '')::timestamp,
+            coseguro = NULLIF($7, '')::numeric, particular_price = NULLIF($8, '')::numeric,
+            payment_method = $9, professional_name = $10, is_ingreso = TRUE,
+            appointment_date = COALESCE(NULLIF($12, '')::timestamp, appointment_date)
+           WHERE id = $11`,
+          [patientId, analysis_type, aire_test_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, existingId, appointment_date]
         );
         aptId = existingId;
         // Clean old analyses and insert new ones

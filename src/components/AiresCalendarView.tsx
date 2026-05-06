@@ -213,14 +213,21 @@ export default function AiresCalendarView({ appointments }: { appointments: any[
 
                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto', flex: 1, maxHeight: '280px' }}>
                  {dayAppts.filter(Boolean).map(apt => (
-                     <div key={apt.id} style={{ 
+                     <div key={apt.id}
+                     draggable={true}
+                     onDragStart={(e) => {
+                       e.stopPropagation();
+                       e.dataTransfer.setData("appointmentId", apt.id);
+                       e.dataTransfer.effectAllowed = "move";
+                     }}
+                     style={{
                        ...getTypeStyle(apt.aire_test_type, apt.status),
-                       padding: '0.65rem', 
+                       padding: '0.65rem',
                        borderRadius: '8px',
                        boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
                        position: 'relative',
                        borderLeft: `5px solid ${getBadgeColor(apt?.aire_test_type)}`,
-                       cursor: 'pointer',
+                       cursor: 'grab',
                        transition: 'all 0.2s ease',
                        flexShrink: 0,
                        minHeight: 'fit-content'
