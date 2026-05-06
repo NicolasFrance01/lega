@@ -4,6 +4,12 @@ import { useState } from "react";
 import { Search, Save, X, Plus, Trash2 } from "lucide-react";
 import { updateBillingPrice, createBillingPrice, deleteBillingPrice } from "@/actions/listados";
 
+function formatPeso(value: any) {
+  const num = parseFloat(String(value).replace(',', '.'));
+  if (isNaN(num)) return String(value);
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+}
+
 export default function BillingPricesTable({ data }: { data: any[] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [items, setItems] = useState(data);
@@ -110,7 +116,7 @@ export default function BillingPricesTable({ data }: { data: any[] }) {
                         />
                       ) : (
                         <span style={{ fontSize: "0.85rem", color: item[col.key] ? "var(--text-main)" : "var(--text-muted)" }}>
-                          {item[col.key] ? `${item[col.key]}` : "-"}
+                          {item[col.key] ? formatPeso(item[col.key]) : "-"}
                         </span>
                       )}
                     </td>

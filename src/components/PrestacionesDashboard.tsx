@@ -435,11 +435,11 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
         {filteredSections.map((section, idx) => (
-          <div key={idx} className="section-block" style={{ background: 'white', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', padding: '1.5rem 0' }}>
+          <div key={idx} className="section-block" style={{ background: 'var(--glass-bg)', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', padding: '1.5rem 0', border: '1px solid var(--glass-border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 1.5rem', marginBottom: '1.5rem' }}>
               <div>
                 <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{section.title}</h3>
-                {section.subtitle && <p style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '0.25rem', fontWeight: 600 }}>{section.subtitle}</p>}
+                {section.subtitle && <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.25rem', fontWeight: 600 }}>{section.subtitle}</p>}
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button onClick={() => openEditModal(section)} className="btn-small-secondary"><Settings size={14} /> Editar Tabla</button>
@@ -458,7 +458,7 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
               </div>
             </div>
 
-            <div className="custom-scrollbar" style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '70vh', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9', position: 'relative' }}>
+            <div className="custom-scrollbar" style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '70vh', borderTop: '1px solid var(--glass-border)', borderBottom: '1px solid var(--glass-border)', position: 'relative' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
                 <thead>
                   <tr style={{ background: '#244c7d', position: 'sticky', top: 0, zIndex: 10 }}>
@@ -504,14 +504,14 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
                         borderTop: dragOverRowId === row.id ? '2px solid #3b82f6' : undefined,
                       }}
                     >
-                      {isExcelSheet && <td style={{background: row.row_data.__row_color || '#f8fafc', color: '#64748b', fontSize: '0.75rem', textAlign: 'center', borderRight: '1px solid #cbd5e1', fontWeight: 800, cursor: 'grab'}} title="Mantén presionado para reordenar la fila">{rowExcelIndex}</td>}
+                      {isExcelSheet && <td style={{background: row.row_data.__row_color || 'var(--glass-bg)', color: 'var(--text-muted)', fontSize: '0.75rem', textAlign: 'center', borderRight: '1px solid var(--glass-border)', fontWeight: 800, cursor: 'grab'}} title="Mantén presionado para reordenar la fila">{rowExcelIndex}</td>}
                       {(section.headers.length > 0 ? section.headers : columns).map((h: any) => {
                         const type = section.types[h] || "text";
                         const isDescriptionCol = h === section.headers[0] || h === columns[0] || h === "__EMPTY";
                         const isPrice = type === 'price' || h === '__EMPTY_1';
                         const align = isDescriptionCol ? 'left' : 'right';
                         return (
-                          <td key={h} style={{ padding: '0.75rem 1rem', border: '1px solid #cbd5e1', minWidth: isDescriptionCol ? (isExcelSheet ? '200px' : '300px') : 'auto', textAlign: align, backgroundColor: row.row_data[`__cell_color_${h}`] || row.row_data.__row_color || (editingRow === row.id ? '#f8fafc' : 'transparent') }}>
+                          <td key={h} style={{ padding: '0.75rem 1rem', border: '1px solid var(--glass-border)', minWidth: isDescriptionCol ? (isExcelSheet ? '200px' : '300px') : 'auto', textAlign: align, backgroundColor: row.row_data[`__cell_color_${h}`] || row.row_data.__row_color || (editingRow === row.id ? 'var(--bg-gradient-end)' : 'transparent') }}>
                             {editingRow === row.id ? (
                               isDescriptionCol && type === 'text' ? (
                                 <div style={{display: 'flex', alignItems: 'flex-start', gap: '0.5rem'}}>
@@ -584,7 +584,7 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
                           </td>
                         );
                       })}
-                      <td style={{ textAlign: 'right', padding: '0.5rem 1rem', border: '1px solid #f1f5f9', background: 'white', position: 'sticky', right: 0, zIndex: 5 }}>
+                      <td style={{ textAlign: 'right', padding: '0.5rem 1rem', border: '1px solid var(--glass-border)', background: 'var(--table-sticky-bg)', position: 'sticky', right: 0, zIndex: 5 }}>
                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
                           {editingRow === row.id && isExcelSheet && (
                             <input 
@@ -605,9 +605,9 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
               </table>
             </div>
             {section.note && (
-              <div style={{ padding: '1.25rem', margin: '1.5rem', background: '#f8fafc', borderRadius: '12px', border: '1.5px solid #e2e8f0', display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                <div style={{ color: '#0f172a', fontSize: '0.85rem', fontWeight: 800, whiteSpace: 'nowrap', marginTop: '2px' }}>[NOTA:]</div>
-                <div style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 600, lineHeight: 1.5 }}>{section.note}</div>
+              <div style={{ padding: '1.25rem', margin: '1.5rem', background: 'var(--bg-gradient-end)', borderRadius: '12px', border: '1.5px solid var(--glass-border)', display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                <div style={{ color: 'var(--text-main)', fontSize: '0.85rem', fontWeight: 800, whiteSpace: 'nowrap', marginTop: '2px' }}>[NOTA:]</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, lineHeight: 1.5 }}>{section.note}</div>
               </div>
             )}
           </div>
@@ -661,32 +661,33 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
       <style jsx>{`
         .modern-input { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 0.6rem 1rem; }
         .tab-active { padding: 0.6rem 1.2rem; background: var(--primary); color: white; border: none; border-radius: 12px 12px 0 0; font-weight: 700; cursor: pointer; }
-        .tab-inactive { padding: 0.6rem 1.2rem; background: rgba(0,0,0,0.05); color: var(--text-muted); border: none; border-radius: 12px 12px 0 0; cursor: pointer; }
+        .tab-inactive { padding: 0.6rem 1.2rem; background: var(--glass-bg); color: var(--text-muted); border: 1px solid var(--glass-border); border-bottom: none; border-radius: 12px 12px 0 0; cursor: pointer; }
         .btn-primary { background: var(--primary); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 12px; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
         .btn-small-primary { background: var(--primary); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.25rem; }
-        .btn-small-secondary { background: #f1f5f9; color: #475569; border: none; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.25rem; }
-        .btn-small-danger { background: #fee2e2; color: #ef4444; border: none; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.25rem; }
-        .input-inline { width: 100%; border: 1px solid var(--primary); border-radius: 4px; padding: 0.3rem }
-        .input-inline-area { width: 100%; border: 1px solid var(--primary); border-radius: 6px; padding: 0.5rem; min-height: 80px; font-family: inherit; font-size: 0.9rem; resize: vertical; background: white; }
+        .btn-small-secondary { background: var(--glass-bg); color: var(--text-muted); border: 1px solid var(--glass-border); padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.25rem; }
+        .btn-small-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: none; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.25rem; }
+        .input-inline { width: 100%; border: 1px solid var(--primary); border-radius: 4px; padding: 0.3rem; background: var(--glass-bg); color: var(--text-main); }
+        .input-inline-area { width: 100%; border: 1px solid var(--primary); border-radius: 6px; padding: 0.5rem; min-height: 80px; font-family: inherit; font-size: 0.9rem; resize: vertical; background: var(--glass-bg); color: var(--text-main); }
         .btn-action { background: none; border: none; cursor: pointer; }
         .btn-action.save { color: var(--success); }
         .btn-action.edit { color: var(--text-muted); }
         .btn-action.delete { color: var(--danger); }
-        .glass-panel { background: white; border-radius: 16px; border: 1px solid var(--glass-border); }
-        .table-row-hover:hover { background: #f8fafc; }
+        .glass-panel { background: var(--glass-bg); border-radius: 16px; border: 1px solid var(--glass-border); }
+        .table-row-hover:hover { background: rgba(14, 165, 233, 0.05); }
         .custom-scrollbar::-webkit-scrollbar {
           height: 12px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f5f9;
+          background: var(--bg-gradient-end);
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
+          background: var(--text-muted);
           border-radius: 6px;
-          border: 3px solid #f1f5f9;
+          border: 3px solid var(--bg-gradient-end);
+          opacity: 0.5;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
+          opacity: 1;
         }
       `}</style>
     </div>
