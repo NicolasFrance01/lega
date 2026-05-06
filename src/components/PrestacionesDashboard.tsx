@@ -670,7 +670,7 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
         .input-inline-area { width: 100%; border: 1px solid var(--primary); border-radius: 6px; padding: 0.5rem; min-height: 80px; font-family: inherit; font-size: 0.9rem; resize: vertical; background: var(--glass-bg); color: var(--text-main); }
         .btn-action { background: none; border: none; cursor: pointer; }
         .btn-action.save { color: var(--success); }
-        .btn-action.edit { color: var(--text-muted); }
+        .btn-action.edit { color: var(--primary); }
         .btn-action.delete { color: var(--danger); }
         .glass-panel { background: var(--glass-bg); border-radius: 16px; border: 1px solid var(--glass-border); }
         .table-row-hover:hover { background: rgba(14, 165, 233, 0.05); }
