@@ -442,7 +442,7 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
                 {section.subtitle && <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.25rem', fontWeight: 600 }}>{section.subtitle}</p>}
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button onClick={() => openEditModal(section)} className="btn-small-secondary"><Settings size={14} /> Editar Tabla</button>
+                <button onClick={() => openEditModal(section)} className="btn-small-secondary" style={{ color: 'var(--text-main)' }}><Settings size={14} /> Editar Tabla</button>
                 <button
                   onClick={() => {
                     const lastId = section.rows.length > 0
@@ -451,10 +451,11 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
                     handleAddRow(activeSheet, { "__EMPTY": "Nueva Prestación...", "meta_part": "DATA" }, lastId);
                   }}
                   className="btn-small-primary"
+                  style={{ color: 'white' }}
                 >
                   <Plus size={14} /> Agregar Fila
                 </button>
-                <button onClick={() => handleDeleteSection(section.allIds)} className="btn-small-danger"><Trash2 size={14} /> Eliminar Tabla</button>
+                <button onClick={() => handleDeleteSection(section.allIds)} className="btn-small-danger" style={{ color: 'var(--danger)' }}><Trash2 size={14} /> Eliminar Tabla</button>
               </div>
             </div>
 
@@ -595,8 +596,8 @@ export default function PrestacionesDashboard({ initialSheets }: { initialSheets
                               style={{ width: '24px', height: '24px', padding: 0, border: 'none', borderRadius: '4px', cursor: 'pointer' }} 
                             />
                           )}
-                          {editingRow === row.id ? <button onClick={() => handleSave(row.id)} className="btn-action save"><Save size={16} /></button> : <button onClick={() => handleEdit(row)} className="btn-action edit"><Edit2 size={16} /></button>}
-                          <button onClick={() => handleDelete(row.id)} className="btn-action delete"><Trash2 size={16} /></button>
+                          {editingRow === row.id ? <button onClick={() => handleSave(row.id)} className="btn-action save" style={{ color: 'var(--success)' }}><Save size={16} /></button> : <button onClick={() => handleEdit(row)} className="btn-action edit" style={{ color: 'var(--primary)' }}><Edit2 size={16} /></button>}
+                          <button onClick={() => handleDelete(row.id)} className="btn-action delete" style={{ color: 'var(--danger)' }}><Trash2 size={16} /></button>
                         </div>
                       </td>
                     </tr>
