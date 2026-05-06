@@ -1,14 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { History, CalendarPlus, UserCog } from "lucide-react";
+import { History, CalendarPlus, UserCog, Trash2 } from "lucide-react";
 import AppointmentModal from "./AppointmentModal";
 import EditPatientModal from "./EditPatientModal";
+import { deletePatient } from "@/actions/patients";
 
 export default function PatientTableActions({ patient, userRole }: { patient: any, userRole?: string }) {
   const [isAptModalOpen, setIsAptModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const isBioq = userRole === 'bioquimico';
+  const canDelete = userRole === 'admin' || userRole === 'gerente';
+
+  async function handleDelete() {
+    if (!confirm(`¿Eliminar al paciente "${patient.name}"? Esta acción no se puede deshacer y borrará todos sus turnos e historial.`)) return;
+    const res = await deletePatient(patient.id);
+    if (res.error) alert("Error al eliminar: " + res.error);
+  }
 
   return (
     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
@@ -72,11 +80,28 @@ export default function PatientTableActions({ patient, userRole }: { patient: an
         }}
       />
 
-      <EditPatientModal 
+      <EditPatientModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         patient={patient}
       />
+
+      {canDelete && (
+        <button
+          onClick={handleDelete}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '0.4rem',
+            padding: '0.4rem 0.8rem', background: 'rgba(239, 68, 68, 0.07)',
+            color: 'var(--danger)', fontWeight: 600, fontSize: '0.8rem',
+            borderRadius: '6px', transition: 'all 0.2s', border: '1px solid rgba(239,68,68,0.2)',
+            cursor: 'pointer'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.15)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.07)'}
+        >
+          <Trash2 size={14} /> Eliminar
+        </button>
+      )}
     </div>
   );
 }

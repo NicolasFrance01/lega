@@ -53,6 +53,17 @@ export async function updatePatient(formData: FormData) {
     return { error: error.message };
   }
 }
+export async function deletePatient(id: string) {
+  try {
+    await pool.query('DELETE FROM patients WHERE id = $1', [id]);
+    revalidatePath("/pacientes");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Delete patient error:", error);
+    return { error: error.message };
+  }
+}
+
 export async function searchPatients(query: string) {
   try {
     if (!query || query.length < 2) return { data: [], error: null };
