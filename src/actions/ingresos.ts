@@ -20,7 +20,17 @@ export async function getIngresos(search?: string) {
       WHERE a.is_ingreso = TRUE 
          OR a.status = 'COMPLETADO' 
          OR a.status = 'CONFIRMAR ASISTENCIA'
-      ORDER BY a.appointment_date::date ASC, a.created_at ASC
+      ORDER BY a.appointment_date::date ASC,
+        CASE
+          WHEN a.report_id ~ '^[0-9]+$' THEN (a.report_id::INTEGER * 2)::FLOAT
+          ELSE (
+            SELECT COALESCE(MAX(b.report_id::INTEGER), 0) * 2 + 1
+            FROM appointments b
+            WHERE b.appointment_date::date = a.appointment_date::date
+              AND b.report_id ~ '^[0-9]+$'
+              AND b.created_at < a.created_at
+          )::FLOAT
+        END ASC NULLS LAST
     `);
 
     return {
