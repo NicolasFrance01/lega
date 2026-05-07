@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Plus, Check, X } from "lucide-react";
 import { getCustomObrasSociales, addCustomObraSocial } from "@/actions/healthInsurance";
 
@@ -31,17 +31,22 @@ interface Props {
 
 export default function HealthInsuranceInput({
   name = "health_insurance",
-  defaultValue,
-  listId = "insurance-list",
+  defaultValue = "",
+  listId,
   className,
   style,
   placeholder = "Seleccioná o escribí obra social...",
   required = false,
 }: Props) {
   const [customOptions, setCustomOptions] = useState<string[]>([]);
+  const [inputValue, setInputValue] = useState(defaultValue || "");
+  const [showDropdown, setShowDropdown] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [highlightIdx, setHighlightIdx] = useState(-1);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     getCustomObrasSociales().then(r => {
@@ -49,9 +54,61 @@ export default function HealthInsuranceInput({
     });
   }, []);
 
+  // Sync when parent changes defaultValue (e.g. patient selection)
+  useEffect(() => {
+    setInputValue(defaultValue || "");
+  }, [defaultValue]);
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+        setShowAdd(false);
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
+
   const allOptions = Array.from(new Set([...BASE_OPTIONS, ...customOptions])).sort((a, b) =>
     a.toLowerCase().localeCompare(b.toLowerCase())
   );
+
+  const filteredOptions = inputValue.trim()
+    ? allOptions.filter(opt => opt.toLowerCase().includes(inputValue.toLowerCase()))
+    : allOptions;
+
+  function selectOption(opt: string) {
+    setInputValue(opt);
+    setShowDropdown(false);
+    setHighlightIdx(-1);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!showDropdown) { if (e.key === 'ArrowDown') setShowDropdown(true); return; }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightIdx(i => Math.min(i + 1, filteredOptions.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightIdx(i => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter') {
+      if (highlightIdx >= 0 && filteredOptions[highlightIdx]) {
+        e.preventDefault();
+        selectOption(filteredOptions[highlightIdx]);
+      }
+    } else if (e.key === 'Escape') {
+      setShowDropdown(false);
+    }
+  }
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (highlightIdx >= 0 && dropdownRef.current) {
+      const item = dropdownRef.current.children[highlightIdx] as HTMLElement;
+      item?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [highlightIdx]);
 
   async function handleAdd() {
     const trimmed = newName.trim();
@@ -60,27 +117,32 @@ export default function HealthInsuranceInput({
     await addCustomObraSocial(trimmed);
     const upper = trimmed.toUpperCase();
     setCustomOptions(prev => [...prev, upper]);
+    setInputValue(upper);
     setNewName("");
     setShowAdd(false);
+    setShowDropdown(false);
     setSaving(false);
   }
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div ref={containerRef} style={{ position: 'relative' }}>
       <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
         <input
-          name={name}
           type="text"
-          list={listId}
-          defaultValue={defaultValue}
+          name={name}
+          value={inputValue}
+          onChange={e => { setInputValue(e.target.value); setShowDropdown(true); setHighlightIdx(-1); }}
+          onFocus={() => setShowDropdown(true)}
+          onKeyDown={handleKeyDown}
           className={className}
           style={{ ...style, flex: 1, minWidth: 0 }}
           placeholder={placeholder}
           required={required}
+          autoComplete="off"
         />
         <button
           type="button"
-          onClick={() => setShowAdd(v => !v)}
+          onClick={() => { setShowAdd(v => !v); setShowDropdown(false); }}
           title="Agregar nueva obra social"
           style={{
             background: showAdd ? 'var(--primary-hover)' : 'var(--primary)',
@@ -101,15 +163,56 @@ export default function HealthInsuranceInput({
         </button>
       </div>
 
+      {/* Autocomplete dropdown */}
+      {showDropdown && filteredOptions.length > 0 && (
+        <div
+          ref={dropdownRef}
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 3px)',
+            left: 0,
+            right: 0,
+            zIndex: 500,
+            background: 'var(--glass-bg)',
+            border: '1px solid var(--glass-border)',
+            borderRadius: '10px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+            maxHeight: '220px',
+            overflowY: 'auto',
+          }}
+        >
+          {filteredOptions.map((opt, idx) => (
+            <div
+              key={opt}
+              onMouseDown={e => { e.preventDefault(); selectOption(opt); }}
+              style={{
+                padding: '0.5rem 0.85rem',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                color: 'var(--text-main)',
+                background: idx === highlightIdx ? 'rgba(14, 165, 233, 0.15)' : 'transparent',
+                borderBottom: idx < filteredOptions.length - 1 ? '1px solid var(--glass-border)' : 'none',
+                transition: 'background 0.1s',
+              }}
+              onMouseEnter={() => setHighlightIdx(idx)}
+              onMouseLeave={() => setHighlightIdx(-1)}
+            >
+              {opt}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add new panel */}
       {showAdd && (
         <div style={{
           position: 'absolute',
           top: 'calc(100% + 4px)',
           left: 0,
           right: 0,
-          zIndex: 200,
+          zIndex: 500,
           background: 'var(--glass-bg)',
-          border: '1px solid var(--glass-border)',
+          border: '1px solid var(--primary)',
           borderRadius: '10px',
           padding: '0.75rem',
           boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
@@ -123,7 +226,7 @@ export default function HealthInsuranceInput({
             onChange={e => setNewName(e.target.value)}
             onKeyDown={e => {
               if (e.key === 'Enter') { e.preventDefault(); handleAdd(); }
-              if (e.key === 'Escape') setShowAdd(false);
+              if (e.key === 'Escape') { setShowAdd(false); setNewName(""); }
             }}
             placeholder="Nombre de la nueva obra social..."
             autoFocus
@@ -176,10 +279,6 @@ export default function HealthInsuranceInput({
           </button>
         </div>
       )}
-
-      <datalist id={listId}>
-        {allOptions.map(opt => <option key={opt} value={opt} />)}
-      </datalist>
     </div>
   );
 }
