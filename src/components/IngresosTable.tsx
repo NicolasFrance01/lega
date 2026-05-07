@@ -34,7 +34,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
     const newVal = !current;
     // Optimistic Update
     setOptimisticChecks(prev => ({ ...prev, [id]: newVal }));
-    
+
     const res = await updateIngresoField(id, 'checkbox_checked', newVal);
     if (res.success) {
       onRefresh();
@@ -72,7 +72,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
     if (isEditing) {
       if (type === "select") {
         return (
-          <select 
+          <select
             autoFocus
             value={localValue}
             onChange={(e) => setLocalValue(e.target.value)}
@@ -84,7 +84,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
         );
       }
       return (
-          <input 
+        <input
           autoFocus
           type={type}
           value={localValue || ""}
@@ -97,7 +97,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
     }
 
     return (
-      <div 
+      <div
         onClick={() => setEditingCell({ id, field })}
         style={{ cursor: 'pointer', minHeight: '1.2rem', minWidth: '2rem' }}
         className="editable-cell-hover"
@@ -155,20 +155,20 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
               const isChecked = optimisticChecks[ing.id] ?? ing.checkbox_checked;
 
               return (
-                <tr 
-                  key={ing.id} 
+                <tr
+                  key={ing.id}
                   ref={isTodayRow ? todayRef : null}
-                  style={{ 
-                    borderBottom: '1px solid var(--glass-border)', 
+                  style={{
+                    borderBottom: '1px solid var(--glass-border)',
                     background: isTodayRow ? 'rgba(14, 165, 233, 0.15)' : (isChecked ? 'rgba(16, 185, 129, 0.1)' : 'transparent'),
                     transition: 'all 0.2s'
                   }}
                 >
-                  <td style={{ 
-                    padding: '0.75rem 1rem', 
-                    fontWeight: 700, 
-                    position: 'sticky', 
-                    left: 0, 
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontWeight: 700,
+                    position: 'sticky',
+                    left: 0,
                     background: 'var(--table-sticky-bg, #ffffff)',
                     color: 'var(--table-sticky-text, #000000)',
                     zIndex: 2,
@@ -223,9 +223,9 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
                   </td>
                   <td style={{ padding: '0.75rem 1rem', textAlign: 'center', position: 'relative' }}>
                     {/* Notification Bell */}
-                    <div 
+                    <div
                       onClick={() => setBellPopup({ id: ing.id, note: ing.internal_note || '', status: ing.internal_note_status || 'none' })}
-                      style={{ 
+                      style={{
                         position: 'absolute', top: '4px', right: '4px', cursor: 'pointer',
                         color: ing.internal_note_status === 'unread' ? '#F59E0B' : (ing.internal_note_status === 'read' ? '#10B981' : '#94a3b8'),
                         transition: 'all 0.2s',
@@ -236,9 +236,9 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
                       <Bell size={12} fill={ing.internal_note_status !== 'none' ? 'currentColor' : 'none'} />
                     </div>
 
-                    <button 
+                    <button
                       onClick={() => handleToggleCheck(ing.id, isChecked)}
-                      style={{ 
+                      style={{
                         width: '20px', height: '20px', borderRadius: '4px', border: '2px solid var(--glass-border)',
                         background: isChecked ? 'var(--success)' : 'transparent',
                         borderColor: isChecked ? 'var(--success)' : 'var(--glass-border)',
@@ -279,8 +279,8 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                         {ing.analyses.filter((a: any) => a.name).map((a: any, idx: number) => (
                           <div key={idx} style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                             <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)' }}></span>
-                             {a.name}{a.subtype ? ` (${a.subtype})` : ''}
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)' }}></span>
+                            {a.name}{a.subtype ? ` (${a.subtype})` : ''}
                           </div>
                         ))}
                       </div>
@@ -289,15 +289,19 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
                     )}
                   </td>
                   <td style={{ padding: '0.75rem 1rem' }}>
-                    <span style={{ padding: '0.2rem 0.5rem', background: '#e0f2fe', color: '#0369a1', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem' }}>
-                      {ing.health_insurance || 'PARTICULAR'}
-                    </span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                      {(ing.health_insurance || 'PARTICULAR').split(',').map((os: string) => os.trim()).filter(Boolean).map((os: string) => (
+                        <span key={os} style={{ padding: '0.2rem 0.5rem', background: '#e0f2fe', color: '#0369a1', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                          {os}
+                        </span>
+                      ))}
+                    </div>
                   </td>
                   <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--success)' }}>
-                    <EditableCell id={ing.id} field="coseguro" value={ing.coseguro} type="number" isReadOnly={isBioq} />
+                    <EditableCell id={ing.id} field="coseguro" value={ing.coseguro} type="number" />
                   </td>
                   <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>
-                    <EditableCell id={ing.id} field="particular_price" value={ing.particular_price} type="number" isReadOnly={isBioq} />
+                    <EditableCell id={ing.id} field="particular_price" value={ing.particular_price} type="number" />
                   </td>
                   <td style={{ padding: '0.75rem 1rem' }}>
                     <EditableCell
@@ -306,41 +310,38 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
                       value={ing.payment_method}
                       type="select"
                       options={['-', 'EFECTIVO', 'TRANSFERENCIA', 'TARJETA']}
-                      isReadOnly={isBioq}
                     />
                   </td>
                   <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem', fontStyle: 'italic', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={ing.observations}>
                     {ing.observations || '-'}
                   </td>
-                  <td style={{ 
-                    padding: '0.75rem 1rem', 
-                    textAlign: 'right', 
-                    position: 'sticky', 
-                    right: 0, 
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    textAlign: 'right',
+                    position: 'sticky',
+                    right: 0,
                     background: 'var(--table-sticky-bg, #ffffff)',
                     color: 'var(--table-sticky-text, #000000)',
                     zIndex: 2,
                     borderLeft: '1px solid var(--glass-border)',
                     borderBottom: '1px solid var(--glass-border)'
                   }}>
-                    {!isBioq && (
-                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                        <button
-                          onClick={() => onEdit(ing)}
-                          style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(14, 165, 233, 0.1)', color: 'var(--primary)', border: 'none', cursor: 'pointer' }}
-                          title="Editar"
-                        >
-                          <Edit2 size={14} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(ing.id)}
-                          style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: 'none', cursor: 'pointer' }}
-                          title="Eliminar"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    )}
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                      <button
+                        onClick={() => onEdit(ing)}
+                        style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(14, 165, 233, 0.1)', color: 'var(--primary)', border: 'none', cursor: 'pointer' }}
+                        title="Editar"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(ing.id)}
+                        style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: 'none', cursor: 'pointer' }}
+                        title="Eliminar"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -348,71 +349,71 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
           </tbody>
         </table>
       </div>
-      
+
       {bellPopup && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'fadeIn 0.3s ease' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)' }}>
-                <Bell size={24} color={bellPopup.status === 'unread' ? '#F59E0B' : (bellPopup.status === 'read' ? '#10B981' : 'var(--primary)')} /> 
+                <Bell size={24} color={bellPopup.status === 'unread' ? '#F59E0B' : (bellPopup.status === 'read' ? '#10B981' : 'var(--primary)')} />
                 NOTA INTERNA
               </h3>
               <button onClick={() => setBellPopup(null)} style={{ background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Check size={20} />
               </button>
             </div>
-            
-            <textarea 
+
+            <textarea
               value={bellPopup.note}
               onChange={(e) => setBellPopup({ ...bellPopup, note: e.target.value })}
               placeholder="Escribe una nota interna para el equipo..."
-              style={{ 
-                width: '100%', minHeight: '150px', padding: '1.25rem', borderRadius: '14px', border: '1px solid var(--glass-border)', 
+              style={{
+                width: '100%', minHeight: '150px', padding: '1.25rem', borderRadius: '14px', border: '1px solid var(--glass-border)',
                 background: 'var(--glass-bg)', color: 'var(--text-main)', fontSize: '1rem', fontWeight: 600, outline: 'none',
                 resize: 'none', lineHeight: 1.6
               }}
             />
-            
+
             <div style={{ display: 'flex', gap: '1rem' }}>
-               <button 
-                 onClick={async () => {
-                   setLoadingId(bellPopup.id);
-                   try {
-                     const res = await updateInternalNote(bellPopup.id, bellPopup.note);
-                     if (res.success) {
-                       setBellPopup(null);
-                       onRefresh();
-                     }
-                   } catch (e: any) {
-                     console.error("Connection error:", e);
-                   }
-                   setLoadingId(null);
-                 }}
-                 className="btn-primary" 
-                 style={{ flex: 1, padding: '0.85rem', borderRadius: '12px', fontWeight: 800 }}
-               >
-                 {loadingId === bellPopup.id ? 'GUARDANDO...' : 'GUARDAR NOTA'}
-               </button>
-               {bellPopup.status === 'unread' && (
-                 <button 
-                   onClick={async () => {
-                     setLoadingId(bellPopup.id);
-                     try {
-                       const res = await markInternalNoteAsRead(bellPopup.id);
-                       if (res.success) {
-                         setBellPopup(null);
-                         onRefresh();
-                       }
-                     } catch (e: any) {
-                       console.error("Connection error:", e);
-                     }
-                     setLoadingId(null);
-                   }}
-                   style={{ flex: 1, padding: '0.85rem', borderRadius: '12px', background: '#10B981', color: 'white', border: 'none', fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)' }}
-                 >
-                   {loadingId === bellPopup.id ? '...' : 'MARCAR LEÍDO'}
-                 </button>
-               )}
+              <button
+                onClick={async () => {
+                  setLoadingId(bellPopup.id);
+                  try {
+                    const res = await updateInternalNote(bellPopup.id, bellPopup.note);
+                    if (res.success) {
+                      setBellPopup(null);
+                      onRefresh();
+                    }
+                  } catch (e: any) {
+                    console.error("Connection error:", e);
+                  }
+                  setLoadingId(null);
+                }}
+                className="btn-primary"
+                style={{ flex: 1, padding: '0.85rem', borderRadius: '12px', fontWeight: 800 }}
+              >
+                {loadingId === bellPopup.id ? 'GUARDANDO...' : 'GUARDAR NOTA'}
+              </button>
+              {bellPopup.status === 'unread' && (
+                <button
+                  onClick={async () => {
+                    setLoadingId(bellPopup.id);
+                    try {
+                      const res = await markInternalNoteAsRead(bellPopup.id);
+                      if (res.success) {
+                        setBellPopup(null);
+                        onRefresh();
+                      }
+                    } catch (e: any) {
+                      console.error("Connection error:", e);
+                    }
+                    setLoadingId(null);
+                  }}
+                  style={{ flex: 1, padding: '0.85rem', borderRadius: '12px', background: '#10B981', color: 'white', border: 'none', fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)' }}
+                >
+                  {loadingId === bellPopup.id ? '...' : 'MARCAR LEÍDO'}
+                </button>
+              )}
             </div>
           </div>
         </div>

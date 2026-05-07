@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Plus, Check, X } from "lucide-react";
-import { getCustomObrasSociales, addCustomObraSocial } from "@/actions/healthInsurance";
+import { X } from "lucide-react";
 
 const BASE_OPTIONS = [
   'Particular', 'A.A.T.R.A. - OSTYR - (SCIS S.A. )', 'A.M.U.R.', 'A.P.M.', 'ALCAT',
@@ -29,321 +28,189 @@ interface Props {
   required?: boolean;
 }
 
-function OptionList({
-  options,
-  highlightIdx,
-  onSelect,
-  onHighlight,
-  dropdownRef,
-}: {
-  options: string[];
-  highlightIdx: number;
-  onSelect: (opt: string) => void;
-  onHighlight: (idx: number) => void;
-  dropdownRef: React.RefObject<HTMLDivElement | null>;
-}) {
-  if (options.length === 0) return null;
-  return (
-    <div
-      ref={dropdownRef}
-      style={{
-        position: 'absolute',
-        top: 'calc(100% + 3px)',
-        left: 0,
-        right: 0,
-        zIndex: 600,
-        background: 'var(--glass-bg)',
-        border: '1px solid var(--glass-border)',
-        borderRadius: '10px',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-        maxHeight: '200px',
-        overflowY: 'auto',
-      }}
-    >
-      {options.map((opt, idx) => (
-        <div
-          key={opt}
-          onMouseDown={e => { e.preventDefault(); onSelect(opt); }}
-          onMouseEnter={() => onHighlight(idx)}
-          onMouseLeave={() => onHighlight(-1)}
-          style={{
-            padding: '0.5rem 0.85rem',
-            cursor: 'pointer',
-            fontSize: '0.85rem',
-            color: 'var(--text-main)',
-            background: idx === highlightIdx ? 'rgba(14, 165, 233, 0.15)' : 'transparent',
-            borderBottom: idx < options.length - 1 ? '1px solid var(--glass-border)' : 'none',
-            transition: 'background 0.1s',
-          }}
-        >
-          {opt}
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default function HealthInsuranceInput({
   name = "health_insurance",
   defaultValue = "",
-  listId,
   className,
   style,
-  placeholder = "Seleccioná o escribí obra social...",
-  required = false,
+  placeholder,
 }: Props) {
-  const [customOptions, setCustomOptions] = useState<string[]>([]);
-  const [inputValue, setInputValue] = useState(defaultValue || "");
+  const parseValue = (v: string) =>
+    v ? v.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+  const [selected, setSelected] = useState<string[]>(parseValue(defaultValue));
+  const [inputValue, setInputValue] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState(-1);
-
-  const [showAdd, setShowAdd] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [addDropdown, setAddDropdown] = useState(false);
-  const [addHighlightIdx, setAddHighlightIdx] = useState(-1);
-  const [saving, setSaving] = useState(false);
-
   const containerRef = useRef<HTMLDivElement>(null);
-  const mainDropdownRef = useRef<HTMLDivElement>(null);
-  const addDropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    getCustomObrasSociales().then(r => {
-      if (r.data?.length) setCustomOptions(r.data);
-    });
-  }, []);
-
-  useEffect(() => {
-    setInputValue(defaultValue || "");
+    setSelected(parseValue(defaultValue));
   }, [defaultValue]);
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setShowDropdown(false);
-        setShowAdd(false);
-        setAddDropdown(false);
       }
     }
     document.addEventListener('mousedown', onClickOutside);
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
 
-  const allOptions = Array.from(new Set([...BASE_OPTIONS, ...customOptions])).sort((a, b) =>
-    a.toLowerCase().localeCompare(b.toLowerCase())
-  );
-
-  const mainFiltered = inputValue.trim()
-    ? allOptions.filter(opt => opt.toLowerCase().includes(inputValue.toLowerCase()))
-    : allOptions;
-
-  const addFiltered = newName.trim()
-    ? allOptions.filter(opt => opt.toLowerCase().includes(newName.toLowerCase()))
-    : allOptions;
-
-  // Scroll highlighted items into view
   useEffect(() => {
-    if (highlightIdx >= 0 && mainDropdownRef.current) {
-      (mainDropdownRef.current.children[highlightIdx] as HTMLElement)?.scrollIntoView({ block: 'nearest' });
+    if (highlightIdx >= 0 && dropdownRef.current) {
+      (dropdownRef.current.children[highlightIdx] as HTMLElement)?.scrollIntoView({ block: 'nearest' });
     }
   }, [highlightIdx]);
 
-  useEffect(() => {
-    if (addHighlightIdx >= 0 && addDropdownRef.current) {
-      (addDropdownRef.current.children[addHighlightIdx] as HTMLElement)?.scrollIntoView({ block: 'nearest' });
-    }
-  }, [addHighlightIdx]);
+  const filteredOptions = BASE_OPTIONS.filter(opt =>
+    !selected.includes(opt) &&
+    (inputValue.trim() === '' || opt.toLowerCase().includes(inputValue.toLowerCase()))
+  );
 
-  function selectMain(opt: string) {
-    setInputValue(opt);
+  function add(opt: string) {
+    const trimmed = opt.trim();
+    if (trimmed && !selected.includes(trimmed)) {
+      setSelected(prev => [...prev, trimmed]);
+    }
+    setInputValue("");
     setShowDropdown(false);
     setHighlightIdx(-1);
   }
 
-  // Selecting from the add-panel dropdown fills the main field (existing option chosen)
-  function selectFromAddPanel(opt: string) {
-    setInputValue(opt);
-    setShowAdd(false);
-    setAddDropdown(false);
-    setNewName("");
-    setAddHighlightIdx(-1);
+  function remove(opt: string) {
+    setSelected(prev => prev.filter(o => o !== opt));
   }
 
-  function handleMainKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (highlightIdx >= 0 && filteredOptions[highlightIdx]) {
+        add(filteredOptions[highlightIdx]);
+      } else if (inputValue.trim()) {
+        add(inputValue.trim());
+      }
+      return;
+    }
     if (!showDropdown) { if (e.key === 'ArrowDown') setShowDropdown(true); return; }
-    if (e.key === 'ArrowDown') { e.preventDefault(); setHighlightIdx(i => Math.min(i + 1, mainFiltered.length - 1)); }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setHighlightIdx(i => Math.min(i + 1, filteredOptions.length - 1)); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setHighlightIdx(i => Math.max(i - 1, 0)); }
-    else if (e.key === 'Enter') {
-      if (highlightIdx >= 0 && mainFiltered[highlightIdx]) { e.preventDefault(); selectMain(mainFiltered[highlightIdx]); }
-    } else if (e.key === 'Escape') { setShowDropdown(false); }
-  }
-
-  function handleAddKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Escape') { setShowAdd(false); setNewName(""); setAddDropdown(false); return; }
-    if (!addDropdown) { if (e.key === 'ArrowDown') { setAddDropdown(true); return; } }
-    if (e.key === 'ArrowDown') { e.preventDefault(); setAddHighlightIdx(i => Math.min(i + 1, addFiltered.length - 1)); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); setAddHighlightIdx(i => Math.max(i - 1, 0)); }
-    else if (e.key === 'Enter') {
-      if (addHighlightIdx >= 0 && addFiltered[addHighlightIdx]) { e.preventDefault(); selectFromAddPanel(addFiltered[addHighlightIdx]); }
-      else { e.preventDefault(); handleAdd(); }
+    else if (e.key === 'Escape') { setShowDropdown(false); }
+    else if (e.key === 'Backspace' && inputValue === '' && selected.length > 0) {
+      setSelected(prev => prev.slice(0, -1));
     }
   }
 
-  async function handleAdd() {
-    const trimmed = newName.trim();
-    if (!trimmed) return;
-    setSaving(true);
-    await addCustomObraSocial(trimmed);
-    const upper = trimmed.toUpperCase();
-    setCustomOptions(prev => [...prev, upper]);
-    setInputValue(upper);
-    setNewName("");
-    setShowAdd(false);
-    setAddDropdown(false);
-    setShowDropdown(false);
-    setSaving(false);
-  }
+  const joinedValue = selected.join(', ');
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
-      {/* Main input row */}
-      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-        {/* Hidden input guarantees correct value in FormData regardless of React batching */}
-        <input type="hidden" name={name} value={inputValue} />
+      {/* Hidden input carries the comma-joined value for FormData */}
+      <input type="hidden" name={name} value={joinedValue} />
+
+      <div
+        onClick={() => { setShowDropdown(true); (containerRef.current?.querySelector('input[type=text]') as HTMLInputElement)?.focus(); }}
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '0.35rem',
+          alignItems: 'center',
+          padding: '0.4rem 0.6rem',
+          background: style?.background ?? 'var(--glass-bg)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: '8px',
+          cursor: 'text',
+          minHeight: '42px',
+          ...(className ? {} : style),
+        }}
+        className={className}
+      >
+        {/* Chips */}
+        {selected.map(opt => (
+          <span
+            key={opt}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.3rem',
+              background: 'rgba(14, 165, 233, 0.15)',
+              color: 'var(--primary)',
+              border: '1px solid rgba(14, 165, 233, 0.35)',
+              borderRadius: '20px',
+              padding: '0.15rem 0.55rem 0.15rem 0.65rem',
+              fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap',
+            }}
+          >
+            {opt}
+            <button
+              type="button"
+              onMouseDown={e => { e.preventDefault(); e.stopPropagation(); remove(opt); }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}
+            >
+              <X size={11} />
+            </button>
+          </span>
+        ))}
+
+        {/* Text input */}
         <input
           type="text"
           value={inputValue}
           onChange={e => { setInputValue(e.target.value); setShowDropdown(true); setHighlightIdx(-1); }}
           onFocus={() => setShowDropdown(true)}
-          onKeyDown={handleMainKeyDown}
-          className={className}
-          style={{ ...style, flex: 1, minWidth: 0 }}
-          placeholder={placeholder}
+          onKeyDown={handleKeyDown}
+          placeholder={selected.length === 0 ? (placeholder ?? 'Seleccioná o escribí obra social...') : 'Agregar otra...'}
           autoComplete="off"
-        />
-        <button
-          type="button"
-          onClick={() => { setShowAdd(v => !v); setShowDropdown(false); setNewName(""); setAddDropdown(false); }}
-          title="Agregar nueva obra social"
           style={{
-            background: showAdd ? 'var(--primary-hover)' : 'var(--primary)',
-            color: 'white',
             border: 'none',
-            borderRadius: '8px',
-            width: '30px',
-            height: '30px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            flexShrink: 0,
-            transition: 'background 0.15s',
+            outline: 'none',
+            background: 'transparent',
+            color: 'var(--text-main)',
+            fontSize: '0.9rem',
+            flex: 1,
+            minWidth: '140px',
+            padding: '0.2rem 0',
           }}
-        >
-          <Plus size={14} />
-        </button>
+        />
       </div>
 
-      {/* Main autocomplete dropdown */}
-      {showDropdown && !showAdd && (
-        <OptionList
-          options={mainFiltered}
-          highlightIdx={highlightIdx}
-          onSelect={selectMain}
-          onHighlight={setHighlightIdx}
-          dropdownRef={mainDropdownRef}
-        />
-      )}
-
-      {/* Add new panel */}
-      {showAdd && (
-        <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 4px)',
-          left: 0,
-          right: 0,
-          zIndex: 500,
-          background: 'var(--glass-bg)',
-          border: '1px solid var(--primary)',
-          borderRadius: '10px',
-          padding: '0.75rem',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-        }}>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            {/* Add-panel input with its own autocomplete */}
-            <div style={{ position: 'relative', flex: 1 }}>
-              <input
-                type="text"
-                value={newName}
-                onChange={e => { setNewName(e.target.value); setAddDropdown(true); setAddHighlightIdx(-1); }}
-                onFocus={() => setAddDropdown(true)}
-                onKeyDown={handleAddKeyDown}
-                placeholder="Escribí para buscar o agregar nueva..."
-                autoFocus
-                autoComplete="off"
-                style={{
-                  width: '100%',
-                  padding: '0.4rem 0.75rem',
-                  background: 'var(--glass-bg)',
-                  border: '1px solid var(--glass-border)',
-                  borderRadius: '6px',
-                  color: 'var(--text-main)',
-                  fontSize: '0.85rem',
-                  outline: 'none',
-                }}
-              />
-              {/* Add-panel dropdown */}
-              {addDropdown && (
-                <OptionList
-                  options={addFiltered}
-                  highlightIdx={addHighlightIdx}
-                  onSelect={selectFromAddPanel}
-                  onHighlight={setAddHighlightIdx}
-                  dropdownRef={addDropdownRef}
-                />
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleAdd}
-              disabled={saving || !newName.trim()}
-              title="Guardar como nueva obra social"
+      {/* Autocomplete dropdown */}
+      {showDropdown && filteredOptions.length > 0 && (
+        <div
+          ref={dropdownRef}
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 3px)',
+            left: 0,
+            right: 0,
+            zIndex: 600,
+            background: 'var(--glass-bg)',
+            border: '1px solid var(--glass-border)',
+            borderRadius: '10px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+            maxHeight: '220px',
+            overflowY: 'auto',
+          }}
+        >
+          {filteredOptions.map((opt, idx) => (
+            <div
+              key={opt}
+              onMouseDown={e => { e.preventDefault(); add(opt); }}
+              onMouseEnter={() => setHighlightIdx(idx)}
+              onMouseLeave={() => setHighlightIdx(-1)}
               style={{
-                background: 'var(--success)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '0.4rem 0.75rem',
-                cursor: saving || !newName.trim() ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                opacity: saving || !newName.trim() ? 0.6 : 1,
-                flexShrink: 0,
-              }}
-            >
-              <Check size={12} /> Guardar nueva
-            </button>
-            <button
-              type="button"
-              onClick={() => { setShowAdd(false); setNewName(""); setAddDropdown(false); }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-muted)',
+                padding: '0.5rem 0.85rem',
                 cursor: 'pointer',
-                padding: '0.25rem',
-                display: 'flex',
-                alignItems: 'center',
-                flexShrink: 0,
+                fontSize: '0.85rem',
+                color: 'var(--text-main)',
+                background: idx === highlightIdx ? 'rgba(14, 165, 233, 0.15)' : 'transparent',
+                borderBottom: idx < filteredOptions.length - 1 ? '1px solid var(--glass-border)' : 'none',
+                transition: 'background 0.1s',
               }}
             >
-              <X size={14} />
-            </button>
-          </div>
+              {opt}
+            </div>
+          ))}
         </div>
       )}
     </div>
