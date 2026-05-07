@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { deleteDocument, updateAppointment, deleteAppointment } from "@/actions/appointments";
 import { X, Calendar, Edit, Loader2, Info, CloudUpload, Trash2, Plus } from "lucide-react";
+import HealthInsuranceInput from "./HealthInsuranceInput";
 import { format } from "date-fns";
 import { compressImage } from "@/lib/compression";
 import Portal from "./Portal";
@@ -174,12 +175,7 @@ export default function EditAppointmentModal({ isOpen, onClose, ap, isAires }: {
           </div>
           <div>
             <label style={labelStyle}>Obra Social</label>
-            <input name="health_insurance" defaultValue={ap.health_insurance} type="text" list="insurance-list-edit" className="input-field" style={inputStyle} />
-            <datalist id="insurance-list-edit">
-                {['Particular', 'A.A.T.R.A. - OSTYR - (SCIS S.A. )', 'A.M.U.R.', 'A.P.M.', 'APROSS', 'AVALIAN', 'CAJA DE ABOGADOS', 'CAJA NOTARIAL', 'CEA - SAN PEDRO', 'CIENCIAS ECONOMICAS', 'COBERTURA DE SALUD S.A. (BOREAL)', 'D.A.S.P.U.', 'DA.SU.Te.N', 'FEDERADA SALUD', 'GRUPO PREMEDIC', 'IOSFA', 'JERARQUICOS SALUD', 'LUIS PASTEUR', 'O.P.D.E.A.', 'O.S.P.E.R.Y.H.R.A.', 'O.S.P.I.A.', 'O.S.P.I.G.P.C.', 'OBRA SOCIAL PERSONAL DE FARMACIA (O.S.P.F.)', 'OSADEF', 'OSFFENTOS', 'OSMISS', 'OSPACA', 'OSPCRA', 'OSPECOR', 'OSPEP', 'OSPICAL ENSALUD', 'OSPIHMP', 'OSPIM', 'OSPJTAP', 'OSPL', 'OSSACRA AMA SALUD', 'OSTEL', 'PAMI', 'PODER JUDICIAL', 'PREVENCION SALUD', 'S.A.D.A.I.C.', 'S.A.P.', 'SANCOR SALUD', 'SUPERINTEND.DE BIENESTAR POLICIA FEDERAL ARG.', 'UNION PERSONAL', 'VETERANOS DE GUERRA', 'Osde', 'Swiss medical', 'Medife', 'Galeno', 'Derivacion', 'ALCAT', 'CIBIC', 'Metabolomica', 'Jujuy', 'Rio 1°'].map(opt => (
-                  <option key={opt} value={opt} />
-                ))}
-              </datalist>
+            <HealthInsuranceInput defaultValue={ap.health_insurance} listId="insurance-list-editapt" className="input-field" style={inputStyle} />
           </div>
 
           <div className="modal-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, Save, User as UserIcon, Calendar, Phone, Mail, Shield, Search, CheckCircle, Clock, DollarSign, CreditCard, ChevronRight } from "lucide-react";
+import HealthInsuranceInput from "./HealthInsuranceInput";
 import { searchPatients } from "@/actions/medical_results";
 import { getTodayAppointments } from "@/actions/appointments";
 import { createIngreso, getNextReportId } from "@/actions/ingresos";
@@ -406,18 +407,11 @@ function IngresoForm({
         </div>
         <div style={{ gridColumn: 'span 2' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Obra Social</label>
-          <input 
-            name="health_insurance" 
-            list="insurance-list"
-            defaultValue={selectedPatient?.health_insurance || 'Particular'} 
-            placeholder="Seleccioná o escribí obra social..."
-            style={{ ...inputStyle, background: 'var(--glass-bg)' }} 
+          <HealthInsuranceInput
+            defaultValue={selectedPatient?.health_insurance || 'Particular'}
+            listId="insurance-list-ingreso"
+            style={{ ...inputStyle, background: 'var(--glass-bg)' }}
           />
-          <datalist id="insurance-list">
-            {['Particular', 'A.A.T.R.A. - OSTYR - (SCIS S.A. )', 'A.M.U.R.', 'A.P.M.', 'APROSS', 'AVALIAN', 'CAJA DE ABOGADOS', 'CAJA NOTARIAL', 'CEA - SAN PEDRO', 'CIENCIAS ECONOMICAS', 'COBERTURA DE SALUD S.A. (BOREAL)', 'D.A.S.P.U.', 'DA.SU.Te.N', 'FEDERADA SALUD', 'GRUPO PREMEDIC', 'IOSFA', 'JERARQUICOS SALUD', 'LUIS PASTEUR', 'O.P.D.E.A.', 'O.S.P.E.R.Y.H.R.A.', 'O.S.P.I.A.', 'O.S.P.I.G.P.C.', 'OBRA SOCIAL PERSONAL DE FARMACIA (O.S.P.F.)', 'OSADEF', 'OSFFENTOS', 'OSMISS', 'OSPACA', 'OSPCRA', 'OSPECOR', 'OSPEP', 'OSPICAL ENSALUD', 'OSPIHMP', 'OSPIM', 'OSPJTAP', 'OSPL', 'OSSACRA AMA SALUD', 'OSTEL', 'PAMI', 'PODER JUDICIAL', 'PREVENCION SALUD', 'S.A.D.A.I.C.', 'S.A.P.', 'SANCOR SALUD', 'SUPERINTEND.DE BIENESTAR POLICIA FEDERAL ARG.', 'UNION PERSONAL', 'VETERANOS DE GUERRA', 'Osde', 'Swiss medical', 'Medife', 'Galeno', 'Derivacion', 'ALCAT', 'CIBIC', 'Metabolomica', 'Jujuy', 'Rio 1°'].map(opt => (
-              <option key={opt} value={opt} />
-            ))}
-          </datalist>
         </div>
         <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
           <div>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createAppointment } from "@/actions/appointments";
 import { format } from "date-fns";
 import { User, FileText, Calendar, CloudUpload, X, Loader2 } from "lucide-react";
+import HealthInsuranceInput from "./HealthInsuranceInput";
 import { compressImage } from "@/lib/compression";
 import Portal from "./Portal";
 
@@ -221,12 +222,7 @@ export default function AppointmentModal({
           <div className="modal-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <div>
               <label style={labelStyle}>Obra Social</label>
-              <input name="health_insurance" type="text" list="insurance-list" className="modern-input" style={inputStyle} placeholder="Ej: Particular, OSDE, etc." defaultValue={initialData?.health_insurance} />
-              <datalist id="insurance-list">
-                {['Particular', 'A.A.T.R.A. - OSTYR - (SCIS S.A. )', 'A.M.U.R.', 'A.P.M.', 'APROSS', 'AVALIAN', 'CAJA DE ABOGADOS', 'CAJA NOTARIAL', 'CEA - SAN PEDRO', 'CIENCIAS ECONOMICAS', 'COBERTURA DE SALUD S.A. (BOREAL)', 'D.A.S.P.U.', 'DA.SU.Te.N', 'FEDERADA SALUD', 'GRUPO PREMEDIC', 'IOSFA', 'JERARQUICOS SALUD', 'LUIS PASTEUR', 'O.P.D.E.A.', 'O.S.P.E.R.Y.H.R.A.', 'O.S.P.I.A.', 'O.S.P.I.G.P.C.', 'OBRA SOCIAL PERSONAL DE FARMACIA (O.S.P.F.)', 'OSADEF', 'OSFFENTOS', 'OSMISS', 'OSPACA', 'OSPCRA', 'OSPECOR', 'OSPEP', 'OSPICAL ENSALUD', 'OSPIHMP', 'OSPIM', 'OSPJTAP', 'OSPL', 'OSSACRA AMA SALUD', 'OSTEL', 'PAMI', 'PODER JUDICIAL', 'PREVENCION SALUD', 'S.A.D.A.I.C.', 'S.A.P.', 'SANCOR SALUD', 'SUPERINTEND.DE BIENESTAR POLICIA FEDERAL ARG.', 'UNION PERSONAL', 'VETERANOS DE GUERRA', 'Osde', 'Swiss medical', 'Medife', 'Galeno', 'Derivacion', 'ALCAT', 'CIBIC', 'Metabolomica', 'Jujuy', 'Rio 1°'].map(opt => (
-                  <option key={opt} value={opt} />
-                ))}
-              </datalist>
+              <HealthInsuranceInput defaultValue={initialData?.health_insurance} listId="insurance-list-apt" className="modern-input" style={inputStyle} placeholder="Ej: Particular, OSDE, etc." />
             </div>
             <div>
               <label style={labelStyle}>Tipo de Análisis</label>
