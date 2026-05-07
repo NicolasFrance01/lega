@@ -208,9 +208,10 @@ export default function HealthInsuranceInput({
     <div ref={containerRef} style={{ position: 'relative' }}>
       {/* Main input row */}
       <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+        {/* Hidden input guarantees correct value in FormData regardless of React batching */}
+        <input type="hidden" name={name} value={inputValue} />
         <input
           type="text"
-          name={name}
           value={inputValue}
           onChange={e => { setInputValue(e.target.value); setShowDropdown(true); setHighlightIdx(-1); }}
           onFocus={() => setShowDropdown(true)}
@@ -218,7 +219,6 @@ export default function HealthInsuranceInput({
           className={className}
           style={{ ...style, flex: 1, minWidth: 0 }}
           placeholder={placeholder}
-          required={required}
           autoComplete="off"
         />
         <button
