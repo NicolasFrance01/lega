@@ -406,6 +406,8 @@ export async function updateAppointmentStatus(id: string, status: string, reason
 
     revalidatePath("/");
     revalidatePath("/calendario");
+    revalidatePath("/calendario-aire");
+    revalidatePath("/calendario-domicilio");
     revalidatePath("/pacientes", "layout");
 
     return { success: true };

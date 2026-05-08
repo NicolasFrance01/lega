@@ -232,7 +232,8 @@ export default function AiresCalendarView({ appointments }: { appointments: any[
                        flexShrink: 0,
                        minHeight: 'fit-content'
                      }}
-                     onClick={() => {
+                     onClick={(e) => {
+                       e.stopPropagation();
                        setSelectedAp(apt);
                      }}
                      >
