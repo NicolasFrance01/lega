@@ -1,15 +1,17 @@
 "use client";
 
 import React, { useState, useMemo, useRef } from 'react';
-import { 
+import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
-import { Download, Calendar, Filter, ArrowLeft, TrendingUp, Users, Activity, DollarSign } from 'lucide-react';
+import { Download, ChevronDown, TrendingUp, Users, Activity, DollarSign } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { es } from 'date-fns/locale';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+
+const AIR_TEST_NAMES = new Set(['TEST DE AIRE', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'AIRES']);
 
 const COLORS = ['#0EA5E9', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4'];
 
@@ -23,6 +25,7 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
     start: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
     end: format(endOfMonth(new Date()), 'yyyy-MM-dd')
   });
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const reportRef = useRef<HTMLDivElement>(null);
 
@@ -43,17 +46,21 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
     const insuranceMap: Record<string, number> = {};
     const professionalMap: Record<string, number> = {};
     const paymentMap: Record<string, number> = { 'Efectivo': 0, 'Transferencia': 0, 'Tarjeta': 0, 'Particular': 0, 'Obra Social': 0 };
-    
+
     let totalRevenue = 0;
 
     filteredData.forEach(item => {
       // Multiple Analyses Support
-      const itemAnalyses = item.analyses && item.analyses.length > 0 
-        ? item.analyses 
-        : [{ analysis_name: item.analysis_type || 'Otros' }];
+      const itemAnalyses = item.analyses && item.analyses.length > 0
+        ? item.analyses
+        : [{ name: item.analysis_type || 'Otros' }];
 
       itemAnalyses.forEach((ana: any) => {
-        const type = ana.analysis_name || ana.name || 'Otros';
+        let type = (ana.analysis_name || ana.name || 'Otros').trim().toUpperCase();
+        // Remap generic 'TEST DE AIRE' to specific sub-type when available
+        if (AIR_TEST_NAMES.has(type) && item.aire_test_type) {
+          type = item.aire_test_type.trim().toUpperCase();
+        }
         analysisMap[type] = (analysisMap[type] || 0) + 1;
       });
 
@@ -97,22 +104,54 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
   }, [filteredData]);
 
   const exportPDF = async () => {
+    setShowExportMenu(false);
     if (!reportRef.current) return;
-    
     const canvas = await html2canvas(reportRef.current, {
       scale: 2,
       useCORS: true,
       logging: false,
       backgroundColor: '#f8fafc'
     });
-    
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    
     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
     pdf.save(`Reporte_Laboratorio_Lega_${format(new Date(), 'dd-MM-yyyy')}.pdf`);
+  };
+
+  const exportCSV = () => {
+    setShowExportMenu(false);
+    const dateLabel = `${format(new Date(dateRange.start), 'dd/MM/yyyy')} al ${format(new Date(dateRange.end), 'dd/MM/yyyy')}`;
+    const rows: string[] = [
+      `Reporte Laboratorio Lega - ${dateLabel}`,
+      '',
+      'DISTRIBUCIÓN DE ESTUDIOS',
+      'Estudio,Cantidad',
+      ...stats.analysisData.map(d => `${d.name},${d.value}`),
+      '',
+      'COBERTURAS MÉDICAS',
+      'Obra Social,Cantidad',
+      ...stats.insuranceData.map(d => `${d.name},${d.value}`),
+      '',
+      'PACIENTES POR PROFESIONAL',
+      'Profesional,Cantidad',
+      ...stats.professionalData.map(d => `${d.name},${d.value}`),
+      '',
+      'MÉTODOS DE PAGO',
+      'Método,Cantidad',
+      ...stats.paymentData.map(d => `${d.name},${d.value}`),
+      '',
+      `Total pacientes,${stats.totalEntries}`,
+      `Caja estimada,$${stats.totalRevenue.toLocaleString()}`,
+    ];
+    const blob = new Blob(['﻿' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Reporte_Laboratorio_Lega_${format(new Date(), 'dd-MM-yyyy')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -140,13 +179,36 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
           </div>
         </div>
 
-        <button 
-          onClick={exportPDF}
-          className="btn-primary"
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', borderRadius: '12px' }}
-        >
-          <Download size={18} /> EXPORTAR PDF PROFESIONAL
-        </button>
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowExportMenu(v => !v)}
+            className="btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', borderRadius: '12px' }}
+          >
+            <Download size={18} /> EXPORTAR <ChevronDown size={16} />
+          </button>
+          {showExportMenu && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 500,
+              background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
+              borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+              minWidth: '180px', overflow: 'hidden'
+            }}>
+              <button
+                onClick={exportPDF}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', width: '100%', padding: '0.75rem 1rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: 600 }}
+              >
+                <Download size={15} /> Descargar PDF
+              </button>
+              <button
+                onClick={exportCSV}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', width: '100%', padding: '0.75rem 1rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: 600, borderTop: '1px solid var(--glass-border)' }}
+              >
+                <Download size={15} /> Descargar CSV (Excel)
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Report Content */}
@@ -217,7 +279,7 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
                   outerRadius={100}
                   paddingAngle={5}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent ? percent * 100 : 0).toFixed(0)}%`}
+                  label={({ name, value, percent }) => `${name}: ${value} (${(percent ? percent * 100 : 0).toFixed(0)}%)`}
                 >
                   {stats.analysisData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
