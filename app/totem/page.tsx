@@ -362,7 +362,7 @@ export default function TotemPortal() {
       )}
 
       {/* WhatsApp modal */}
-      {showWA && <WAModal onClose={() => setShowWA(false)} selectedResult={selectedResult} />}
+      {showWA && <WAModal onClose={() => setShowWA(false)} />}
 
       {/* Print modal */}
       {printTarget && (
@@ -409,12 +409,8 @@ export default function TotemPortal() {
 }
 
 // ── WhatsApp Modal ────────────────────────────────────────────────────────────
-function WAModal({ onClose, selectedResult }: { onClose: () => void; selectedResult?: any }) {
+function WAModal({ onClose }: { onClose: () => void }) {
   const phone = "+54 9 351 304-9709";
-  const rawPhone = "5493513049709";
-  const message = selectedResult
-    ? `Hola, necesito consultar sobre mi resultado de ${selectedResult.analysis_type || 'Análisis'} (Informe N° ${selectedResult.report_id || '-'})`
-    : "Hola, necesito ayuda con mis resultados de laboratorio.";
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 8500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
@@ -444,16 +440,6 @@ function WAModal({ onClose, selectedResult }: { onClose: () => void; selectedRes
           <p style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 600, marginBottom: '1.5rem' }}>
             Abrí WhatsApp en tu celular y escribinos al número de arriba,<br />o escaneá el código QR si lo tenemos disponible en el tótem.
           </p>
-
-          {/* Direct link (for tablets with browser access) */}
-          <a
-            href={`https://wa.me/${rawPhone}?text=${encodeURIComponent(message)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', padding: '1rem', background: '#25D366', color: 'white', borderRadius: '14px', fontWeight: 800, fontSize: '1rem', textDecoration: 'none', marginBottom: '1rem', boxShadow: '0 4px 12px rgba(37,211,102,0.35)' }}
-          >
-            <MessageSquare size={20} /> Abrir WhatsApp
-          </a>
 
           <button
             onClick={onClose}
