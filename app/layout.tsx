@@ -44,7 +44,7 @@ export default async function RootLayout({
   const session = await getSession() as any;
   const headerList = await headers();
   const pathname = headerList.get('x-pathname') || '';
-  const isPortal = pathname.startsWith('/resultado');
+  const isPortal = pathname.startsWith('/resultado') || pathname.startsWith('/totem');
 
   let userData = null;
   if (session) {
