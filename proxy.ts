@@ -15,6 +15,7 @@ export async function proxy(request: NextRequest) {
   // Allow public access to these paths
   if (
     pathname.startsWith('/resultado') ||
+    pathname.startsWith('/totem') ||
     pathname.startsWith('/api/medical-result/file') ||
     pathname.startsWith('/login')
   ) {
