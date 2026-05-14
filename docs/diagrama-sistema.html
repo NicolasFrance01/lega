@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LEGA — Diagrama de Flujo del Sistema</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+    header {
+      background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+      padding: 2.5rem 3rem;
+      text-align: center;
+    }
+    header h1 { font-size: 2.2rem; font-weight: 900; color: white; letter-spacing: -0.03em; }
+    header p  { color: rgba(255,255,255,0.8); margin-top: 0.5rem; font-size: 1rem; font-weight: 500; }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      padding: 0 2rem;
+      display: flex; gap: 0.25rem; overflow-x: auto;
+    }
+    nav a {
+      display: inline-block; padding: 0.9rem 1.1rem;
+      color: #94a3b8; text-decoration: none; font-size: 0.8rem; font-weight: 700;
+      white-space: nowrap; border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    nav a:hover, nav a.active { color: #0ea5e9; border-bottom-color: #0ea5e9; }
+
+    main { max-width: 1400px; margin: 0 auto; padding: 3rem 2rem; }
+
+    section { margin-bottom: 5rem; scroll-margin-top: 60px; }
+    section h2 {
+      font-size: 1.5rem; font-weight: 800; color: #f1f5f9;
+      margin-bottom: 0.5rem; padding-bottom: 0.75rem;
+      border-bottom: 2px solid #334155;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    section .subtitle { color: #64748b; font-size: 0.9rem; margin-bottom: 2rem; font-weight: 500; }
+
+    .diagram-box {
+      background: #1e293b; border: 1px solid #334155; border-radius: 16px;
+      padding: 2rem; overflow-x: auto;
+    }
+    .diagram-box .mermaid { min-width: 600px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: #0f172a; border: 1px solid #334155;
+      padding: 0.35rem 0.75rem; border-radius: 8px;
+      font-size: 0.78rem; font-weight: 600; color: #94a3b8;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    .role-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+    @media (max-width: 800px) { .role-cards { grid-template-columns: 1fr; } }
+    .role-card {
+      background: #0f172a; border-radius: 12px; padding: 1.5rem;
+      border-left: 4px solid;
+    }
+    .role-card h3 { font-size: 1rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .role-card p  { font-size: 0.8rem; color: #64748b; line-height: 1.6; }
+    .role-card ul { margin-top: 0.75rem; padding-left: 1rem; }
+    .role-card li { font-size: 0.78rem; color: #94a3b8; margin-bottom: 0.2rem; }
+    .card-admin   { border-color: #f59e0b; }
+    .card-admin h3 { color: #f59e0b; }
+    .card-staff   { border-color: #0ea5e9; }
+    .card-staff h3 { color: #0ea5e9; }
+    .card-bio     { border-color: #10b981; }
+    .card-bio h3  { color: #10b981; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🏥 LEGA Laboratorio — Diagrama de Flujo del Sistema</h1>
+  <p>Arquitectura completa · Roles · Base de datos · Flujos de datos · 17 tablas · 3 roles · 20+ rutas</p>
+</header>
+
+<nav id="top-nav">
+  <a href="#auth">🔐 Autenticación</a>
+  <a href="#roles">👥 Roles</a>
+  <a href="#modules">🗺️ Módulos</a>
+  <a href="#db">🗄️ Base de Datos</a>
+  <a href="#flow-turno">📋 Turno → Resultado</a>
+  <a href="#flow-admin">👑 Admin</a>
+  <a href="#flow-staff">🧑‍💼 Staff</a>
+  <a href="#flow-bio">🧪 Bioquímico</a>
+  <a href="#flow-patient">🙋 Paciente</a>
+  <a href="#actions">⚡ Acciones</a>
+</nav>
+
+<main>
+
+<!-- ══════════════════════════════════════════════════════════
+     1. AUTENTICACIÓN
+══════════════════════════════════════════════════════════ -->
+<section id="auth">
+  <h2>🔐 Flujo de Autenticación</h2>
+  <p class="subtitle">Login, JWT cookie, middleware proxy.ts, layout condicional y logout.</p>
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart TD
+    A(["👤 Usuario accede al sistema"]) --> B{{"¿Ruta pública?<br/>/resultado · /totem · /api/medical-result/file"}}
+
+    B -- Sí --> PUB(["✅ Acceso directo sin login"])
+    B -- No --> MW{{"¿Cookie auth_token presente?"}}
+
+    MW -- No --> LOGIN["/login\nFormulario usuario + contraseña"]
+    LOGIN --> CRED{{"¿Credenciales válidas?"}}
+    CRED -- No --> ERR["❌ Error mostrado en pantalla"]
+    ERR --> LOGIN
+    CRED -- Sí --> JWT["Genera JWT\n{id, username, role}\nExpira en 24h"]
+    JWT --> COOK["Cookie: auth_token\nhttpOnly · secure · path=/"]
+    COOK --> PROXY
+
+    MW -- Sí --> PROXY{{"proxy.ts middleware\n¿Token válido y vigente?"}}
+    PROXY -- No/expirado --> DEL["Borra cookie auth_token"]
+    DEL --> LOGIN
+
+    PROXY -- Sí --> ROLE{{"¿role === 'bioquimico'?"}}
+
+    ROLE -- Sí --> BIOCHECK{{"¿pathname en lista permitida?\n/ingresos · /pacientes · /perfil"}}
+    BIOCHECK -- Sí --> BIOPAGE["Renderiza página\n✅ Acceso OK"]
+    BIOCHECK -- No --> BIORED["Redirect → /ingresos"]
+
+    ROLE -- No --> HEADER["Inyecta header x-pathname"]
+    HEADER --> LAYOUT["app/layout.tsx\ngetSession()"]
+
+    LAYOUT --> ISPORTAL{{"¿isPortal?\npathname empieza con\n/resultado · /totem"}}
+    ISPORTAL -- Sí --> PORTALHTML["Render: HTML sin shell\n(portal público limpio)"]
+    ISPORTAL -- No --> SHELL["Render: SidebarNav\n+ ShellLayout\n+ Contenido"]
+
+    SHELL --> LOGOUT["logoutAction()\nBorra cookie\nlogAction LOGIN_OUT\nRedirect /login"]
+
+    style A fill:#0ea5e9,color:#fff
+    style PUB fill:#10b981,color:#fff
+    style ERR fill:#ef4444,color:#fff
+    style BIORED fill:#f59e0b,color:#fff
+    style LOGOUT fill:#ef4444,color:#fff
+    style PORTALHTML fill:#8b5cf6,color:#fff
+    style SHELL fill:#0ea5e9,color:#fff
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     2. ROLES
+══════════════════════════════════════════════════════════ -->
+<section id="roles">
+  <h2>👥 Control de Acceso por Rol</h2>
+  <p class="subtitle">Tres roles con permisos diferenciados: admin, staff y bioquimico.</p>
+
+  <div class="role-cards">
+    <div class="role-card card-admin">
+      <h3>👑 Admin</h3>
+      <p>Acceso total al sistema. Único que puede gestionar usuarios y prestaciones.</p>
+      <ul>
+        <li>✅ Dashboard + Calendarios</li>
+        <li>✅ Pacientes + Ingresos</li>
+        <li>✅ Resumen médico</li>
+        <li>✅ Listados (todos)</li>
+        <li>✅ Facturación OS</li>
+        <li>✅ /usuarios → Crear/editar/eliminar usuarios</li>
+        <li>✅ /prestaciones</li>
+        <li>✅ Auditoría completa</li>
+        <li>✅ Reportes estadísticos</li>
+      </ul>
+    </div>
+    <div class="role-card card-staff">
+      <h3>🧑‍💼 Staff</h3>
+      <p>Personal administrativo. Acceso completo excepto gestión de usuarios y prestaciones.</p>
+      <ul>
+        <li>✅ Dashboard + Calendarios</li>
+        <li>✅ Pacientes + Ingresos</li>
+        <li>✅ Resumen médico</li>
+        <li>✅ Listados (todos)</li>
+        <li>✅ Facturación OS</li>
+        <li>✅ Perfil propio</li>
+        <li>❌ /usuarios</li>
+        <li>❌ /prestaciones</li>
+      </ul>
+    </div>
+    <div class="role-card card-bio">
+      <h3>🧪 Bioquímico</h3>
+      <p>Personal de laboratorio. Acceso limitado a 3 rutas. Redirigido a /ingresos si accede a otras.</p>
+      <ul>
+        <li>✅ /ingresos (lectura)</li>
+        <li>✅ /pacientes (lectura)</li>
+        <li>✅ /perfil propio</li>
+        <li>❌ Crear ingresos (bloqueado en backend)</li>
+        <li>❌ Calendarios</li>
+        <li>❌ Facturación</li>
+        <li>❌ Listados</li>
+        <li>❌ Resumen médico</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart LR
+    subgraph ROLES["Roles del Sistema"]
+        ADMIN(["👑 ADMIN"])
+        STAFF(["🧑‍💼 STAFF"])
+        BIO(["🧪 BIOQUÍMICO"])
+    end
+
+    subgraph RUTAS_COMUNES["🔵 Rutas compartidas (todos los roles autenticados)"]
+        PERFIL["/perfil"]
+    end
+
+    subgraph RUTAS_BS["🟢 Staff + Admin"]
+        DASH["/\nDashboard"]
+        CAL["/calendario"]
+        CAL_A["/calendario-aire"]
+        CAL_D["/calendario-domicilio"]
+        PAC["/pacientes"]
+        ING["/ingresos"]
+        RES["/resumen-medico"]
+        LST["/listados/*"]
+        FACT["/facturacion"]
+    end
+
+    subgraph RUTAS_ADMIN["🟡 Solo Admin"]
+        USR["/usuarios"]
+        PREST["/prestaciones"]
+    end
+
+    subgraph RUTAS_PUBLIC["⚪ Públicas"]
+        LOGIN["/login"]
+        RESULT["/resultado"]
+        TOTEM["/totem"]
+    end
+
+    ADMIN --> RUTAS_COMUNES
+    ADMIN --> RUTAS_BS
+    ADMIN --> RUTAS_ADMIN
+
+    STAFF --> RUTAS_COMUNES
+    STAFF --> RUTAS_BS
+
+    BIO --> PERFIL
+    BIO --> ING
+    BIO --> PAC
+
+    style ADMIN fill:#f59e0b,color:#000
+    style STAFF fill:#0ea5e9,color:#fff
+    style BIO fill:#10b981,color:#fff
+    style USR fill:#f59e0b,stroke:#f59e0b
+    style PREST fill:#f59e0b,stroke:#f59e0b
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     3. MÓDULOS / MAPA DE RUTAS
+══════════════════════════════════════════════════════════ -->
+<section id="modules">
+  <h2>🗺️ Mapa Completo de Módulos y Rutas</h2>
+  <p class="subtitle">Todas las rutas del sistema, sus componentes principales y relaciones.</p>
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart TD
+    subgraph PUBLIC["🌐 PÚBLICO"]
+        direction LR
+        LOGIN_P["/login\nFormulario de acceso"]
+        RESULT_P["/resultado\nPortal de pacientes"]
+        TOTEM_P["/totem\nKiosco táctil con teclado virtual"]
+        API_P["/api/medical-result/file/id\nDescarga de resultados"]
+    end
+
+    subgraph CORE["📊 CORE — Dashboard"]
+        DASH_P["/\nDashboard de Turnos\nEstadísticas · Tabla · Filtros\nBotón Nuevo Turno"]
+    end
+
+    subgraph CALENDARS["📅 CALENDARIOS"]
+        CAL_P["/calendario\nVista de mes interactiva\nTodos los turnos de laboratorio"]
+        CAL_A_P["/calendario-aire\nSolo Tests de Aire\nMáximo 4 turnos/día\nArrastrar y soltar"]
+        CAL_D_P["/calendario-domicilio\nTurnos domicilio\nLink Google Maps"]
+    end
+
+    subgraph PATIENTS["👥 PACIENTES"]
+        PAC_P["/pacientes\nDirectorio completo\nBuscar · Editar · Eliminar"]
+        PAC_D_P["/pacientes/id\nDetalle del paciente\nHistorial de citas"]
+    end
+
+    subgraph MEDICAL["🩺 MÉDICO"]
+        RES_P["/resumen-medico\nCargar resultados\nPDF · Imagen · Nota\nVercel Blob"]
+    end
+
+    subgraph INGRESOS_M["💉 INGRESOS"]
+        ING_P["/ingresos\nRegistro de ingresos\nReportes estadísticos\nCSV / PDF export"]
+    end
+
+    subgraph LISTADOS_M["📋 LISTADOS"]
+        direction TB
+        LST_P["/listados\nÍndice"]
+        PEND_P["/listados/pendientes\nAutorizaciones\nPedidos Médicos\nPagos"]
+        COD_P["/listados/codigos\nCódigos NBU / Sistema"]
+        PREC_P["/listados/precios\nPrecios por OS\nCIBIC·GORNITZ·FPM·MANLAB·LERDA"]
+        IND_P["/listados/indicaciones\nControl de indicaciones\nTest de Aire"]
+        APR_P["/listados/apross\nRegistros APROSS\nDocumentos adjuntos"]
+        COB_P["/listados/cobranzas\nControl cobranzas"]
+    end
+
+    subgraph FACT_M["💰 FACTURACIÓN"]
+        FACT_P["/facturacion\nFacturación por Obra Social\nDocumentos adjuntos"]
+    end
+
+    subgraph ADMIN_M["⚙️ ADMINISTRACIÓN"]
+        USR_P["/usuarios\nGestión de usuarios\nAuditoría de actividades"]
+        PREST_P["/prestaciones\nEdición inline de tablas\nDatos de prestaciones"]
+        PERFIL_P["/perfil\nDatos del usuario\nCambiar contraseña\nAvatar"]
+    end
+
+    LOGIN_P -->|"auth_token cookie"| CORE
+    CORE --> CALENDARS
+    CORE --> PATIENTS
+    CORE --> MEDICAL
+    CORE --> INGRESOS_M
+    CORE --> LISTADOS_M
+    CORE --> FACT_M
+    CORE --> ADMIN_M
+    PAC_P --> PAC_D_P
+    LST_P --> PEND_P
+    LST_P --> COD_P
+    LST_P --> PREC_P
+    LST_P --> IND_P
+    LST_P --> APR_P
+    LST_P --> COB_P
+    RESULT_P -->|"DNI del paciente"| API_P
+    TOTEM_P -->|"DNI del paciente"| API_P
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     4. BASE DE DATOS
+══════════════════════════════════════════════════════════ -->
+<section id="db">
+  <h2>🗄️ Esquema de Base de Datos</h2>
+  <p class="subtitle">17 tablas en PostgreSQL (Neon). Relaciones, claves foráneas y campos principales.</p>
+  <div class="diagram-box">
+    <div class="mermaid">
+erDiagram
+    users {
+        int id PK
+        varchar username "UNIQUE"
+        varchar password_hash
+        varchar role "admin|staff|bioquimico"
+        text full_name
+        text avatar_url
+        timestamp created_at
+    }
+
+    patients {
+        uuid id PK
+        varchar name
+        varchar dni
+        varchar email
+        varchar phone
+        varchar health_insurance "Puede ser múltiple, separado por coma"
+        date birth_date
+        text address
+        timestamp created_at
+    }
+
+    appointments {
+        uuid id PK
+        uuid patient_id FK
+        timestamp appointment_date
+        varchar status "AGENDADO|COMPLETADO|CANCELADO"
+        varchar analysis_type
+        varchar aire_test_type "SIBO|Lactosa|Fructuosa|SIBO c/Lactulon"
+        text observations
+        text evolution_notes
+        boolean is_domicilio
+        text domicilio_address
+        text google_maps_link
+        varchar report_id
+        timestamp result_date
+        numeric coseguro
+        numeric particular_price
+        varchar payment_method
+        varchar professional_name
+        boolean indications_sent
+        boolean is_ingreso
+        text internal_note
+        varchar internal_note_status "unread|read"
+        text biochemical_notice
+        timestamp created_at
+    }
+
+    appointment_analyses {
+        serial id PK
+        uuid appointment_id FK
+        varchar analysis_name
+        varchar aire_test_subtype
+        varchar status
+    }
+
+    appointment_documents {
+        serial id PK
+        uuid appointment_id FK
+        text document_url "Vercel Blob URL"
+        text filename
+        timestamp created_at
+    }
+
+    medical_results {
+        uuid id PK
+        uuid appointment_id FK
+        uuid patient_id FK
+        uuid analysis_id FK
+        varchar result_type "pdf|image|note"
+        text content "URL o contenido texto"
+        text filename
+        text notes
+        int uploaded_by FK
+        timestamp created_at
+        timestamp notified_at
+    }
+
+    audit_logs {
+        serial id PK
+        int user_id FK
+        text action
+        jsonb details
+        timestamp created_at
+    }
+
+    pendientes {
+        serial id PK
+        date fecha
+        varchar paciente
+        varchar pendiente "Autorizacion|Pedido Medico|Pago"
+        text detalle
+        varchar seguimiento "Pendiente|En Proceso|Finalizado"
+        text observaciones
+        varchar month_group
+        timestamp created_at
+    }
+
+    system_codes {
+        serial id PK
+        text analisis "UNIQUE"
+        varchar codigo_sistema
+        text codigo_nbu
+        varchar ub
+        timestamp created_at
+    }
+
+    billing_prices {
+        serial id PK
+        text analisis "UNIQUE"
+        varchar cibic
+        varchar gornitz
+        varchar fpm
+        varchar manlab
+        varchar lerda
+        timestamp created_at
+    }
+
+    cobranzas {
+        serial id PK
+        date fecha
+        text paciente
+        text dni
+        text factura
+        text observacion
+        text seguimiento
+        varchar month_group
+        timestamp created_at
+    }
+
+    apross {
+        serial id PK
+        date fecha
+        text paciente
+        text dni
+        text telefono
+        text analisis
+        numeric coseguro
+        numeric particular_efv
+        numeric particular_tarjeta
+        text observaciones
+        varchar month_group
+        timestamp created_at
+    }
+
+    apross_documents {
+        serial id PK
+        int apross_id FK
+        text document_url
+        text filename
+        timestamp created_at
+    }
+
+    facturacion_os {
+        serial id PK
+        varchar obra_social
+        date fecha
+        varchar nro_factura
+        text detalle
+        text seguimiento
+        varchar month_group
+        timestamp created_at
+    }
+
+    facturacion_os_documents {
+        serial id PK
+        int facturacion_id FK
+        text document_url
+        text filename
+        timestamp created_at
+    }
+
+    prestaciones_data {
+        serial id PK
+        varchar sheet_name
+        jsonb row_data
+        int row_index
+        timestamp updated_at
+    }
+
+    custom_health_insurances {
+        varchar name PK
+        timestamp created_at
+    }
+
+    users ||--o{ audit_logs : "registra acciones"
+    users ||--o{ medical_results : "carga resultados"
+    patients ||--o{ appointments : "tiene turnos"
+    patients ||--o{ medical_results : "tiene resultados"
+    appointments ||--o{ appointment_analyses : "tiene análisis"
+    appointments ||--o{ appointment_documents : "tiene documentos"
+    appointments ||--o{ medical_results : "tiene resultados"
+    appointment_analyses ||--o{ medical_results : "análisis → resultado"
+    apross ||--o{ apross_documents : "tiene documentos"
+    facturacion_os ||--o{ facturacion_os_documents : "tiene documentos"
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     5. FLUJO TURNO → RESULTADO
+══════════════════════════════════════════════════════════ -->
+<section id="flow-turno">
+  <h2>📋 Flujo Completo: Turno → Resultado → Portal</h2>
+  <p class="subtitle">Ciclo de vida completo de un turno, desde la creación hasta que el paciente ve su resultado.</p>
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart TD
+    START(["👤 Paciente llama o llega"]) --> NUEVO
+
+    subgraph CREACION["📝 CREACIÓN DEL TURNO"]
+        NUEVO["Staff abre '/'\nPresiona 'Nuevo Turno'"]
+        MODAL["AppointmentModal:\n- Nombre + DNI del paciente\n- Análisis (uno o múltiples)\n- ¿Es domicilio?\n- Hora/fecha\n- Documentos adjuntos (pedido médico)"]
+        VALIDATE{{"¿Test de aire?\n¿Ya hay 4 turnos ese día?"}}
+        OVERLOAD["❌ Error: Límite 4/día\nalcanzado"]
+        PATIENT_CHECK{{"¿Paciente existe\nen DB por DNI+nombre?"}}
+        NEW_PATIENT["INSERT INTO patients"]
+        CREATE_APT["INSERT INTO appointments\nstatus: AGENDADO"]
+        CREATE_ANA["INSERT INTO appointment_analyses\n(uno por cada análisis)"]
+        CREATE_DOC["PUT → Vercel Blob\nINSERT INTO appointment_documents"]
+        AUDIT1["logAction('CREATE_APPOINTMENT')"]
+    end
+
+    subgraph CALENDARS2["📅 VISIBILIDAD EN CALENDARIOS"]
+        DASH2["/\nDashboard\n(filtrado por fecha)"]
+        CAL2["/calendario\n(todos los turnos)"]
+        CAL_A2["/calendario-aire\n(solo Tests de Aire)"]
+        CAL_D2["/calendario-domicilio\n(solo domicilios)"]
+    end
+
+    subgraph SEGUIMIENTO["🔄 SEGUIMIENTO DEL TURNO"]
+        ESTADO{{"Estado actual"}}
+        AGEND["🔵 AGENDADO\n(estado inicial)"]
+        MOVER["Reprogramar:\nmoveAppointment()\n+ motivo\n+ nueva fecha"]
+        INDICACIONES["Enviar indicaciones:\ntoggleIndicationsStatus()"]
+        CONFIRMAR["Confirmar asistencia:\nupdateAppointmentStatus(COMPLETADO)"]
+        CANCELAR["Cancelar:\nupdateAppointmentStatus(CANCELADO)\n+ motivo"]
+        COMP["🟢 COMPLETADO"]
+        CANC["⛔ CANCELADO"]
+    end
+
+    subgraph RESULTADO2["🩺 CARGA DE RESULTADO"]
+        RESUMEN["/resumen-medico\nMedicalResultsManager"]
+        UPLOAD{{"Tipo de resultado"}}
+        PDF_UP["PDF → Vercel Blob\nresult_type: 'pdf'"]
+        IMG_UP["Imagen → Vercel Blob\nresult_type: 'image'"]
+        NOTE_UP["Texto/nota\nresult_type: 'note'"]
+        INSERT_RES["INSERT INTO medical_results\nVincular appointment_id + patient_id"]
+        UPDATE_APT["UPDATE appointments\nSET report_id, result_date"]
+        AUDIT2["logAction('UPLOAD_MEDICAL_RESULT')"]
+    end
+
+    subgraph PORTAL2["🌐 PORTAL DEL PACIENTE"]
+        PORTALROUTE["/resultado · /totem\nIngresa DNI"]
+        FETCH["getPatientPortalData(dni)\nObtiene resultados + historial"]
+        VIEW_R["Ve resultados agrupados\npor turno/fecha"]
+        DOWNLOAD["Descarga PDF\n/api/medical-result/file/id"]
+        PRINT_T["Imprime desde tótem\niframe + print dialog"]
+        WA["Contacta por WhatsApp\nModal con número"]
+    end
+
+    START --> NUEVO
+    NUEVO --> MODAL
+    MODAL --> VALIDATE
+    VALIDATE -- "Límite alcanzado" --> OVERLOAD
+    VALIDATE -- OK --> PATIENT_CHECK
+    PATIENT_CHECK -- No existe --> NEW_PATIENT
+    NEW_PATIENT --> CREATE_APT
+    PATIENT_CHECK -- Existe --> CREATE_APT
+    CREATE_APT --> CREATE_ANA
+    CREATE_ANA --> CREATE_DOC
+    CREATE_DOC --> AUDIT1
+    AUDIT1 --> CALENDARS2
+    CALENDARS2 --> SEGUIMIENTO
+    ESTADO --> AGEND
+    AGEND --> MOVER
+    AGEND --> INDICACIONES
+    AGEND --> CONFIRMAR
+    AGEND --> CANCELAR
+    CONFIRMAR --> COMP
+    CANCELAR --> CANC
+    COMP --> RESUMEN
+    RESUMEN --> UPLOAD
+    UPLOAD --> PDF_UP
+    UPLOAD --> IMG_UP
+    UPLOAD --> NOTE_UP
+    PDF_UP --> INSERT_RES
+    IMG_UP --> INSERT_RES
+    NOTE_UP --> INSERT_RES
+    INSERT_RES --> UPDATE_APT
+    UPDATE_APT --> AUDIT2
+    AUDIT2 --> PORTAL2
+    PORTALROUTE --> FETCH
+    FETCH --> VIEW_R
+    VIEW_R --> DOWNLOAD
+    VIEW_R --> PRINT_T
+    VIEW_R --> WA
+
+    style START fill:#0ea5e9,color:#fff
+    style OVERLOAD fill:#ef4444,color:#fff
+    style COMP fill:#10b981,color:#fff
+    style CANC fill:#94a3b8,color:#fff
+    style PORTAL2 fill:#1e293b
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     6. JOURNEY ADMIN
+══════════════════════════════════════════════════════════ -->
+<section id="flow-admin">
+  <h2>👑 Journey del Administrador</h2>
+  <p class="subtitle">Flujo típico de un admin: desde el login hasta las tareas de gestión avanzada.</p>
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart TD
+    A_START(["👑 ADMIN\nInicia sesión"]) --> A_DASH
+
+    A_DASH["/\nDashboard\nVe estadísticas del día:\nTotal · Confirmados · Pendientes · Cancelados"]
+
+    A_DASH --> A_OPS{"¿Qué tarea?"}
+
+    A_OPS --> A_TURN["GESTIÓN DE TURNOS\n• Crear turno nuevo\n• Editar fecha/análisis\n• Cambiar estado\n• Reprogramar con motivo\n• Eliminar turno\n• Ver documentos adjuntos"]
+
+    A_OPS --> A_CAL["CALENDARIOS\n• /calendario (laboratorio)\n• /calendario-aire (SIBO, Lactosa, etc)\n• /calendario-domicilio\n• Arrastrar para reprogramar"]
+
+    A_OPS --> A_PAC["PACIENTES\n• Directorio completo\n• Buscar por nombre/DNI\n• Editar datos\n• Ver historial de citas\n• Gestionar obras sociales múltiples"]
+
+    A_OPS --> A_RES["RESULTADOS MÉDICOS\n/resumen-medico\n• Cargar PDF/Imagen/Nota\n• Vincular a turno\n• Notificar al paciente"]
+
+    A_OPS --> A_ING["INGRESOS\n/ingresos\n• Registrar ingresos\n• Ver tabla con filtros\n• Reportes PDF y CSV\n• Gráfico de análisis"]
+
+    A_OPS --> A_LIST["LISTADOS\n• Pendientes (autorizaciones/pagos)\n• Códigos NBU\n• Precios por OS\n• Indicaciones de aire\n• APROSS\n• Cobranzas"]
+
+    A_OPS --> A_FACT["FACTURACIÓN\n/facturacion\n• Por obra social\n• Documentos adjuntos\n• Seguimiento"]
+
+    A_OPS --> A_ADMIN_ONLY["EXCLUSIVO ADMIN"]
+
+    A_ADMIN_ONLY --> A_USR["USUARIOS /usuarios\n• Crear nuevo usuario\n• Asignar rol (admin/staff/bioquimico)\n• Editar datos\n• Eliminar usuario"]
+
+    A_ADMIN_ONLY --> A_AUDIT["AUDITORÍA\n• Ver log de todas las acciones\n• Filtrar por usuario/fecha\n• CREATE/UPDATE/DELETE\n• LOGIN/LOGOUT"]
+
+    A_ADMIN_ONLY --> A_PREST["PRESTACIONES /prestaciones\n• Editar tablas de prestaciones\n• Añadir/eliminar filas\n• Gestión de secciones"]
+
+    A_OPS --> A_PERFIL["PERFIL /perfil\n• Cambiar nombre/contraseña\n• Subir avatar\n• Ver datos de sesión"]
+
+    style A_START fill:#f59e0b,color:#000
+    style A_ADMIN_ONLY fill:#1e293b,stroke:#f59e0b,stroke-width:2px
+    style A_USR fill:#f59e0b,color:#000
+    style A_AUDIT fill:#f59e0b,color:#000
+    style A_PREST fill:#f59e0b,color:#000
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     7. JOURNEY STAFF
+══════════════════════════════════════════════════════════ -->
+<section id="flow-staff">
+  <h2>🧑‍💼 Journey del Staff</h2>
+  <p class="subtitle">Flujo típico del personal administrativo. Acceso completo excepto usuarios y prestaciones.</p>
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart TD
+    S_START(["🧑‍💼 STAFF\nInicia sesión"]) --> S_DASH
+
+    S_DASH["/\nDashboard\nVe agenda del día\nFiltros por estado y fecha"]
+
+    S_DASH --> S_OPS{"¿Tarea del día?"}
+
+    S_OPS --> S_MAÑANA["INICIO DE JORNADA\n1. Ver turnos del día (/)\n2. Verificar pendientes de indicaciones\n3. Revisar calendario de aire (/calendario-aire)\n4. Marcar indicaciones enviadas ✓"]
+
+    S_OPS --> S_LLEGADA["LLEGADA DE PACIENTE\n1. Buscar turno en dashboard\n2. Confirmar asistencia → COMPLETADO\n3. Ver pedido médico adjunto\n4. Registrar ingreso si corresponde"]
+
+    S_OPS --> S_NUEVO_T["NUEVO TURNO\nAppointmentModal:\n• Busca paciente por DNI\n• Elige análisis\n• Selecciona hora y fecha\n• ¿Es domicilio? → agrega dirección\n• Adjunta documentos (pedido)"]
+
+    S_OPS --> S_REPROG["REPROGRAMACIÓN\n• Arrastrar en calendario\n• O editar fecha en modal\n• Ingresa motivo\n• Sistema registra en observaciones"]
+
+    S_OPS --> S_INGRESOS2["INGRESOS /ingresos\n• Registrar datos económicos\n• Coseguro / precio particular\n• Método de pago\n• Notas internas"]
+
+    S_OPS --> S_LISTADOS2["LISTADOS\n• Agregar pendiente nuevo\n• Actualizar seguimiento\n• Cargar código NBU\n• Registrar precio OS\n• Control cobranza mensual"]
+
+    S_OPS --> S_FACT2["FACTURACIÓN /facturacion\n• Nueva factura por OS\n• Adjuntar comprobante\n• Actualizar seguimiento"]
+
+    S_OPS --> S_PERFIL2["PERFIL /perfil\n• Datos propios\n• Cambiar contraseña"]
+
+    S_OPS --> S_BLOCKED["❌ BLOQUEADO para Staff\n• /usuarios\n• /prestaciones\n(redirige a 403 o inicio)"]
+
+    style S_START fill:#0ea5e9,color:#fff
+    style S_BLOCKED fill:#ef4444,color:#fff
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     8. JOURNEY BIOQUÍMICO
+══════════════════════════════════════════════════════════ -->
+<section id="flow-bio">
+  <h2>🧪 Journey del Bioquímico</h2>
+  <p class="subtitle">Acceso restringido a /ingresos, /pacientes y /perfil. Cualquier otra ruta redirige a /ingresos.</p>
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart TD
+    B_START(["🧪 BIOQUÍMICO\nInicia sesión"]) --> B_REDIR
+
+    B_REDIR["Middleware detecta role: bioquimico\nRedirige automáticamente a /ingresos"]
+
+    B_REDIR --> B_OPS{"¿Qué puede hacer?"}
+
+    B_OPS --> B_ING["✅ /ingresos\nVista de ingresos\n• Ver tabla de ingresos\n• Ver detalles de cada ingreso\n• Leer notas bioquímicas\n• Consultar obras sociales"]
+
+    B_OPS --> B_PAC["✅ /pacientes\nDirectorio de pacientes\n• Ver listado completo\n• Buscar por nombre o DNI\n• Ver datos del paciente\n(solo lectura)"]
+
+    B_OPS --> B_PERFIL["✅ /perfil\nPerfil propio\n• Ver datos de usuario\n• Cambiar contraseña\n• Actualizar nombre"]
+
+    B_OPS --> B_DENIED{"Intenta acceder a otra ruta"}
+    B_DENIED --> B_BLOCK["❌ proxy.ts intercepta\nRedirige a /ingresos"]
+
+    B_ING --> B_ING_LIMIT["⚠️ Limitaciones en /ingresos:\n• NO puede crear ingresos\n  (createIngreso() bloquea en backend)\n• Solo lectura del registro\n• NO puede eliminar"]
+
+    B_PAC --> B_PAC_LIMIT["⚠️ Limitaciones en /pacientes:\n• NO puede crear turnos\n• Solo visualización\n• NO puede eliminar pacientes"]
+
+    style B_START fill:#10b981,color:#fff
+    style B_REDIR fill:#f59e0b,color:#000
+    style B_BLOCK fill:#ef4444,color:#fff
+    style B_ING_LIMIT fill:#1e293b,stroke:#ef4444
+    style B_PAC_LIMIT fill:#1e293b,stroke:#ef4444
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     9. JOURNEY PACIENTE
+══════════════════════════════════════════════════════════ -->
+<section id="flow-patient">
+  <h2>🙋 Journey del Paciente (Portal Público)</h2>
+  <p class="subtitle">Sin login. El paciente accede con su DNI desde /resultado o el tótem físico (/totem).</p>
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart TD
+    P_START(["🙋 PACIENTE\nLlega al laboratorio o accede online"]) --> P_ELEC
+
+    P_ELEC{{"¿Cómo accede?"}}
+
+    P_ELEC --> P_WEB["/resultado\nNavegador web\n(en casa o celular)"]
+    P_ELEC --> P_TOTEM["/totem\nTótem físico del laboratorio\n(pantalla táctil)"]
+
+    subgraph LOGIN_P2["🔐 IDENTIFICACIÓN POR DNI"]
+        P_INPUT["Ingresa su DNI"]
+        P_KEY_WEB["Teclado físico del dispositivo\n(web)"]
+        P_KEY_TOTEM["🎹 Teclado Virtual en pantalla\n(numérico, táctil)"]
+        P_CALL["getPatientPortalData(dni)\nBusca en DB todos sus datos"]
+        P_ERR["❌ DNI no encontrado\nMuestra error"]
+        P_OK["✅ Datos encontrados\nEntra al portal"]
+    end
+
+    subgraph PORTAL_VIEW["📱 PORTAL DEL PACIENTE"]
+        P_TABS{{"Pestaña activa"}}
+        P_RESULTADOS["📄 RESULTADOS MÉDICOS\nInformes agrupados por turno"]
+        P_HISTORIAL["📅 MI HISTORIAL\nTodos los turnos registrados"]
+        P_SEARCH["🔍 Buscador\n(filtra por fecha / análisis / N° informe)"]
+        P_SEARCH_KEY["🎹 Teclado Virtual QWERTY\n(solo en /totem)"]
+    end
+
+    subgraph ACTIONS_P["⚡ ACCIONES"]
+        P_EXPAND["Toca una tarjeta\n→ Expande el resultado"]
+        P_VIEW_PDF["Ve PDF inline\n(iframe en página)"]
+        P_VIEW_IMG["Ve imagen inline"]
+        P_PRINT["🖨️ IMPRIMIR INFORME\n(solo /totem)\nAbre modal con preview\nBotón dispara diálogo impresión"]
+        P_DL["⬇️ DESCARGAR INFORME\n(solo /resultado)\nDescarga directa del archivo"]
+        P_WA_BTN["💬 CONSULTAR / AYUDA"]
+        P_WA_MODAL["Modal de contacto:\n• Número: +54 9 351 304-9709\n• Sin abrir nueva pestaña"]
+        P_WA_LINK["Enlace directo a WhatsApp\n(solo /resultado)"]
+    end
+
+    P_WEB --> P_INPUT
+    P_TOTEM --> P_INPUT
+    P_INPUT --> P_KEY_WEB
+    P_INPUT --> P_KEY_TOTEM
+    P_KEY_WEB --> P_CALL
+    P_KEY_TOTEM --> P_CALL
+    P_CALL --> P_ERR
+    P_CALL --> P_OK
+    P_OK --> P_TABS
+    P_TABS --> P_RESULTADOS
+    P_TABS --> P_HISTORIAL
+    P_TABS --> P_SEARCH
+    P_SEARCH --> P_SEARCH_KEY
+    P_RESULTADOS --> P_EXPAND
+    P_EXPAND --> P_VIEW_PDF
+    P_EXPAND --> P_VIEW_IMG
+    P_EXPAND --> P_PRINT
+    P_EXPAND --> P_DL
+    P_TABS --> P_WA_BTN
+    P_WA_BTN --> P_WA_MODAL
+    P_WA_MODAL --> P_WA_LINK
+
+    style P_START fill:#8b5cf6,color:#fff
+    style P_TOTEM fill:#0ea5e9,color:#fff
+    style P_WEB fill:#10b981,color:#fff
+    style P_ERR fill:#ef4444,color:#fff
+    style P_OK fill:#10b981,color:#fff
+    style P_PRINT fill:#0ea5e9,color:#fff
+    style P_WA_MODAL fill:#25d366,color:#fff
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     10. SERVER ACTIONS
+══════════════════════════════════════════════════════════ -->
+<section id="actions">
+  <h2>⚡ Server Actions — Mapa Completo</h2>
+  <p class="subtitle">Todas las acciones del servidor agrupadas por dominio funcional.</p>
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart LR
+    subgraph AUTH_A["auth.ts"]
+        login_a["login(formData)\nValida credenciales\nGenera JWT cookie"]
+        logout_a["logoutAction()\nElimina cookie\nRedirect /login"]
+    end
+
+    subgraph APT_A["appointments.ts"]
+        get_apt["getAppointments()\nTodos los turnos + join patients"]
+        get_today["getTodayAppointments()\nSolo hoy"]
+        create_apt["createAppointment(formData)\nValida límite aire\nCrea paciente si no existe\nTransacción BEGIN/COMMIT"]
+        update_apt["updateAppointment(formData)\nEdita turno, análisis, docs"]
+        update_evo["updateEvolution(formData)\nEstado + notas"]
+        move_apt["moveAppointment(id, newDate, reason)\nReprogramar con motivo"]
+        delete_apt["deleteAppointment(id)\nElimina turno + docs"]
+        upd_status["updateAppointmentStatus(id, status, reason?)\nAGENDADO|COMPLETADO|CANCELADO\nRevalida 4 rutas"]
+        toggle_ind["toggleIndicationsStatus(id, bool)\nMarca indicaciones enviadas"]
+        del_doc["deleteDocument(docId)\nElimina de Vercel Blob"]
+    end
+
+    subgraph PAT_A["patients.ts"]
+        get_pat["getPatients()\nListado completo"]
+        upd_pat["updatePatient(formData)\nEdita datos"]
+        del_pat["deletePatient(id)\nElimina paciente"]
+        search_pat["searchPatients(query)\nBúsqueda nombre/DNI"]
+    end
+
+    subgraph MED_A["medical_results.ts"]
+        upload_res["uploadMedicalResult(formData)\nVercel Blob + INSERT"]
+        get_res["getPatientResults(dni)"]
+        portal_data["getPatientPortalData(dni)\nResultados + citas (público)"]
+        get_all_res["getAllMedicalResults()\nÚltimos 100"]
+        mark_notif["markAsNotified(id)"]
+        del_res["deleteMedicalResult(resultId)"]
+    end
+
+    subgraph ING_A["ingresos.ts"]
+        get_ing["getIngresos(search?)\nTurnos COMPLETADO + is_ingreso"]
+        create_ing["createIngreso(formData)\n⚠️ BLOQUEADO para bioquimico"]
+        del_ing["deleteIngreso(id)"]
+        get_detail["getIngresoDetail(id)"]
+        upd_field["updateIngresoField(id, field, value)"]
+        get_date["getIngresosByDate(date)"]
+        save_note["saveInternalNote(id, note)"]
+        mark_read["markInternalNoteAsRead(id)"]
+        cobranzas_rep["getCobranzasReport(start, end)"]
+    end
+
+    subgraph USR_A["users.ts"]
+        get_profile["getProfileData()\nUsuario actual"]
+        get_users["getUsers() — ADMIN ONLY"]
+        create_usr["createUser(formData) — ADMIN ONLY"]
+        upd_profile["updateProfile(formData)"]
+        del_usr["deleteUser(id) — ADMIN ONLY"]
+    end
+
+    subgraph LST_A["listados.ts"]
+        subgraph PEND_A["Pendientes"]
+            get_pend["getPendientes()"]
+            create_pend["createPendiente()"]
+            upd_pend["updatePendiente()"]
+            del_pend["deletePendiente()"]
+        end
+        subgraph CODES_A["System Codes"]
+            get_codes["getSystemCodes()"]
+            create_code["createSystemCode()"]
+            upd_code["updateSystemCode()"]
+            del_code["deleteSystemCode()"]
+        end
+        subgraph BILLING_A["Billing Prices"]
+            get_prices["getBillingPrices()"]
+            create_price["createBillingPrice()"]
+            upd_price["updateBillingPrice()"]
+            del_price["deleteBillingPrice()"]
+        end
+        subgraph COBR_A["Cobranzas"]
+            get_cobr["getCobranzas()"]
+            create_cobr["createCobranza()"]
+            upd_cobr["updateCobranza()"]
+            del_cobr["deleteCobranza()"]
+        end
+        subgraph APR_A2["APROSS"]
+            get_apr["getApross()"]
+            create_apr["createApross()"]
+            upd_apr["updateApross()"]
+            del_apr["deleteApross()"]
+        end
+        subgraph FACT_A2["Facturación OS"]
+            get_fact["getFacturacionOS(os)"]
+            create_fact["createFacturacionOS()"]
+            upd_fact["updateFacturacionOS()"]
+            del_fact["deleteFacturacionOS()"]
+        end
+    end
+
+    subgraph PREST_A["prestaciones.ts"]
+        get_sheets["getPrestacionesSheets()"]
+        get_by_sheet["getPrestacionesBySheet(name)"]
+        upd_prest["updatePrestacion(id, rowData)"]
+        add_prest["addPrestacion(sheet, rowData)"]
+        del_prest["deletePrestacion(id)"]
+    end
+
+    subgraph AUDIT_A["audit.ts"]
+        log_action["logAction(action, details)\nRegistra en audit_logs"]
+        get_logs["getAuditLogs(filters) — ADMIN ONLY"]
+        get_audit_users["getAuditUsers()"]
+    end
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer style="text-align:center;padding:3rem;color:#334155;font-size:0.8rem;border-top:1px solid #1e293b;">
+  LEGA Laboratorio — Diagrama generado automáticamente | Sistema v1.1.7
+</footer>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#0ea5e9',
+      primaryTextColor: '#f1f5f9',
+      primaryBorderColor: '#334155',
+      lineColor: '#64748b',
+      secondaryColor: '#1e293b',
+      tertiaryColor: '#0f172a',
+      background: '#0f172a',
+      mainBkg: '#1e293b',
+      nodeBkg: '#1e293b',
+      edgeLabelBackground: '#1e293b',
+    },
+    flowchart: { curve: 'basis', htmlLabels: true },
+    er: { diagramPadding: 20 },
+    securityLevel: 'loose',
+  });
+
+  // Nav highlight on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const link = document.querySelector(`nav a[href="#${e.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
