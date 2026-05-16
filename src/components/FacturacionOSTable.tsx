@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Plus, Trash2, Save, X, Search, FileText, Upload, Pencil } from "lucide-react";
 
-const OBRAS_SOCIALES = ['OSDE', 'SWISS MEDICAL', 'GALENO', 'MEDIFE', 'CIBIC', 'METABOLOMICA', 'FEDERACION'];
+const OBRAS_SOCIALES = ['OSDE', 'SWISS MEDICAL', 'GALENO', 'MEDIFE', 'CIBIC', 'METABOLOMICA', 'FEDERACION', 'ASOCIACION'];
 
 const SEGUIMIENTO_OPTIONS = ['Falta Pagos', 'Pagado'];
 

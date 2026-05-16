@@ -95,10 +95,9 @@ export async function createIngreso(formData: FormData) {
     const files = formData.getAll("document") as File[];
     const coseguro_agregado = formData.get("coseguro_agregado") === 'true';
     const factura_instante = formData.get("factura_instante") === 'true';
+    const payment_combined = formData.get("payment_combined") === 'true';
     const coseguro_payment_method = formData.get("coseguro_payment_method") as string || '';
     const particular_payment_method = formData.get("particular_payment_method") as string || '';
-    const payment_combined = (coseguro_payment_method + ',' + particular_payment_method).split(',').filter(Boolean).filter(m => m !== 'EFECTIVO').length > 0
-      && (coseguro_payment_method + ',' + particular_payment_method).toLowerCase().includes('efectivo');
 
     let patientId;
 
@@ -196,9 +195,21 @@ export async function createIngreso(formData: FormData) {
 
     // Auto-create cobranza for non-cash payments on new ingresos
     if (!existingId) {
-      const allMethods = [...coseguro_payment_method.split(','), ...particular_payment_method.split(',')]
-        .map(m => m.trim()).filter(Boolean);
-      const hasNonCash = allMethods.some(m => m !== 'EFECTIVO' && m !== '-');
+      const isNonCash = (m: string) => m && m !== '-' && m !== 'EFECTIVO';
+      let hasNonCash: boolean;
+      let cobranzaCoseguroMethod: string;
+      let cobranzaParticularMethod: string;
+      if (payment_combined) {
+        const allMethods = [...coseguro_payment_method.split(','), ...particular_payment_method.split(',')]
+          .map(m => m.trim()).filter(Boolean);
+        hasNonCash = allMethods.some(isNonCash);
+        cobranzaCoseguroMethod = coseguro_payment_method;
+        cobranzaParticularMethod = particular_payment_method;
+      } else {
+        hasNonCash = isNonCash(payment_method);
+        cobranzaCoseguroMethod = '';
+        cobranzaParticularMethod = payment_method;
+      }
       if (hasNonCash) {
         const tipo = factura_instante ? 'factura_instante' : 'pendiente';
         const total = ((parseFloat(coseguro || '0') || 0) + (parseFloat(particular_price || '0') || 0)).toFixed(2);
@@ -206,7 +217,7 @@ export async function createIngreso(formData: FormData) {
         await client.query(
           `INSERT INTO cobranzas (fecha, paciente, ingreso_id, coseguro_amount, coseguro_method, particular_amount, particular_method, total, tipo, observacion, estado_factura, month_group)
            VALUES ($1, $2, $3, NULLIF($4,'')::numeric, NULLIF($5,''), NULLIF($6,'')::numeric, NULLIF($7,''), $8, $9, $10, 'NO FACTURADO', $11)`,
-          [appointment_date_raw, name, aptId, coseguro, coseguro_payment_method, particular_price, particular_payment_method, total, tipo, observations, month_group]
+          [appointment_date_raw, name, aptId, coseguro, cobranzaCoseguroMethod, particular_price, cobranzaParticularMethod, total, tipo, observations, month_group]
         );
       }
 

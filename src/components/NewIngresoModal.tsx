@@ -21,9 +21,6 @@ function PaymentMethodSelector({ label, selectedMethods, onChange, inputName }: 
   onChange: (methods: string[]) => void;
   inputName: string;
 }) {
-  const hasQR = selectedMethods.includes('QR');
-  const hasEfectivo = selectedMethods.includes('EFECTIVO');
-
   function toggle(m: string) {
     onChange(selectedMethods.includes(m) ? selectedMethods.filter(x => x !== m) : [...selectedMethods, m]);
   }
@@ -49,18 +46,6 @@ function PaymentMethodSelector({ label, selectedMethods, onChange, inputName }: 
           </button>
         ))}
       </div>
-      {hasQR && !hasEfectivo && (
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
-          <input type="checkbox" onChange={() => toggle('EFECTIVO')} checked={false} />
-          Combinado con Efectivo
-        </label>
-      )}
-      {hasQR && hasEfectivo && (
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--primary)', cursor: 'pointer' }}>
-          <input type="checkbox" onChange={() => toggle('EFECTIVO')} checked />
-          Combinado con Efectivo
-        </label>
-      )}
       <input type="hidden" name={inputName} value={selectedMethods.join(',')} />
     </div>
   );
@@ -260,16 +245,16 @@ function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setS
   const [particularVal, setParticularVal] = useState(src?.particular_price ? String(src.particular_price) : '');
   const [coseguroAgregado, setCoseguroAgregado] = useState(src?.coseguro_agregado || false);
   const [facturaInstante, setFacturaInstante] = useState(src?.factura_instante || false);
+  const [paymentMethod, setPaymentMethod] = useState<string>(src?.payment_method || '-');
+  const [paymentCombinado, setPaymentCombinado] = useState<boolean>(src?.payment_combined || false);
   const [coseguroMethods, setCoseguroMethods] = useState<string[]>(
     src?.coseguro_payment_method ? src.coseguro_payment_method.split(',').filter(Boolean) : []
   );
   const [particularMethods, setParticularMethods] = useState<string[]>(
-    src?.particular_payment_method ? src.particular_payment_method.split(',').filter(Boolean) :
-    (src?.payment_method && src.payment_method !== '-' ? [src.payment_method] : [])
+    src?.particular_payment_method ? src.particular_payment_method.split(',').filter(Boolean) : []
   );
 
   const total = (parseFloat(coseguroVal) || 0) + (parseFloat(particularVal) || 0);
-  const legacyPayment = particularMethods[0] || coseguroMethods[0] || (src?.payment_method || '-');
 
   return (
     <form
@@ -279,9 +264,9 @@ function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setS
     >
       {editingIngreso && <input type="hidden" name="id" value={editingIngreso.id} />}
       {mode === 'con_turno' && selectedPatient?.id && !editingIngreso && <input type="hidden" name="id" value={selectedPatient.id} />}
-      <input type="hidden" name="payment_method" value={legacyPayment} />
       <input type="hidden" name="coseguro_agregado" value={coseguroAgregado ? 'true' : ''} />
       <input type="hidden" name="factura_instante" value={facturaInstante ? 'true' : ''} />
+      <input type="hidden" name="payment_combined" value={paymentCombinado ? 'true' : ''} />
 
       {error && <div style={{ color: 'var(--danger)', padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', fontSize: '0.85rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>{error}</div>}
 
@@ -396,9 +381,60 @@ function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setS
           <input name="professional_name" defaultValue={src?.professional_name} style={inputStyle} placeholder="Nombre del médico" />
         </div>
 
-        {/* Coseguro + Particular + Total */}
+        {/* Payment section */}
         <div style={{ gridColumn: 'span 2', height: '1px', background: 'var(--glass-border)', margin: '0.25rem 0' }} />
 
+        {/* Payment method row + Combinado checkbox */}
+        <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', alignItems: 'end' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Medio de Pago</label>
+            <select
+              name="payment_method"
+              value={paymentMethod}
+              onChange={e => setPaymentMethod(e.target.value)}
+              style={{ ...inputStyle, background: 'var(--glass-bg)', color: 'var(--text-main)' }}
+            >
+              <option value="-">-</option>
+              <option value="EFECTIVO">Efectivo</option>
+              <option value="TRANSFERENCIA">Transferencia</option>
+              <option value="TARJETA">Tarjeta</option>
+              <option value="QR">QR</option>
+            </select>
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.75rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: paymentCombinado ? 'var(--primary)' : 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+            <input
+              type="checkbox"
+              checked={paymentCombinado}
+              onChange={e => setPaymentCombinado(e.target.checked)}
+              style={{ width: '15px', height: '15px', accentColor: 'var(--primary)', cursor: 'pointer' }}
+            />
+            Combinado con Efectivo
+          </label>
+        </div>
+
+        {/* Per-field method selectors (visible only when combined) */}
+        {paymentCombinado && (
+          <>
+            <div>
+              <PaymentMethodSelector
+                label="Tipo de pago — Coseguro"
+                selectedMethods={coseguroMethods}
+                onChange={setCoseguroMethods}
+                inputName="coseguro_payment_method"
+              />
+            </div>
+            <div>
+              <PaymentMethodSelector
+                label="Tipo de pago — Particular"
+                selectedMethods={particularMethods}
+                onChange={setParticularMethods}
+                inputName="particular_payment_method"
+              />
+            </div>
+          </>
+        )}
+
+        {/* Coseguro + Particular + Total */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)' }}>Coseguro O.Soc</label>
@@ -447,24 +483,6 @@ function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setS
               $ {total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
-        </div>
-
-        {/* Payment methods */}
-        <div>
-          <PaymentMethodSelector
-            label="Medio de Pago — Coseguro"
-            selectedMethods={coseguroMethods}
-            onChange={setCoseguroMethods}
-            inputName="coseguro_payment_method"
-          />
-        </div>
-        <div>
-          <PaymentMethodSelector
-            label="Medio de Pago — Particular"
-            selectedMethods={particularMethods}
-            onChange={setParticularMethods}
-            inputName="particular_payment_method"
-          />
         </div>
 
         {/* Observations */}
