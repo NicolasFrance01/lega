@@ -195,7 +195,7 @@ export async function createIngreso(formData: FormData) {
 
     // Auto-create cobranza for non-cash payments on new ingresos
     if (!existingId) {
-      const isNonCash = (m: string) => m && m !== '-' && m !== 'EFECTIVO';
+      const isNonCash = (m: string): boolean => !!m && m !== '-' && m !== 'EFECTIVO';
       let hasNonCash: boolean;
       let cobranzaCoseguroMethod: string;
       let cobranzaParticularMethod: string;
