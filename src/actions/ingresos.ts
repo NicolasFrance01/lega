@@ -207,8 +207,11 @@ export async function createIngreso(formData: FormData) {
         cobranzaParticularMethod = particular_payment_method;
       } else {
         hasNonCash = isNonCash(payment_method);
-        cobranzaCoseguroMethod = '';
-        cobranzaParticularMethod = payment_method;
+        // Assign method to whichever amount column has a value
+        cobranzaCoseguroMethod = (coseguro && parseFloat(coseguro) > 0) ? payment_method : '';
+        cobranzaParticularMethod = (particular_price && parseFloat(particular_price) > 0) ? payment_method : '';
+        // If only coseguro exists, still surface the method there
+        if (!cobranzaCoseguroMethod && !cobranzaParticularMethod) cobranzaCoseguroMethod = payment_method;
       }
       if (hasNonCash) {
         const tipo = factura_instante ? 'factura_instante' : 'pendiente';
@@ -224,10 +227,11 @@ export async function createIngreso(formData: FormData) {
       // Auto-create pago_obrasocial entry when coseguro is "agregado"
       if (coseguro_agregado && coseguro) {
         const month_group = appointment_date_raw?.substring(0, 7) || new Date().toISOString().substring(0, 7);
+        const poMethod = payment_combined ? (coseguro_payment_method || particular_payment_method) : payment_method;
         await client.query(
-          `INSERT INTO pago_obrasocial (ingreso_id, fecha, paciente, coseguro_pendiente, seguimiento, month_group)
-           VALUES ($1, $2, $3, $4, 'Pendiente', $5)`,
-          [aptId, appointment_date_raw, name, coseguro, month_group]
+          `INSERT INTO pago_obrasocial (ingreso_id, fecha, paciente, coseguro_pendiente, seguimiento, month_group, payment_method)
+           VALUES ($1, $2, $3, $4, 'Pendiente', $5, $6)`,
+          [aptId, appointment_date_raw, name, coseguro, month_group, poMethod || null]
         );
       }
     }
@@ -415,6 +419,8 @@ export async function ensureIngresosExtColumns() {
         detalle TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE pago_obrasocial ADD COLUMN IF NOT EXISTS payment_method VARCHAR(100);
+      ALTER TABLE coseguro_pagos ADD COLUMN IF NOT EXISTS payment_method VARCHAR(100);
     `);
     return { success: true };
   } catch (error: any) {

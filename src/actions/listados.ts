@@ -715,7 +715,8 @@ export async function getPagoObrasocial() {
     const res = await pool.query(`
       SELECT po.*,
              COALESCE(
-               json_agg(json_build_object('id', cp.id, 'monto', cp.monto, 'fecha', cp.fecha, 'detalle', cp.detalle, 'created_at', cp.created_at))
+               json_agg(json_build_object('id', cp.id, 'monto', cp.monto, 'fecha', cp.fecha, 'detalle', cp.detalle, 'payment_method', cp.payment_method, 'created_at', cp.created_at)
+               ORDER BY cp.fecha ASC, cp.created_at ASC)
                FILTER (WHERE cp.id IS NOT NULL),
                '[]'::json
              ) as pagos,
@@ -731,7 +732,7 @@ export async function getPagoObrasocial() {
   }
 }
 
-export async function addCoseguroPago(pago_obrasocial_id: number, monto: number, fecha: string, detalle: string) {
+export async function addCoseguroPago(pago_obrasocial_id: number, monto: number, fecha: string, detalle: string, payment_method?: string) {
   try {
     const session = await getSession() as any;
     if (!session) throw new Error("No autenticado");
@@ -742,8 +743,8 @@ export async function addCoseguroPago(pago_obrasocial_id: number, monto: number,
     }
 
     await pool.query(
-      "INSERT INTO coseguro_pagos (pago_obrasocial_id, monto, fecha, detalle) VALUES ($1, $2, $3, $4)",
-      [pago_obrasocial_id, monto, fecha, detalle || null]
+      "INSERT INTO coseguro_pagos (pago_obrasocial_id, monto, fecha, detalle, payment_method) VALUES ($1, $2, $3, $4, $5)",
+      [pago_obrasocial_id, monto, fecha, detalle || null, payment_method || null]
     );
 
     revalidatePath("/listados/pago-obrasocial");
