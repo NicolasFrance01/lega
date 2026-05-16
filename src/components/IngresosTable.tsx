@@ -139,10 +139,10 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
               <th style={{ padding: '0.75rem 1rem' }}>PROFESIONAL</th>
               <th style={{ padding: '0.75rem 1rem' }}>ESTUDIO</th>
               <th style={{ padding: '0.75rem 1rem' }}>OBRA SOCIAL</th>
-              <th style={{ padding: '0.75rem 1rem' }}>COSEGURO</th>
-              <th style={{ padding: '0.75rem 1rem' }}>PARTICULAR</th>
-              <th style={{ padding: '0.75rem 1rem' }}>PAGO</th>
-              <th style={{ padding: '0.75rem 1rem' }}>OBSERVACIONES / DETALLES</th>
+              {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>COSEGURO</th>}
+              {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>PARTICULAR</th>}
+              {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>PAGO</th>}
+              {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>OBSERVACIONES / DETALLES</th>}
               <th style={{ padding: '0.75rem 1rem', textAlign: 'right', position: 'sticky', right: 0, background: 'var(--table-sticky-bg, #ffffff)', color: 'var(--table-sticky-text, #000000)', zIndex: 31, borderLeft: '1px solid var(--glass-border)', borderBottom: '2px solid var(--glass-border)' }}>ACCIONES</th>
             </tr>
           </thead>
@@ -297,24 +297,32 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
                       ))}
                     </div>
                   </td>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--success)' }}>
-                    <EditableCell id={ing.id} field="coseguro" value={ing.coseguro} type="number" />
-                  </td>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>
-                    <EditableCell id={ing.id} field="particular_price" value={ing.particular_price} type="number" />
-                  </td>
-                  <td style={{ padding: '0.75rem 1rem' }}>
-                    <EditableCell
-                      id={ing.id}
-                      field="payment_method"
-                      value={ing.payment_method}
-                      type="select"
-                      options={['-', 'EFECTIVO', 'TRANSFERENCIA', 'TARJETA']}
-                    />
-                  </td>
-                  <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem', fontStyle: 'italic', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={ing.observations}>
-                    {ing.observations || '-'}
-                  </td>
+                  {!isBioq && (
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--success)' }}>
+                      <EditableCell id={ing.id} field="coseguro" value={ing.coseguro} type="number" />
+                    </td>
+                  )}
+                  {!isBioq && (
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>
+                      <EditableCell id={ing.id} field="particular_price" value={ing.particular_price} type="number" />
+                    </td>
+                  )}
+                  {!isBioq && (
+                    <td style={{ padding: '0.75rem 1rem' }}>
+                      <EditableCell
+                        id={ing.id}
+                        field="payment_method"
+                        value={ing.payment_method}
+                        type="select"
+                        options={['-', 'EFECTIVO', 'TRANSFERENCIA', 'TARJETA', 'QR']}
+                      />
+                    </td>
+                  )}
+                  {!isBioq && (
+                    <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem', fontStyle: 'italic', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={ing.observations}>
+                      {ing.observations || '-'}
+                    </td>
+                  )}
                   <td style={{
                     padding: '0.75rem 1rem',
                     textAlign: 'right',
@@ -327,20 +335,16 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
                     borderBottom: '1px solid var(--glass-border)'
                   }}>
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                      <button
-                        onClick={() => onEdit(ing)}
-                        style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(14, 165, 233, 0.1)', color: 'var(--primary)', border: 'none', cursor: 'pointer' }}
-                        title="Editar"
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(ing.id)}
-                        style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: 'none', cursor: 'pointer' }}
-                        title="Eliminar"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {!isBioq && (
+                        <button onClick={() => onEdit(ing)} style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(14, 165, 233, 0.1)', color: 'var(--primary)', border: 'none', cursor: 'pointer' }} title="Editar">
+                          <Edit2 size={14} />
+                        </button>
+                      )}
+                      {!isBioq && (
+                        <button onClick={() => handleDelete(ing.id)} style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: 'none', cursor: 'pointer' }} title="Eliminar">
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

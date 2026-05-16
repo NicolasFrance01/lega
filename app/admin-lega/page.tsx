@@ -1,0 +1,61 @@
+import { getUsers } from "@/actions/users";
+import { getAuditLogs } from "@/actions/audit";
+import { getObrasSociales } from "@/actions/listados";
+import { ShieldCheck, History, Building2 } from "lucide-react";
+import CreateUserModal from "@/components/CreateUserModal";
+import UserManagementClient from "@/components/UserManagementClient";
+import AuditLogHistory from "@/components/AuditLogHistory";
+import ObrasSocialesAdmin from "@/components/ObrasSocialesAdmin";
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
+
+export const revalidate = 0;
+
+export default async function AdminLegaPage() {
+  const session = await getSession() as any;
+  if (!session || session.role !== 'admin') redirect("/");
+
+  const { data: users, error: userError } = await getUsers();
+  const { data: auditLogs, error: auditError } = await getAuditLogs();
+  const { data: obrasSociales } = await getObrasSociales();
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <header className="glass-panel" style={{ padding: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
+        <div>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '0.25rem' }}>Admin Lega</h2>
+          <p style={{ color: 'var(--text-muted)' }}>Administración centralizada del sistema: usuarios, actividad y obras sociales.</p>
+        </div>
+        <CreateUserModal />
+      </header>
+
+      <div className="grid-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
+        <section className="glass-panel" style={{ padding: '2rem' }}>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '1.25rem' }}>
+            <ShieldCheck color="var(--primary)" /> Staff del Laboratorio
+          </h3>
+          {userError && <p style={{ color: 'var(--danger)' }}>{userError}</p>}
+          <UserManagementClient initialUsers={users || []} currentUserId={session?.id} />
+        </section>
+
+        <section className="glass-panel" style={{ padding: '2rem', maxHeight: '85vh', overflowY: 'auto' }}>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '1.25rem' }}>
+            <History color="var(--accent)" /> Registro de Actividad
+          </h3>
+          {auditError && <p style={{ color: 'var(--danger)' }}>{auditError}</p>}
+          <AuditLogHistory initialLogs={auditLogs || []} />
+        </section>
+      </div>
+
+      <section className="glass-panel" style={{ padding: '2rem' }}>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '1.25rem' }}>
+          <Building2 color="var(--primary)" /> Obras Sociales
+        </h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+          Listado centralizado de todas las obras sociales del sistema. Los cambios se reflejan en todos los módulos.
+        </p>
+        <ObrasSocialesAdmin initialData={obrasSociales || []} />
+      </section>
+    </div>
+  );
+}

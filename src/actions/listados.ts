@@ -222,7 +222,14 @@ export async function getCobranzas() {
     const session = await getSession() as any;
     if (!session) throw new Error("No autenticado");
 
-    const res = await pool.query("SELECT * FROM cobranzas ORDER BY month_group DESC, fecha DESC");
+    const res = await pool.query(`
+      SELECT c.*,
+             p.name as ingreso_paciente_name
+      FROM cobranzas c
+      LEFT JOIN appointments a ON a.id = c.ingreso_id
+      LEFT JOIN patients p ON p.id = a.patient_id
+      ORDER BY c.month_group DESC, c.fecha DESC
+    `);
     return { data: res.rows, error: null };
   } catch (error: any) {
     return { data: null, error: error.message };
@@ -237,18 +244,26 @@ export async function createCobranza(formData: FormData) {
     const fecha = formData.get("fecha") as string;
     const paciente = (formData.get("paciente") as string)?.toUpperCase().trim();
     const dni = formData.get("dni") as string;
-    const factura = formData.get("factura") as string;
+    const factura = formData.get("factura") as string || null;
+    const nro_factura = formData.get("nro_factura") as string || null;
     const observacion = formData.get("observacion") as string;
-    const seguimiento = formData.get("seguimiento") as string;
+    const seguimiento = (formData.get("seguimiento") as string) || 'Pendiente';
+    const tipo = (formData.get("tipo") as string) || 'manual';
+    const coseguro_amount = formData.get("coseguro_amount") as string || null;
+    const particular_amount = formData.get("particular_amount") as string || null;
+    const total = coseguro_amount || particular_amount
+      ? String((parseFloat(coseguro_amount || '0') || 0) + (parseFloat(particular_amount || '0') || 0))
+      : null;
 
-    const month_group = fecha.substring(0, 7); // 'YYYY-MM'
+    const month_group = fecha.substring(0, 7);
 
     await pool.query(
-      "INSERT INTO cobranzas (fecha, paciente, dni, factura, observacion, seguimiento, month_group) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-      [fecha, paciente, dni, factura, observacion, seguimiento, month_group]
+      `INSERT INTO cobranzas (fecha, paciente, dni, factura, nro_factura, observacion, seguimiento, tipo, coseguro_amount, particular_amount, total, estado_factura, month_group)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULLIF($9,'')::numeric, NULLIF($10,'')::numeric, NULLIF($11,'')::numeric, 'NO FACTURADO', $12)`,
+      [fecha, paciente, dni, factura, nro_factura, observacion, seguimiento, tipo, coseguro_amount, particular_amount, total, month_group]
     );
 
-    await logAction("CREATE_COBRANZA", { paciente, factura });
+    await logAction("CREATE_COBRANZA", { paciente, tipo });
     revalidatePath("/listados/cobranzas");
     return { success: true };
   } catch (error: any) {
@@ -300,6 +315,15 @@ export async function ensureCobranzasTable() {
         month_group TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE cobranzas ADD COLUMN IF NOT EXISTS ingreso_id UUID;
+      ALTER TABLE cobranzas ADD COLUMN IF NOT EXISTS coseguro_amount NUMERIC;
+      ALTER TABLE cobranzas ADD COLUMN IF NOT EXISTS coseguro_method VARCHAR(200);
+      ALTER TABLE cobranzas ADD COLUMN IF NOT EXISTS particular_amount NUMERIC;
+      ALTER TABLE cobranzas ADD COLUMN IF NOT EXISTS particular_method VARCHAR(200);
+      ALTER TABLE cobranzas ADD COLUMN IF NOT EXISTS total NUMERIC;
+      ALTER TABLE cobranzas ADD COLUMN IF NOT EXISTS tipo VARCHAR(30) DEFAULT 'manual';
+      ALTER TABLE cobranzas ADD COLUMN IF NOT EXISTS nro_factura VARCHAR(100);
+      ALTER TABLE cobranzas ADD COLUMN IF NOT EXISTS estado_factura VARCHAR(30) DEFAULT 'NO FACTURADO';
     `);
     return { success: true };
   } catch (error: any) {
@@ -675,6 +699,162 @@ export async function deleteFacturacionOSDocument(id: number) {
     }
     await pool.query('DELETE FROM facturacion_os_documents WHERE id = $1', [id]);
     revalidatePath("/facturacion");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+// --- PAGO OBRA SOCIAL ---
+
+export async function getPagoObrasocial() {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    const res = await pool.query(`
+      SELECT po.*,
+             COALESCE(
+               json_agg(json_build_object('id', cp.id, 'monto', cp.monto, 'fecha', cp.fecha, 'detalle', cp.detalle, 'created_at', cp.created_at))
+               FILTER (WHERE cp.id IS NOT NULL),
+               '[]'::json
+             ) as pagos,
+             COALESCE(SUM(cp.monto), 0) as total_pagado
+      FROM pago_obrasocial po
+      LEFT JOIN coseguro_pagos cp ON cp.pago_obrasocial_id = po.id
+      GROUP BY po.id
+      ORDER BY po.month_group DESC, po.fecha DESC
+    `);
+    return { data: JSON.parse(JSON.stringify(res.rows)), error: null };
+  } catch (error: any) {
+    return { data: null, error: error.message };
+  }
+}
+
+export async function addCoseguroPago(pago_obrasocial_id: number, monto: number, fecha: string, detalle: string) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    const check = await pool.query("SELECT seguimiento FROM pago_obrasocial WHERE id = $1", [pago_obrasocial_id]);
+    if (check.rows[0]?.seguimiento === 'Completo') {
+      return { error: "Este registro está completo y no acepta más pagos." };
+    }
+
+    await pool.query(
+      "INSERT INTO coseguro_pagos (pago_obrasocial_id, monto, fecha, detalle) VALUES ($1, $2, $3, $4)",
+      [pago_obrasocial_id, monto, fecha, detalle || null]
+    );
+
+    revalidatePath("/listados/pago-obrasocial");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function updatePagoObrasocialSeguimiento(id: number, seguimiento: string) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    await pool.query("UPDATE pago_obrasocial SET seguimiento = $1 WHERE id = $2", [seguimiento, id]);
+    revalidatePath("/listados/pago-obrasocial");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function deletePagoObrasocial(id: number) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    await pool.query("DELETE FROM pago_obrasocial WHERE id = $1", [id]);
+    revalidatePath("/listados/pago-obrasocial");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+// --- OBRAS SOCIALES ADMIN ---
+
+export async function ensureObrasSocialesTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS obras_sociales_catalog (
+        id SERIAL PRIMARY KEY,
+        nombre VARCHAR(255) NOT NULL UNIQUE,
+        activo BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT INTO obras_sociales_catalog (nombre) VALUES
+        ('OSDE'), ('SWISS MEDICAL'), ('GALENO'), ('MEDIFE'),
+        ('CIBIC'), ('METABOLOMICA'), ('FEDERACION'), ('ASOCIACION'),
+        ('APROSS'), ('PARTICULAR')
+      ON CONFLICT (nombre) DO NOTHING;
+    `);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function getObrasSociales() {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    await ensureObrasSocialesTable();
+    const res = await pool.query("SELECT * FROM obras_sociales_catalog ORDER BY nombre ASC");
+    return { data: res.rows, error: null };
+  } catch (error: any) {
+    return { data: null, error: error.message };
+  }
+}
+
+export async function createObraSocial(nombre: string) {
+  try {
+    const session = await getSession() as any;
+    if (!session || session.role !== 'admin') throw new Error("Sin permiso");
+
+    const nombreUpper = nombre.trim().toUpperCase();
+    await pool.query(
+      "INSERT INTO obras_sociales_catalog (nombre) VALUES ($1) ON CONFLICT (nombre) DO UPDATE SET activo = TRUE",
+      [nombreUpper]
+    );
+    revalidatePath("/admin-lega");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function updateObraSocial(id: number, nombre: string, activo: boolean) {
+  try {
+    const session = await getSession() as any;
+    if (!session || session.role !== 'admin') throw new Error("Sin permiso");
+
+    await pool.query(
+      "UPDATE obras_sociales_catalog SET nombre = $1, activo = $2 WHERE id = $3",
+      [nombre.trim().toUpperCase(), activo, id]
+    );
+    revalidatePath("/admin-lega");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function deleteObraSocial(id: number) {
+  try {
+    const session = await getSession() as any;
+    if (!session || session.role !== 'admin') throw new Error("Sin permiso");
+
+    await pool.query("DELETE FROM obras_sociales_catalog WHERE id = $1", [id]);
+    revalidatePath("/admin-lega");
     return { success: true };
   } catch (error: any) {
     return { error: error.message };

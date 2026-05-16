@@ -31,7 +31,7 @@ export default function SidebarNav({ userRole, isCollapsed }: { userRole?: strin
   if (!isBioq && userRole === 'admin') {
     navItems.push({ name: "Prestaciones", path: "/prestaciones", icon: <PrestacionesIcon size={20} /> });
     navItems.push({ name: "Resumen Médico", path: "/resumen-medico", icon: <ClipboardList size={20} /> });
-    navItems.push({ name: "Usuarios", path: "/usuarios", icon: <Users size={20} /> });
+    navItems.push({ name: "Admin Lega", path: "/admin-lega", icon: <Users size={20} /> });
   }
 
   if (!isBioq) {

@@ -93,6 +93,12 @@ export async function createIngreso(formData: FormData) {
     const payment_method = formData.get("payment_method") as string;
     const observations = formData.get("observations") as string;
     const files = formData.getAll("document") as File[];
+    const coseguro_agregado = formData.get("coseguro_agregado") === 'true';
+    const factura_instante = formData.get("factura_instante") === 'true';
+    const coseguro_payment_method = formData.get("coseguro_payment_method") as string || '';
+    const particular_payment_method = formData.get("particular_payment_method") as string || '';
+    const payment_combined = (coseguro_payment_method + ',' + particular_payment_method).split(',').filter(Boolean).filter(m => m !== 'EFECTIVO').length > 0
+      && (coseguro_payment_method + ',' + particular_payment_method).toLowerCase().includes('efectivo');
 
     let patientId;
 
@@ -145,9 +151,12 @@ export async function createIngreso(formData: FormData) {
             report_id = $5, result_date = NULLIF($6, '')::timestamp,
             coseguro = NULLIF($7, '')::numeric, particular_price = NULLIF($8, '')::numeric,
             payment_method = $9, professional_name = $10, is_ingreso = TRUE,
-            appointment_date = COALESCE(NULLIF($12, '')::timestamp, appointment_date)
+            appointment_date = COALESCE(NULLIF($12, '')::timestamp, appointment_date),
+            coseguro_agregado = $13, factura_instante = $14,
+            coseguro_payment_method = NULLIF($15, ''), particular_payment_method = NULLIF($16, ''),
+            payment_combined = $17
            WHERE id = $11`,
-          [patientId, analysis_type, aire_test_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, existingId, appointment_date]
+          [patientId, analysis_type, aire_test_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, existingId, appointment_date, coseguro_agregado, factura_instante, coseguro_payment_method, particular_payment_method, payment_combined]
         );
         aptId = existingId;
         // Clean old analyses and insert new ones
@@ -155,12 +164,13 @@ export async function createIngreso(formData: FormData) {
       } else {
         // Insert Appointment as Ingreso
         const aptRes = await client.query(
-          `INSERT INTO appointments 
-           (patient_id, appointment_date, analysis_type, aire_test_type, observations, status, 
-            report_id, result_date, coseguro, particular_price, payment_method, professional_name, is_ingreso) 
-           VALUES ($1, $2, $3, $4, $5, 'CONFIRMAR ASISTENCIA', $6, NULLIF($7, '')::timestamp, NULLIF($8, '')::numeric, NULLIF($9, '')::numeric, $10, $11, TRUE)
+          `INSERT INTO appointments
+           (patient_id, appointment_date, analysis_type, aire_test_type, observations, status,
+            report_id, result_date, coseguro, particular_price, payment_method, professional_name, is_ingreso,
+            coseguro_agregado, factura_instante, coseguro_payment_method, particular_payment_method, payment_combined)
+           VALUES ($1, $2, $3, $4, $5, 'CONFIRMAR ASISTENCIA', $6, NULLIF($7, '')::timestamp, NULLIF($8, '')::numeric, NULLIF($9, '')::numeric, $10, $11, TRUE, $12, $13, NULLIF($14,''), NULLIF($15,''), $16)
            RETURNING id`,
-          [patientId, appointment_date || new Date().toISOString(), analysis_type, aire_test_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name]
+          [patientId, appointment_date || new Date().toISOString(), analysis_type, aire_test_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, coseguro_agregado, factura_instante, coseguro_payment_method, particular_payment_method, payment_combined]
         );
         aptId = aptRes.rows[0].id;
       }
@@ -182,6 +192,33 @@ export async function createIngreso(formData: FormData) {
         "INSERT INTO appointment_analyses (appointment_id, analysis_name, aire_test_subtype) VALUES ($1, $2, $3)",
         [aptId, analysis_type, null]
       );
+    }
+
+    // Auto-create cobranza for non-cash payments on new ingresos
+    if (!existingId) {
+      const allMethods = [...coseguro_payment_method.split(','), ...particular_payment_method.split(',')]
+        .map(m => m.trim()).filter(Boolean);
+      const hasNonCash = allMethods.some(m => m !== 'EFECTIVO' && m !== '-');
+      if (hasNonCash) {
+        const tipo = factura_instante ? 'factura_instante' : 'pendiente';
+        const total = ((parseFloat(coseguro || '0') || 0) + (parseFloat(particular_price || '0') || 0)).toFixed(2);
+        const month_group = appointment_date_raw?.substring(0, 7) || new Date().toISOString().substring(0, 7);
+        await client.query(
+          `INSERT INTO cobranzas (fecha, paciente, ingreso_id, coseguro_amount, coseguro_method, particular_amount, particular_method, total, tipo, observacion, estado_factura, month_group)
+           VALUES ($1, $2, $3, NULLIF($4,'')::numeric, NULLIF($5,''), NULLIF($6,'')::numeric, NULLIF($7,''), $8, $9, $10, 'NO FACTURADO', $11)`,
+          [appointment_date_raw, name, aptId, coseguro, coseguro_payment_method, particular_price, particular_payment_method, total, tipo, observations, month_group]
+        );
+      }
+
+      // Auto-create pago_obrasocial entry when coseguro is "agregado"
+      if (coseguro_agregado && coseguro) {
+        const month_group = appointment_date_raw?.substring(0, 7) || new Date().toISOString().substring(0, 7);
+        await client.query(
+          `INSERT INTO pago_obrasocial (ingreso_id, fecha, paciente, coseguro_pendiente, seguimiento, month_group)
+           VALUES ($1, $2, $3, $4, 'Pendiente', $5)`,
+          [aptId, appointment_date_raw, name, coseguro, month_group]
+        );
+      }
     }
 
     // Handle File Uploads
@@ -337,6 +374,40 @@ export async function markInternalNoteAsRead(id: string) {
     return { success: true };
   } catch (error: any) {
     console.error("Error in markInternalNoteAsRead:", error);
+    return { error: error.message };
+  }
+}
+
+export async function ensureIngresosExtColumns() {
+  try {
+    await pool.query(`
+      ALTER TABLE appointments ADD COLUMN IF NOT EXISTS coseguro_agregado BOOLEAN DEFAULT FALSE;
+      ALTER TABLE appointments ADD COLUMN IF NOT EXISTS factura_instante BOOLEAN DEFAULT FALSE;
+      ALTER TABLE appointments ADD COLUMN IF NOT EXISTS coseguro_payment_method VARCHAR(200);
+      ALTER TABLE appointments ADD COLUMN IF NOT EXISTS particular_payment_method VARCHAR(200);
+      ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_combined BOOLEAN DEFAULT FALSE;
+      CREATE TABLE IF NOT EXISTS pago_obrasocial (
+        id SERIAL PRIMARY KEY,
+        ingreso_id UUID REFERENCES appointments(id) ON DELETE SET NULL,
+        fecha DATE NOT NULL,
+        paciente TEXT NOT NULL,
+        coseguro_pendiente NUMERIC NOT NULL DEFAULT 0,
+        seguimiento VARCHAR(50) NOT NULL DEFAULT 'Pendiente',
+        month_group VARCHAR(7) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS coseguro_pagos (
+        id SERIAL PRIMARY KEY,
+        pago_obrasocial_id INTEGER REFERENCES pago_obrasocial(id) ON DELETE CASCADE,
+        monto NUMERIC NOT NULL,
+        fecha DATE NOT NULL,
+        detalle TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    return { success: true };
+  } catch (error: any) {
+    console.error("ensureIngresosExtColumns error:", error);
     return { error: error.message };
   }
 }

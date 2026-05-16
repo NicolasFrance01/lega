@@ -20,25 +20,44 @@ interface IngresosReportsProps {
   onBack: () => void;
 }
 
+const ANALYSIS_OPTIONS = ['Test de aire', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'PYLORI', 'EXTRACCION', 'MATERIA FECAL', 'ORINA', 'PANEL 105', 'PANEL 63', 'ALCAT', 'CIBIC'];
+const OBRAS_SOCIALES_FILTER = ['OSDE', 'SWISS MEDICAL', 'GALENO', 'MEDIFE', 'CIBIC', 'METABOLOMICA', 'FEDERACION', 'ASOCIACION', 'APROSS', 'PARTICULAR'];
+
 export default function IngresosReports({ data, onBack }: IngresosReportsProps) {
   const [dateRange, setDateRange] = useState({
     start: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
     end: format(endOfMonth(new Date()), 'yyyy-MM-dd')
   });
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [filterAnalysis, setFilterAnalysis] = useState<string[]>([]);
+  const [filterObraSocial, setFilterObraSocial] = useState('');
+  const [filterProfessional, setFilterProfessional] = useState('');
 
   const reportRef = useRef<HTMLDivElement>(null);
 
-  // Filter data by date range
+  // Filter data by date range + extra filters
   const filteredData = useMemo(() => {
     return data.filter(item => {
       const date = new Date(item.appointment_date);
-      return isWithinInterval(date, {
-        start: new Date(dateRange.start),
-        end: new Date(dateRange.end)
-      });
+      if (!isWithinInterval(date, { start: new Date(dateRange.start), end: new Date(dateRange.end) })) return false;
+
+      if (filterAnalysis.length > 0) {
+        const itemTypes = item.analyses?.map((a: any) => (a.analysis_name || a.name || '').trim().toUpperCase()) ||
+          [(item.analysis_type || '').trim().toUpperCase()];
+        if (!filterAnalysis.some(fa => itemTypes.includes(fa.trim().toUpperCase()))) return false;
+      }
+
+      if (filterObraSocial) {
+        if (!(item.health_insurance || '').toUpperCase().includes(filterObraSocial.toUpperCase())) return false;
+      }
+
+      if (filterProfessional) {
+        if (!(item.professional_name || '').toLowerCase().includes(filterProfessional.toLowerCase())) return false;
+      }
+
+      return true;
     });
-  }, [data, dateRange]);
+  }, [data, dateRange, filterAnalysis, filterObraSocial, filterProfessional]);
 
   // Statistics Processing
   const stats = useMemo(() => {
@@ -157,22 +176,23 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Controls Header */}
-      <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>DESDE</label>
-            <input 
-              type="date" 
-              value={dateRange.start} 
+            <input
+              type="date"
+              value={dateRange.start}
               onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))}
               style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-main)', fontWeight: 600 }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>HASTA</label>
-            <input 
-              type="date" 
-              value={dateRange.end} 
+            <input
+              type="date"
+              value={dateRange.end}
               onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))}
               style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-main)', fontWeight: 600 }}
             />
@@ -208,6 +228,61 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
               </button>
             </div>
           )}
+        </div>
+        </div>
+
+        {/* Extra Filters Row */}
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', borderTop: '1px solid var(--glass-border)', paddingTop: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: '1 1 180px' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>TIPO DE ANÁLISIS</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+              {ANALYSIS_OPTIONS.map(opt => {
+                const sel = filterAnalysis.includes(opt);
+                return (
+                  <button
+                    key={opt}
+                    onClick={() => setFilterAnalysis(sel ? filterAnalysis.filter(x => x !== opt) : [...filterAnalysis, opt])}
+                    style={{
+                      padding: '0.2rem 0.55rem', borderRadius: '5px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
+                      border: `1px solid ${sel ? 'var(--primary)' : 'var(--glass-border)'}`,
+                      background: sel ? 'rgba(14,165,233,0.15)' : 'transparent',
+                      color: sel ? 'var(--primary)' : 'var(--text-muted)',
+                    }}
+                  >
+                    {opt}
+                  </button>
+                );
+              })}
+              {filterAnalysis.length > 0 && (
+                <button onClick={() => setFilterAnalysis([])} style={{ padding: '0.2rem 0.45rem', borderRadius: '5px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', border: '1px solid var(--danger)', background: 'rgba(239,68,68,0.08)', color: 'var(--danger)' }}>
+                  Limpiar
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '160px' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>OBRA SOCIAL</label>
+            <select
+              value={filterObraSocial}
+              onChange={e => setFilterObraSocial(e.target.value)}
+              style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-main)', fontWeight: 600, fontSize: '0.85rem' }}
+            >
+              <option value="">Todas</option>
+              {OBRAS_SOCIALES_FILTER.map(os => <option key={os} value={os}>{os}</option>)}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '160px' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>PROFESIONAL</label>
+            <input
+              type="text"
+              value={filterProfessional}
+              onChange={e => setFilterProfessional(e.target.value)}
+              placeholder="Buscar..."
+              style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-main)', fontWeight: 600, fontSize: '0.85rem' }}
+            />
+          </div>
         </div>
       </div>
 

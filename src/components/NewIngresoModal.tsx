@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Save, User as UserIcon, Calendar, Phone, Mail, Shield, Search, CheckCircle, Clock, DollarSign, CreditCard, ChevronRight } from "lucide-react";
+import { X, Search, ChevronRight } from "lucide-react";
 import HealthInsuranceInput from "./HealthInsuranceInput";
 import { searchPatients } from "@/actions/medical_results";
 import { getTodayAppointments } from "@/actions/appointments";
@@ -13,17 +13,66 @@ interface NewIngresoModalProps {
   editingIngreso?: any;
 }
 
+const PAYMENT_METHODS = ['EFECTIVO', 'TRANSFERENCIA', 'TARJETA', 'QR'];
+
+function PaymentMethodSelector({ label, selectedMethods, onChange, inputName }: {
+  label: string;
+  selectedMethods: string[];
+  onChange: (methods: string[]) => void;
+  inputName: string;
+}) {
+  const hasQR = selectedMethods.includes('QR');
+  const hasEfectivo = selectedMethods.includes('EFECTIVO');
+
+  function toggle(m: string) {
+    onChange(selectedMethods.includes(m) ? selectedMethods.filter(x => x !== m) : [...selectedMethods, m]);
+  }
+
+  return (
+    <div>
+      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>{label}</label>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+        {PAYMENT_METHODS.map(m => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => toggle(m)}
+            style={{
+              padding: '0.3rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer',
+              border: `1px solid ${selectedMethods.includes(m) ? 'var(--primary)' : 'var(--glass-border)'}`,
+              background: selectedMethods.includes(m) ? 'rgba(14, 165, 233, 0.15)' : 'transparent',
+              color: selectedMethods.includes(m) ? 'var(--primary)' : 'var(--text-muted)',
+              transition: 'all 0.15s',
+            }}
+          >
+            {m}
+          </button>
+        ))}
+      </div>
+      {hasQR && !hasEfectivo && (
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+          <input type="checkbox" onChange={() => toggle('EFECTIVO')} checked={false} />
+          Combinado con Efectivo
+        </label>
+      )}
+      {hasQR && hasEfectivo && (
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--primary)', cursor: 'pointer' }}>
+          <input type="checkbox" onChange={() => toggle('EFECTIVO')} checked />
+          Combinado con Efectivo
+        </label>
+      )}
+      <input type="hidden" name={inputName} value={selectedMethods.join(',')} />
+    </div>
+  );
+}
+
 export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: NewIngresoModalProps) {
   const [analyses, setAnalyses] = useState<{name: string, subtype: string}[]>([{name: "", subtype: ""}]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [nextReportId, setNextReportId] = useState("");
-  
-  // Con Turno Selection
   const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
   const [loadingToday, setLoadingToday] = useState(false);
-  
-  // Autofill state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
@@ -48,25 +97,21 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
 
   useEffect(() => {
     if (!editingIngreso && selectedPatient) {
-        if (selectedPatient.analyses && selectedPatient.analyses.length > 0) {
-            setAnalyses(selectedPatient.analyses.map((a: any) => ({ name: a.name, subtype: a.subtype })));
-        } else {
-            setAnalyses([{ name: selectedPatient.analysis_type || "", subtype: selectedPatient.aire_test_type || "" }]);
-        }
+      if (selectedPatient.analyses && selectedPatient.analyses.length > 0) {
+        setAnalyses(selectedPatient.analyses.map((a: any) => ({ name: a.name, subtype: a.subtype })));
+      } else {
+        setAnalyses([{ name: selectedPatient.analysis_type || "", subtype: selectedPatient.aire_test_type || "" }]);
+      }
     }
   }, [selectedPatient, editingIngreso]);
 
   async function fetchNextId() {
     const res = await getNextReportId();
-    if (res.success && res.nextId) {
-      setNextReportId(res.nextId);
-    }
+    if (res.success && res.nextId) setNextReportId(res.nextId);
   }
 
   useEffect(() => {
-    if (isOpen && mode === "con_turno" && !editingIngreso) {
-      fetchToday();
-    }
+    if (isOpen && mode === "con_turno" && !editingIngreso) fetchToday();
   }, [isOpen, mode, editingIngreso]);
 
   async function fetchToday() {
@@ -77,14 +122,11 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
   }
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (searchQuery.length > 2) {
-        handlePatientSearch();
-      } else {
-        setSearchResults([]);
-      }
+    const t = setTimeout(() => {
+      if (searchQuery.length > 2) handlePatientSearch();
+      else setSearchResults([]);
     }, 300);
-    return () => clearTimeout(delayDebounceFn);
+    return () => clearTimeout(t);
   }, [searchQuery]);
 
   async function handlePatientSearch() {
@@ -102,15 +144,11 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
     e.preventDefault();
     setLoading(true);
     setError("");
-
     const formData = new FormData(e.currentTarget);
     try {
       const res = await createIngreso(formData);
-      if (res.error) {
-        setError(res.error);
-      } else {
-        onClose();
-      }
+      if (res.error) setError(res.error);
+      else onClose();
     } catch (err: any) {
       setError(err.message || "Error al cargar ingreso");
     } finally {
@@ -121,15 +159,9 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
   if (!isOpen) return null;
 
   const inputStyle = {
-    width: "100%",
-    padding: "0.75rem 1rem",
-    borderRadius: "8px",
-    border: "1px solid var(--glass-border)",
-    background: 'var(--input-bg, rgba(255, 255, 255, 0.05))',
-    color: 'var(--text-main)',
-    fontSize: "0.9rem",
-    outline: "none",
-    transition: 'all 0.2s'
+    width: "100%", padding: "0.75rem 1rem", borderRadius: "8px",
+    border: "1px solid var(--glass-border)", background: 'var(--input-bg, rgba(255, 255, 255, 0.05))',
+    color: 'var(--text-main)', fontSize: "0.9rem", outline: "none", transition: 'all 0.2s'
   };
 
   return (
@@ -156,33 +188,22 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
         </div>
 
         <div style={{ padding: '1.5rem' }}>
-          {/* Mode Switcher */}
           {!editingIngreso && (
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-              <button 
-                onClick={() => { setMode("sin_turno"); setSelectedPatient(null); }}
-                style={{ 
-                  flex: 1, padding: '1rem', borderRadius: '12px', fontWeight: 700,
-                  background: mode === 'sin_turno' ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
-                  color: mode === 'sin_turno' ? 'white' : 'var(--text-muted)',
-                  border: mode === 'sin_turno' ? 'none' : '1px solid var(--glass-border)',
-                  transition: 'all 0.2s'
-                }}
-              >
-                SIN TURNO (Manual)
-              </button>
-              <button 
-                onClick={() => { setMode("con_turno"); setSelectedPatient(null); }}
-                style={{ 
-                  flex: 1, padding: '1rem', borderRadius: '12px', fontWeight: 700,
-                  background: mode === 'con_turno' ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
-                  color: mode === 'con_turno' ? 'white' : 'var(--text-muted)',
-                  border: mode === 'con_turno' ? 'none' : '1px solid var(--glass-border)',
-                  transition: 'all 0.2s'
-                }}
-              >
-                CON TURNO (Agendados Hoy)
-              </button>
+              {(['sin_turno', 'con_turno'] as const).map(m => (
+                <button
+                  key={m}
+                  onClick={() => { setMode(m); setSelectedPatient(null); }}
+                  style={{
+                    flex: 1, padding: '1rem', borderRadius: '12px', fontWeight: 700,
+                    background: mode === m ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
+                    color: mode === m ? 'white' : 'var(--text-muted)',
+                    border: mode === m ? 'none' : '1px solid var(--glass-border)', transition: 'all 0.2s'
+                  }}
+                >
+                  {m === 'sin_turno' ? 'SIN TURNO (Manual)' : 'CON TURNO (Agendados Hoy)'}
+                </button>
+              ))}
             </div>
           )}
 
@@ -193,14 +214,10 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
                   <h4 style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Seleccioná el turno de hoy:</h4>
                   {loadingToday ? <p style={{ color: 'var(--text-muted)' }}>Cargando turnos...</p> : (
                     todayAppointments.map(apt => (
-                      <div 
-                        key={apt.id} 
+                      <div
+                        key={apt.id}
                         onClick={() => setSelectedPatient(apt)}
-                        style={{ 
-                          padding: '1.25rem', border: '1px solid var(--glass-border)', borderRadius: '16px',
-                          cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                          background: 'rgba(255,255,255,0.02)', transition: 'all 0.2s'
-                        }}
+                        style={{ padding: '1.25rem', border: '1px solid var(--glass-border)', borderRadius: '16px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', transition: 'all 0.2s' }}
                         onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(14, 165, 233, 0.05)'}
                         onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
                       >
@@ -215,45 +232,11 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
                   {todayAppointments.length === 0 && !loadingToday && <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>No hay turnos agendados para hoy.</p>}
                 </>
               ) : (
-                <IngresoForm 
-                  mode={mode}
-                  nextReportId={nextReportId}
-                  selectedPatient={selectedPatient} 
-                  editingIngreso={editingIngreso} 
-                  setSelectedPatient={setSelectedPatient} 
-                  handleSubmit={handleSubmit}
-                  loading={loading}
-                  error={error}
-                  inputStyle={inputStyle}
-                  searchResults={searchResults}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  autofillPatient={autofillPatient}
-                  onClose={onClose}
-                  analyses={analyses}
-                  setAnalyses={setAnalyses}
-                />
+                <IngresoForm mode={mode} nextReportId={nextReportId} selectedPatient={selectedPatient} editingIngreso={editingIngreso} setSelectedPatient={setSelectedPatient} handleSubmit={handleSubmit} loading={loading} error={error} inputStyle={inputStyle} searchResults={searchResults} searchQuery={searchQuery} setSearchQuery={setSearchQuery} autofillPatient={autofillPatient} onClose={onClose} analyses={analyses} setAnalyses={setAnalyses} />
               )}
             </div>
           ) : (
-            <IngresoForm 
-              mode={mode}
-              nextReportId={nextReportId}
-              selectedPatient={selectedPatient} 
-              editingIngreso={editingIngreso} 
-              setSelectedPatient={setSelectedPatient} 
-              handleSubmit={handleSubmit}
-              loading={loading}
-              error={error}
-              inputStyle={inputStyle}
-              searchResults={searchResults}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              autofillPatient={autofillPatient}
-              onClose={onClose}
-              analyses={analyses}
-              setAnalyses={setAnalyses}
-            />
+            <IngresoForm mode={mode} nextReportId={nextReportId} selectedPatient={selectedPatient} editingIngreso={editingIngreso} setSelectedPatient={setSelectedPatient} handleSubmit={handleSubmit} loading={loading} error={error} inputStyle={inputStyle} searchResults={searchResults} searchQuery={searchQuery} setSearchQuery={setSearchQuery} autofillPatient={autofillPatient} onClose={onClose} analyses={analyses} setAnalyses={setAnalyses} />
           )}
         </div>
       </div>
@@ -261,65 +244,59 @@ export default function NewIngresoModal({ isOpen, onClose, editingIngreso }: New
   );
 }
 
-function IngresoForm({
-  mode, nextReportId, selectedPatient, editingIngreso, setSelectedPatient, handleSubmit, loading, error, inputStyle, searchResults, searchQuery, setSearchQuery, autofillPatient, onClose, analyses, setAnalyses
-}: any) {
+function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setSelectedPatient, handleSubmit, loading, error, inputStyle, searchResults, searchQuery, setSearchQuery, autofillPatient, onClose, analyses, setAnalyses }: any) {
   const addAnalysis = () => setAnalyses([...analyses, { name: "", subtype: "" }]);
   const removeAnalysis = (index: number) => setAnalyses(analyses.filter((_: any, i: number) => i !== index));
   const updateAnalysis = (index: number, field: string, value: string) => {
-    const newAnalyses = [...analyses];
-    newAnalyses[index] = { ...newAnalyses[index], [field]: value };
-    setAnalyses(newAnalyses);
+    const n = [...analyses]; n[index] = { ...n[index], [field]: value }; setAnalyses(n);
   };
 
-  const defaultAppointmentDate = (() => {
-    const src = editingIngreso || selectedPatient;
-    const d = src?.appointment_date ? new Date(src.appointment_date) : new Date();
-    // Use local date components (not UTC) so the default is correct for Argentina timezone
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  })();
-  const [appointmentDate, setAppointmentDate] = useState(defaultAppointmentDate);
+  const src = editingIngreso || selectedPatient;
+  const d = src?.appointment_date ? new Date(src.appointment_date) : new Date();
+  const defaultDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const [appointmentDate, setAppointmentDate] = useState(defaultDate);
+
+  const [coseguroVal, setCoseguroVal] = useState(src?.coseguro ? String(src.coseguro) : '');
+  const [particularVal, setParticularVal] = useState(src?.particular_price ? String(src.particular_price) : '');
+  const [coseguroAgregado, setCoseguroAgregado] = useState(src?.coseguro_agregado || false);
+  const [facturaInstante, setFacturaInstante] = useState(src?.factura_instante || false);
+  const [coseguroMethods, setCoseguroMethods] = useState<string[]>(
+    src?.coseguro_payment_method ? src.coseguro_payment_method.split(',').filter(Boolean) : []
+  );
+  const [particularMethods, setParticularMethods] = useState<string[]>(
+    src?.particular_payment_method ? src.particular_payment_method.split(',').filter(Boolean) :
+    (src?.payment_method && src.payment_method !== '-' ? [src.payment_method] : [])
+  );
+
+  const total = (parseFloat(coseguroVal) || 0) + (parseFloat(particularVal) || 0);
+  const legacyPayment = particularMethods[0] || coseguroMethods[0] || (src?.payment_method || '-');
 
   return (
-    <form 
-      key={selectedPatient?.id || 'new'} 
-      onSubmit={handleSubmit} 
+    <form
+      key={selectedPatient?.id || 'new'}
+      onSubmit={handleSubmit}
       style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
     >
-      {/* existingId for the action should only be an APPOINTMENT id */}
       {editingIngreso && <input type="hidden" name="id" value={editingIngreso.id} />}
       {mode === 'con_turno' && selectedPatient?.id && !editingIngreso && <input type="hidden" name="id" value={selectedPatient.id} />}
-      
+      <input type="hidden" name="payment_method" value={legacyPayment} />
+      <input type="hidden" name="coseguro_agregado" value={coseguroAgregado ? 'true' : ''} />
+      <input type="hidden" name="factura_instante" value={facturaInstante ? 'true' : ''} />
+
       {error && <div style={{ color: 'var(--danger)', padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', fontSize: '0.85rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>{error}</div>}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+        {/* Patient search */}
         <div style={{ gridColumn: 'span 2' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Paciente</label>
           <div style={{ position: 'relative' }}>
             <Search size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
-            <input 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar por nombre o DNI para autocompletar..." 
-              style={{ ...inputStyle, paddingLeft: '2.5rem' }} 
-            />
-            
+            <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Buscar por nombre o DNI para autocompletar..." style={{ ...inputStyle, paddingLeft: '2.5rem' }} />
             {searchResults.length > 0 && (
-              <div style={{ 
-                position: 'absolute', top: '100%', left: 0, right: 0, 
-                background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
-                borderRadius: '12px', marginTop: '0.5rem', zIndex: 100,
-                boxShadow: '0 10px 25px rgba(0,0,0,0.2)', overflow: 'hidden'
-              }}>
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '12px', marginTop: '0.5rem', zIndex: 100, boxShadow: '0 10px 25px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
                 {searchResults.map((p: any) => (
-                  <div 
-                    key={p.id} 
-                    onClick={() => autofillPatient(p)}
-                    style={{ padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between' }}
-                    className="hoverable-row"
-                  >
-                    <span>{p.name}</span>
-                    <span style={{ opacity: 0.5 }}>{p.dni}</span>
+                  <div key={p.id} onClick={() => autofillPatient(p)} style={{ padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between' }} className="hoverable-row">
+                    <span>{p.name}</span><span style={{ opacity: 0.5 }}>{p.dni}</span>
                   </div>
                 ))}
               </div>
@@ -327,36 +304,38 @@ function IngresoForm({
           </div>
         </div>
 
+        {/* Name / DNI */}
         <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Nombre Completo</label>
-            <input name="name" required defaultValue={selectedPatient?.name} style={inputStyle} />
+            <input name="name" required defaultValue={src?.name} style={inputStyle} />
           </div>
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>DNI</label>
-            <input name="dni" required defaultValue={selectedPatient?.dni} style={inputStyle} />
+            <input name="dni" required defaultValue={src?.dni} style={inputStyle} />
           </div>
         </div>
 
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Nacimiento</label>
-          <input name="birth_date" type="date" defaultValue={selectedPatient?.birth_date ? new Date(selectedPatient.birth_date).toISOString().split('T')[0] : ''} style={inputStyle} />
+          <input name="birth_date" type="date" defaultValue={src?.birth_date ? new Date(src.birth_date).toISOString().split('T')[0] : ''} style={inputStyle} />
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Teléfono</label>
-          <input name="phone" defaultValue={selectedPatient?.phone} style={inputStyle} />
+          <input name="phone" defaultValue={src?.phone} style={inputStyle} />
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Email</label>
-          <input name="email" type="text" defaultValue={selectedPatient?.email} style={inputStyle} />
+          <input name="email" defaultValue={src?.email} style={inputStyle} />
         </div>
         <div style={{ gridColumn: 'span 2' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Dirección</label>
-          <input name="address" defaultValue={selectedPatient?.address} style={inputStyle} />
+          <input name="address" defaultValue={src?.address} style={inputStyle} />
         </div>
 
         <div style={{ gridColumn: 'span 2', height: '1px', background: 'var(--glass-border)', margin: '0.5rem 0' }} />
 
+        {/* Analyses */}
         <div style={{ gridColumn: 'span 2' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)' }}>Tipos de Estudios/Análisis</label>
@@ -366,32 +345,17 @@ function IngresoForm({
             {analyses.map((a: any, index: number) => (
               <div key={index} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
-                    <input 
-                        name="analysis_name" 
-                        required 
-                        list="analysis-list"
-                        value={a.name}
-                        onChange={(e) => updateAnalysis(index, 'name', e.target.value)}
-                        placeholder="Seleccioná o escribí estudio..."
-                        style={{ ...inputStyle, background: 'var(--glass-bg)' }} 
-                    />
-                    {a.name === 'Test de aire' && (
-                        <select 
-                            name="aire_test_subtype" 
-                            required 
-                            value={a.subtype}
-                            onChange={(e) => updateAnalysis(index, 'subtype', e.target.value)}
-                            style={{ ...inputStyle, marginTop: '0.4rem', background: 'var(--glass-bg)', color: 'var(--text-main)', fontSize: '0.8rem', padding: '0.4rem' }}
-                        >
-                            <option value="">-- Seleccionar Prueba --</option>
-                            <option value="SIBO">SIBO</option>
-                            <option value="SIBO c/Lactulon">SIBO c/Lactulon</option>
-                            <option value="Lactosa">Lactosa</option>
-                            <option value="Fructuosa">Fructuosa</option>
-                        </select>
-                    )}
-                    {/* Fallback for legacy subtype if not explicitly using aire_test_subtype name in some forms */}
-                    {a.name !== 'Test de aire' && <input type="hidden" name="aire_test_subtype" value="" />}
+                  <input name="analysis_name" required list="analysis-list" value={a.name} onChange={(e) => updateAnalysis(index, 'name', e.target.value)} placeholder="Seleccioná o escribí estudio..." style={{ ...inputStyle, background: 'var(--glass-bg)' }} />
+                  {a.name === 'Test de aire' && (
+                    <select name="aire_test_subtype" required value={a.subtype} onChange={(e) => updateAnalysis(index, 'subtype', e.target.value)} style={{ ...inputStyle, marginTop: '0.4rem', background: 'var(--glass-bg)', color: 'var(--text-main)', fontSize: '0.8rem', padding: '0.4rem' }}>
+                      <option value="">-- Seleccionar Prueba --</option>
+                      <option value="SIBO">SIBO</option>
+                      <option value="SIBO c/Lactulon">SIBO c/Lactulon</option>
+                      <option value="Lactosa">Lactosa</option>
+                      <option value="Fructuosa">Fructuosa</option>
+                    </select>
+                  )}
+                  {a.name !== 'Test de aire' && <input type="hidden" name="aire_test_subtype" value="" />}
                 </div>
                 {analyses.length > 1 && (
                   <button type="button" onClick={() => removeAnalysis(index)} style={{ padding: '0.5rem', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
@@ -405,88 +369,140 @@ function IngresoForm({
             ))}
           </datalist>
         </div>
+
         <div style={{ gridColumn: 'span 2' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Obra Social</label>
-          <HealthInsuranceInput
-            defaultValue={selectedPatient?.health_insurance || 'Particular'}
-            listId="insurance-list-ingreso"
-            style={{ ...inputStyle, background: 'var(--glass-bg)' }}
-          />
+          <HealthInsuranceInput defaultValue={src?.health_insurance || 'Particular'} listId="insurance-list-ingreso" style={{ ...inputStyle, background: 'var(--glass-bg)' }} />
         </div>
+
+        {/* Dates / Report ID / Professional */}
         <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Fecha de Ingreso</label>
-            <input
-              name="appointment_date"
-              type="date"
-              value={appointmentDate}
-              onChange={(e) => setAppointmentDate(e.target.value)}
-              required
-              style={inputStyle}
-            />
+            <input name="appointment_date" type="date" value={appointmentDate} onChange={(e) => setAppointmentDate(e.target.value)} required style={inputStyle} />
           </div>
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>N° INFORME</label>
-            <input
-              name="report_id"
-              key={selectedPatient?.report_id || nextReportId}
-              defaultValue={selectedPatient?.report_id || nextReportId}
-              style={inputStyle}
-              placeholder="Ej: 94113"
-            />
+            <input name="report_id" key={src?.report_id || nextReportId} defaultValue={src?.report_id || nextReportId} style={inputStyle} placeholder="Ej: 94113" />
           </div>
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Fecha de Resultado</label>
-            <input name="result_date" type="date" defaultValue={selectedPatient?.result_date ? new Date(selectedPatient.result_date).toISOString().split('T')[0] : ''} style={inputStyle} />
+            <input name="result_date" type="date" defaultValue={src?.result_date ? new Date(src.result_date).toISOString().split('T')[0] : ''} style={inputStyle} />
           </div>
         </div>
-        <div>
+
+        <div style={{ gridColumn: 'span 2' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Profesional</label>
-          <input name="professional_name" defaultValue={selectedPatient?.professional_name} style={inputStyle} placeholder="Nombre del médico" />
+          <input name="professional_name" defaultValue={src?.professional_name} style={inputStyle} placeholder="Nombre del médico" />
         </div>
+
+        {/* Coseguro + Particular + Total */}
+        <div style={{ gridColumn: 'span 2', height: '1px', background: 'var(--glass-border)', margin: '0.25rem 0' }} />
+
         <div>
-          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Medio de Pago</label>
-          <select name="payment_method" defaultValue={selectedPatient?.payment_method || 'EFECTIVO'} style={{ ...inputStyle, background: 'var(--glass-bg)', color: 'var(--text-main)' }}>
-            <option value="-" style={{ background: 'var(--glass-bg)', color: 'var(--text-main)' }}>-</option>
-            <option value="EFECTIVO" style={{ background: 'var(--glass-bg)', color: 'var(--text-main)' }}>Efectivo</option>
-            <option value="TRANSFERENCIA" style={{ background: 'var(--glass-bg)', color: 'var(--text-main)' }}>Transferencia</option>
-            <option value="TARJETA" style={{ background: 'var(--glass-bg)', color: 'var(--text-main)' }}>Tarjeta</option>
-          </select>
-        </div>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Coseguro O.Soc</label>
-          <input name="coseguro" type="number" step="0.01" defaultValue={selectedPatient?.coseguro} style={inputStyle} placeholder="$ 0.00" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)' }}>Coseguro O.Soc</label>
+            <button
+              type="button"
+              onClick={() => setCoseguroAgregado((v: boolean) => !v)}
+              style={{
+                padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer',
+                border: `1px solid ${coseguroAgregado ? 'var(--success)' : 'var(--glass-border)'}`,
+                background: coseguroAgregado ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.03)',
+                color: coseguroAgregado ? 'var(--success)' : 'var(--text-muted)',
+              }}
+              title="Marcar coseguro como 'Agregado' para seguimiento de pago en Obra Social"
+            >
+              {coseguroAgregado ? '✓ AGREGADO' : 'AGREGADO'}
+            </button>
+          </div>
+          <input
+            name="coseguro"
+            type="number"
+            step="0.01"
+            value={coseguroVal}
+            onChange={e => setCoseguroVal(e.target.value)}
+            style={inputStyle}
+            placeholder="$ 0.00"
+          />
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Particular</label>
-          <input name="particular_price" type="number" step="0.01" defaultValue={selectedPatient?.particular_price} style={inputStyle} placeholder="$ 0.00" />
-        </div>
-        
-        <div style={{ gridColumn: 'span 2' }}>
-          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Observaciones / Detalles</label>
-          <textarea 
-            name="observations" 
-            defaultValue={selectedPatient?.observations} 
-            style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} 
-            placeholder="Algún detalle adicional sobre el paciente o el estudio..."
+          <input
+            name="particular_price"
+            type="number"
+            step="0.01"
+            value={particularVal}
+            onChange={e => setParticularVal(e.target.value)}
+            style={inputStyle}
+            placeholder="$ 0.00"
           />
         </div>
 
+        {/* Total */}
+        <div style={{ gridColumn: 'span 2' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', borderRadius: '8px', background: 'rgba(14, 165, 233, 0.06)', border: '1px solid rgba(14, 165, 233, 0.2)' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>TOTAL</span>
+            <span style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--primary)' }}>
+              $ {total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+          </div>
+        </div>
+
+        {/* Payment methods */}
+        <div>
+          <PaymentMethodSelector
+            label="Medio de Pago — Coseguro"
+            selectedMethods={coseguroMethods}
+            onChange={setCoseguroMethods}
+            inputName="coseguro_payment_method"
+          />
+        </div>
+        <div>
+          <PaymentMethodSelector
+            label="Medio de Pago — Particular"
+            selectedMethods={particularMethods}
+            onChange={setParticularMethods}
+            inputName="particular_payment_method"
+          />
+        </div>
+
+        {/* Observations */}
+        <div style={{ gridColumn: 'span 2' }}>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Observaciones / Detalles</label>
+          <textarea name="observations" defaultValue={src?.observations} style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} placeholder="Algún detalle adicional sobre el paciente o el estudio..." />
+        </div>
+
+        {/* Factura al instante */}
+        <div style={{ gridColumn: 'span 2' }}>
+          <label style={{
+            display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.85rem 1rem',
+            borderRadius: '10px', cursor: 'pointer',
+            border: `1px solid ${facturaInstante ? 'var(--primary)' : 'var(--glass-border)'}`,
+            background: facturaInstante ? 'rgba(14, 165, 233, 0.07)' : 'transparent',
+            transition: 'all 0.15s'
+          }}>
+            <input
+              type="checkbox"
+              checked={facturaInstante}
+              onChange={e => setFacturaInstante(e.target.checked)}
+              style={{ width: '16px', height: '16px', accentColor: 'var(--primary)', cursor: 'pointer' }}
+            />
+            <div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>Factura al instante</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Registra este ingreso en el módulo de Cobranzas para facturación inmediata</div>
+            </div>
+          </label>
+        </div>
+
+        {/* Documentation */}
         <div style={{ gridColumn: 'span 2' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>
             Documentación Médica (Podés seleccionar varios)
           </label>
-          <div 
+          <div
             onClick={() => document.getElementById('file-upload')?.click()}
-            style={{
-              border: '2px dashed var(--primary)',
-              borderRadius: '16px',
-              padding: '2rem',
-              textAlign: 'center',
-              background: 'rgba(14, 165, 233, 0.02)',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
+            style={{ border: '2px dashed var(--primary)', borderRadius: '16px', padding: '2rem', textAlign: 'center', background: 'rgba(14, 165, 233, 0.02)', cursor: 'pointer', transition: 'all 0.2s' }}
             onMouseOver={(e) => e.currentTarget.style.background = 'rgba(14, 165, 233, 0.08)'}
             onMouseOut={(e) => e.currentTarget.style.background = 'rgba(14, 165, 233, 0.02)'}
           >
@@ -495,14 +511,7 @@ function IngresoForm({
             </div>
             <div style={{ fontWeight: 800, fontSize: '1.1rem', marginBottom: '0.25rem', color: 'var(--text-main)' }}>Subir Pedidos Médicos</div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Hacé clic aquí para seleccionar uno o varios archivos (PDF/Imagen)</div>
-            <input 
-              id="file-upload"
-              name="document" 
-              type="file" 
-              multiple 
-              accept="image/*,application/pdf" 
-              style={{ display: 'none' }} 
-            />
+            <input id="file-upload" name="document" type="file" multiple accept="image/*,application/pdf" style={{ display: 'none' }} />
           </div>
         </div>
       </div>

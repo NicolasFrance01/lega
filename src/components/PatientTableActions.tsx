@@ -36,20 +36,22 @@ export default function PatientTableActions({ patient, userRole }: { patient: an
         <History size={14} /> Historial
       </a>
 
-      <button 
-        onClick={() => setIsEditModalOpen(true)}
-        style={{
-          display: 'flex', alignItems: 'center', gap: '0.4rem', 
-          padding: '0.4rem 0.8rem', background: 'var(--glass-bg)', 
-          color: 'var(--text-main)', fontWeight: 600, fontSize: '0.8rem', 
-          borderRadius: '6px', transition: 'all 0.2s', border: '1px solid var(--glass-border)',
-          cursor: 'pointer'
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(14, 165, 233, 0.05)'}
-        onMouseLeave={(e) => e.currentTarget.style.background = 'var(--glass-bg)'}
-      >
-        <UserCog size={14} color="var(--primary)" /> Editar
-      </button>
+      {!isBioq && (
+        <button
+          onClick={() => setIsEditModalOpen(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '0.4rem',
+            padding: '0.4rem 0.8rem', background: 'var(--glass-bg)',
+            color: 'var(--text-main)', fontWeight: 600, fontSize: '0.8rem',
+            borderRadius: '6px', transition: 'all 0.2s', border: '1px solid var(--glass-border)',
+            cursor: 'pointer'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(14, 165, 233, 0.05)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--glass-bg)'}
+        >
+          <UserCog size={14} color="var(--primary)" /> Editar
+        </button>
+      )}
       
       {!isBioq && (
         <button
