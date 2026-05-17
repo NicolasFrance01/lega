@@ -147,6 +147,90 @@ export async function deleteSystemCode(id: number) {
   }
 }
 
+// --- OSDE CODES ---
+
+export async function ensureOsdeCodesTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS osde_codes (
+        id SERIAL PRIMARY KEY,
+        analisis TEXT NOT NULL,
+        codigo_sistema VARCHAR(100),
+        codigo_nbu VARCHAR(100),
+        ub VARCHAR(100) DEFAULT '-',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function getOsdeCodes() {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    const res = await pool.query("SELECT * FROM osde_codes ORDER BY analisis ASC");
+    return { data: res.rows, error: null };
+  } catch (error: any) {
+    return { data: null, error: error.message };
+  }
+}
+
+export async function updateOsdeCode(id: number, data: any) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    const fields = Object.keys(data).map((k, i) => `${k} = $${i + 1}`).join(", ");
+    const values = Object.values(data);
+
+    await pool.query(`UPDATE osde_codes SET ${fields} WHERE id = $${values.length + 1}`, [...values, id]);
+
+    revalidatePath("/listados/osde");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function createOsdeCode(formData: FormData) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    const analisis = formData.get("analisis") as string;
+    const codigo_sistema = formData.get("codigo_sistema") as string;
+    const codigo_nbu = formData.get("codigo_nbu") as string;
+    const ub = formData.get("ub") as string || "-";
+
+    await pool.query(
+      "INSERT INTO osde_codes (analisis, codigo_sistema, codigo_nbu, ub) VALUES ($1, $2, $3, $4)",
+      [analisis, codigo_sistema, codigo_nbu, ub]
+    );
+
+    revalidatePath("/listados/osde");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function deleteOsdeCode(id: number) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    await pool.query("DELETE FROM osde_codes WHERE id = $1", [id]);
+    revalidatePath("/listados/osde");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
 // --- BILLING PRICES ---
 
 export async function getBillingPrices() {

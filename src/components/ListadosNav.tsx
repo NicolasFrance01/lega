@@ -13,6 +13,7 @@ export default function ListadosNav() {
     { name: "Pago O. Social", href: "/listados/pago-obrasocial" },
     { name: "Indicaciones WS", href: "/listados/indicaciones" },
     { name: "Codigos de Sistema", href: "/listados/codigos" },
+    { name: "OSDE", href: "/listados/osde" },
     { name: "Precios Facturacion", href: "/listados/precios" },
   ];
 
