@@ -458,7 +458,7 @@ export async function createApross(formData: FormData) {
     
     const parseNumeric = (val: string) => {
       if (!val || val === "-") return null;
-      const cleaned = val.replace(/[^0.9.-]/g, "");
+      const cleaned = val.replace(/[^0-9.-]/g, "");
       return isNaN(parseFloat(cleaned)) ? null : cleaned;
     };
 
@@ -536,7 +536,7 @@ export async function updateApross(id: number, data: any) {
     
     const parseNumeric = (val: any) => {
       if (val === undefined || val === null || val === "" || val === "-") return null;
-      const cleaned = String(val).replace(/[^0.9.-]/g, "");
+      const cleaned = String(val).replace(/[^0-9.-]/g, "");
       return isNaN(parseFloat(cleaned)) ? null : cleaned;
     };
 
