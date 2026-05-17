@@ -141,9 +141,9 @@ export default function PagoObrasocialTable({ data }: { data: any[] }) {
                   const isExpanded = expanded.has(item.id);
                   const isComplete = item.seguimiento === 'Completo';
                   const seg = SEGUIMIENTO_STYLES[item.seguimiento] || SEGUIMIENTO_STYLES['Pendiente'];
-                  const totalPagado = parseFloat(String(item.total_pagado || 0));
                   const coseguroPendiente = parseFloat(String(item.coseguro_pendiente || 0));
-                  const isPaid = totalPagado >= coseguroPendiente && coseguroPendiente > 0;
+                  const sumaAgregados = parseFloat(String(item.total_pagado || 0));
+                  const totalPagado = coseguroPendiente + sumaAgregados;
                   return (
                     <>
                       <tr key={item.id} style={{ borderBottom: '1px solid var(--glass-border)', background: isExpanded ? 'rgba(14,165,233,0.03)' : 'transparent' }}>
@@ -169,11 +169,11 @@ export default function PagoObrasocialTable({ data }: { data: any[] }) {
                         <td style={{ padding: '0.9rem 1rem' }}>
                           <span style={{
                             fontWeight: 700, fontSize: '0.95rem',
-                            color: isPaid ? '#10B981' : (totalPagado > 0 ? 'var(--primary)' : 'var(--text-muted)')
+                            color: isComplete ? '#10B981' : 'var(--primary)'
                           }}>
                             ${totalPagado.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                           </span>
-                          {isPaid && <div style={{ fontSize: '0.7rem', color: '#10B981', fontWeight: 700 }}>✓ COMPLETO</div>}
+                          {isComplete && <div style={{ fontSize: '0.7rem', color: '#10B981', fontWeight: 700 }}>✓ COMPLETO</div>}
                         </td>
                         <td style={{ padding: '0.9rem 1rem' }}>
                           <select
