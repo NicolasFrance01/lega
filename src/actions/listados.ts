@@ -156,10 +156,10 @@ export async function ensureOsdeCodesTable() {
         id SERIAL PRIMARY KEY,
         analisis TEXT NOT NULL,
         codigo_sistema VARCHAR(100),
-        codigo_nbu VARCHAR(100),
-        ub VARCHAR(100) DEFAULT '-',
+        estado VARCHAR(50) DEFAULT 'Requiere Autorización',
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE osde_codes ADD COLUMN IF NOT EXISTS estado VARCHAR(50) DEFAULT 'Requiere Autorización';
     `);
     return { success: true };
   } catch (error: any) {
@@ -203,12 +203,11 @@ export async function createOsdeCode(formData: FormData) {
 
     const analisis = formData.get("analisis") as string;
     const codigo_sistema = formData.get("codigo_sistema") as string;
-    const codigo_nbu = formData.get("codigo_nbu") as string;
-    const ub = formData.get("ub") as string || "-";
+    const estado = (formData.get("estado") as string) || 'Requiere Autorización';
 
     await pool.query(
-      "INSERT INTO osde_codes (analisis, codigo_sistema, codigo_nbu, ub) VALUES ($1, $2, $3, $4)",
-      [analisis, codigo_sistema, codigo_nbu, ub]
+      "INSERT INTO osde_codes (analisis, codigo_sistema, estado) VALUES ($1, $2, $3)",
+      [analisis, codigo_sistema, estado]
     );
 
     revalidatePath("/listados/osde");
