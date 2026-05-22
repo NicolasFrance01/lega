@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, subMonths, addMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import { Clock, ChevronLeft, ChevronRight, Wind, AlertCircle, Edit2, CheckCircle, MessageSquare, Loader2, Ban, Trash2, Plus } from "lucide-react";
-import { toggleIndicationsStatus, createAiresBlockedDay, deleteAiresBlockedDay } from "@/actions/appointments";
+import { toggleIndicationsStatus, createBlockedDay, deleteBlockedDay } from "@/actions/appointments";
 import { useRouter } from "next/navigation";
 import AppointmentModal from "./AppointmentModal";
 import EditAppointmentModal from "./EditAppointmentModal";
@@ -75,7 +75,7 @@ export default function AiresCalendarView({
   async function handleAddBlockedDay() {
     if (!newBlockedDate) return;
     setSavingBlocked(true);
-    const res = await createAiresBlockedDay(newBlockedDate, newBlockedDesc);
+    const res = await createBlockedDay(newBlockedDate, newBlockedDesc);
     if (!res.error) {
       setNewBlockedDate('');
       setNewBlockedDesc('');
@@ -87,7 +87,7 @@ export default function AiresCalendarView({
   }
 
   async function handleDeleteBlockedDay(id: number) {
-    const res = await deleteAiresBlockedDay(id);
+    const res = await deleteBlockedDay(id);
     if (!res.error) {
       setBlockedDays(prev => prev.filter(b => b.id !== id));
     } else {

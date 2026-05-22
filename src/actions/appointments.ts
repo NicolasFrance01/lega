@@ -441,27 +441,34 @@ export async function toggleIndicationsStatus(id: string, status: boolean) {
   }
 }
 
-// --- DÍAS BLOQUEADOS (Feriados / Sin atención) ---
+// --- DÍAS BLOQUEADOS (Feriados / Sin atención) — shared across all calendars ---
 
-export async function ensureAiresBlockedDaysTable() {
+export async function ensureBlockedDaysTable() {
   try {
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS aires_blocked_days (
+      CREATE TABLE IF NOT EXISTS blocked_days (
         id SERIAL PRIMARY KEY,
         fecha DATE NOT NULL UNIQUE,
         descripcion TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
+    // migrate from old per-calendar table if it exists
+    await pool.query(`
+      INSERT INTO blocked_days (fecha, descripcion, created_at)
+      SELECT fecha, descripcion, created_at FROM aires_blocked_days
+      WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'aires_blocked_days')
+      ON CONFLICT (fecha) DO NOTHING;
+    `).catch(() => {});
     return { success: true };
   } catch (error: any) {
     return { error: error.message };
   }
 }
 
-export async function getAiresBlockedDays() {
+export async function getBlockedDays() {
   try {
-    const res = await pool.query("SELECT * FROM aires_blocked_days ORDER BY fecha ASC");
+    const res = await pool.query("SELECT * FROM blocked_days ORDER BY fecha ASC");
     const data = res.rows.map(r => ({
       ...r,
       fecha: r.fecha instanceof Date
@@ -474,29 +481,39 @@ export async function getAiresBlockedDays() {
   }
 }
 
-export async function createAiresBlockedDay(fecha: string, descripcion: string) {
+export async function createBlockedDay(fecha: string, descripcion: string) {
   try {
     const session = await getSession() as any;
     if (!session) throw new Error("No autenticado");
     await pool.query(
-      "INSERT INTO aires_blocked_days (fecha, descripcion) VALUES ($1, $2) ON CONFLICT (fecha) DO UPDATE SET descripcion = EXCLUDED.descripcion",
+      "INSERT INTO blocked_days (fecha, descripcion) VALUES ($1, $2) ON CONFLICT (fecha) DO UPDATE SET descripcion = EXCLUDED.descripcion",
       [fecha, descripcion || null]
     );
+    revalidatePath("/calendario");
     revalidatePath("/calendario-aire");
+    revalidatePath("/calendario-domicilio");
     return { success: true };
   } catch (error: any) {
     return { error: error.message };
   }
 }
 
-export async function deleteAiresBlockedDay(id: number) {
+export async function deleteBlockedDay(id: number) {
   try {
     const session = await getSession() as any;
     if (!session) throw new Error("No autenticado");
-    await pool.query("DELETE FROM aires_blocked_days WHERE id = $1", [id]);
+    await pool.query("DELETE FROM blocked_days WHERE id = $1", [id]);
+    revalidatePath("/calendario");
     revalidatePath("/calendario-aire");
+    revalidatePath("/calendario-domicilio");
     return { success: true };
   } catch (error: any) {
     return { error: error.message };
   }
 }
+
+// backward-compat aliases used by existing pages before rename
+export { ensureBlockedDaysTable as ensureAiresBlockedDaysTable };
+export { getBlockedDays as getAiresBlockedDays };
+export { createBlockedDay as createAiresBlockedDay };
+export { deleteBlockedDay as deleteAiresBlockedDay };
