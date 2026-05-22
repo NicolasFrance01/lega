@@ -462,7 +462,13 @@ export async function ensureAiresBlockedDaysTable() {
 export async function getAiresBlockedDays() {
   try {
     const res = await pool.query("SELECT * FROM aires_blocked_days ORDER BY fecha ASC");
-    return { data: res.rows, error: null };
+    const data = res.rows.map(r => ({
+      ...r,
+      fecha: r.fecha instanceof Date
+        ? r.fecha.toISOString().slice(0, 10)
+        : String(r.fecha).slice(0, 10),
+    }));
+    return { data, error: null };
   } catch (error: any) {
     return { data: null, error: error.message };
   }
