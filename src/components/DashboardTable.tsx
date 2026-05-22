@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { Clock, FileText, ChevronDown, ExternalLink, Check, Trash2, CalendarPlus, X, Loader2 } from "lucide-react";
-import { updateAppointmentStatus, toggleIndicationsStatus } from "@/actions/appointments";
+import { Clock, FileText, ChevronDown, ExternalLink, Check, Trash2, CalendarPlus, X, Loader2, Edit2 } from "lucide-react";
+import { updateAppointmentStatus, toggleIndicationsStatus, deleteAppointment } from "@/actions/appointments";
 import AppointmentModal from "./AppointmentModal";
+import EditAppointmentModal from "./EditAppointmentModal";
 import MoveReasonModal from "./MoveReasonModal";
 
 import Portal from "./Portal";
@@ -22,6 +23,9 @@ export default function DashboardTable({ appointments, currentFilter }: { appoin
   
   // Cancellation state
   const [cancelData, setCancelData] = useState<{ id: string, name: string } | null>(null);
+
+  // Edit state
+  const [editingAp, setEditingAp] = useState<any | null>(null);
 
   if (!appointments || appointments.length === 0) {
     return (
@@ -64,6 +68,16 @@ export default function DashboardTable({ appointments, currentFilter }: { appoin
     }
   }
 
+  async function handleDelete(id: string) {
+    if (!confirm("¿Eliminar este turno permanentemente? Esta acción no se puede deshacer.")) return;
+    setLoadingId(id);
+    try {
+      const res = await deleteAppointment(id);
+      if (res.success) { router.refresh(); } else { alert(res.error); }
+    } catch { alert("Error al eliminar turno"); }
+    finally { setLoadingId(null); }
+  }
+
   async function handleCancel(id: string, reason: string) {
     setLoadingId(id);
     setCancelData(null);
@@ -93,6 +107,7 @@ export default function DashboardTable({ appointments, currentFilter }: { appoin
             <th style={{ padding: '1rem', fontWeight: 500 }}>Estado</th>
             <th style={{ padding: '1rem', fontWeight: 500 }}>Observaciones / Pedido</th>
             {currentFilter === 'INDICACIONES' && <th style={{ padding: '1rem', fontWeight: 500, textAlign: 'center' }}>¿WS Enviado?</th>}
+            <th style={{ padding: '1rem', fontWeight: 500, width: '90px' }}></th>
           </tr>
         </thead>
         <tbody>
@@ -265,29 +280,41 @@ export default function DashboardTable({ appointments, currentFilter }: { appoin
               </td>
               {currentFilter === 'INDICACIONES' && (
                 <td style={{ padding: '1rem', textAlign: 'center' }}>
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={apt.indications_sent || false}
                     onChange={async (e) => {
                       const newStatus = e.target.checked;
                       setLoadingId(apt.id);
                       try {
                         const res = await toggleIndicationsStatus(apt.id, newStatus);
-                        if (res.success) {
-                          router.refresh();
-                        } else {
-                          alert(res.error);
-                        }
-                      } catch (err) {
-                        alert("Error al actualizar indicaciones");
-                      } finally {
-                        setLoadingId(null);
-                      }
+                        if (res.success) { router.refresh(); } else { alert(res.error); }
+                      } catch { alert("Error al actualizar indicaciones"); }
+                      finally { setLoadingId(null); }
                     }}
                     style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--primary)' }}
                   />
                 </td>
               )}
+              <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => setEditingAp(apt)}
+                    title="Editar turno"
+                    style={{ padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(apt.id)}
+                    title="Eliminar turno"
+                    disabled={loadingId === apt.id}
+                    style={{ padding: '0.4rem', borderRadius: '6px', border: '1px solid rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.07)', color: 'var(--danger)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  >
+                    {loadingId === apt.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                  </button>
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -308,7 +335,7 @@ export default function DashboardTable({ appointments, currentFilter }: { appoin
 
       {/* Rescheduling Modal */}
       {rescheduleData && (
-        <AppointmentModal 
+        <AppointmentModal
           isOpen={!!rescheduleData}
           onClose={() => setRescheduleData(null)}
           initialData={{
@@ -321,6 +348,13 @@ export default function DashboardTable({ appointments, currentFilter }: { appoin
           }}
         />
       )}
+
+      {/* Edit Modal */}
+      <EditAppointmentModal
+        isOpen={editingAp !== null}
+        onClose={() => setEditingAp(null)}
+        ap={editingAp}
+      />
     </div>
   );
 }

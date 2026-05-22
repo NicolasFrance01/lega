@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { createAppointment } from "@/actions/appointments";
+import { createAppointment, getBlockedDays } from "@/actions/appointments";
 import { searchPatients } from "@/actions/patients";
 import { format } from "date-fns";
 import { User, FileText, Calendar, CloudUpload, X, Loader2, Search } from "lucide-react";
@@ -54,10 +54,16 @@ export default function AppointmentModal({
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Blocked days
+  const [blockedDays, setBlockedDays] = useState<{ fecha: string; descripcion: string | null }[]>([]);
+  const [blockedError, setBlockedError] = useState<string | null>(null);
+
   useEffect(() => {
     if (isOpen) {
       setSelectedFiles([]);
       setAnalysisType(isAire ? "Test de aire" : "");
+      setBlockedError(null);
+      getBlockedDays().then(res => { if (res.data) setBlockedDays(res.data); });
       setNameValue(initialData?.name || "");
       setDniValue(initialData?.dni || "");
       setPhoneValue(initialData?.phone || "");
@@ -97,6 +103,12 @@ export default function AppointmentModal({
     }, 250);
   }, []);
 
+  function checkBlockedDate(dateStr: string): { fecha: string; descripcion: string | null } | null {
+    if (!dateStr) return null;
+    const key = dateStr.slice(0, 10);
+    return blockedDays.find(b => b.fecha.slice(0, 10) === key) || null;
+  }
+
   function selectPatient(p: PatientSuggestion) {
     setNameValue(p.name);
     setDniValue(p.dni);
@@ -120,6 +132,16 @@ export default function AppointmentModal({
         setLoading(false);
         return;
       }
+      const blocked = checkBlockedDate(rawDate);
+      if (blocked) {
+        const msg = blocked.descripcion
+          ? `Esta fecha no está disponible: ${blocked.descripcion}`
+          : "Esta fecha está marcada como sin atención. Por favor elegí otro día.";
+        setBlockedError(msg);
+        setLoading(false);
+        return;
+      }
+      setBlockedError(null);
       const formattedDate = format(new Date(rawDate), "yyyy-MM-dd'T'HH:mm:ssxxx");
       formData.set("appointment_date", formattedDate);
       formData.delete("document");
@@ -341,8 +363,24 @@ export default function AppointmentModal({
                   type="datetime-local"
                   defaultValue={defaultDate ? format(defaultDate, "yyyy-MM-dd'T'HH:mm") : undefined}
                   className="modern-input"
-                  style={inputStyle}
+                  style={{
+                    ...inputStyle,
+                    borderColor: blockedError ? '#EF4444' : undefined,
+                  }}
+                  onChange={(e) => {
+                    const b = checkBlockedDate(e.target.value);
+                    setBlockedError(b
+                      ? (b.descripcion
+                          ? `Esta fecha no está disponible: ${b.descripcion}`
+                          : "Esta fecha está marcada como sin atención. Por favor elegí otro día.")
+                      : null);
+                  }}
                 />
+                {blockedError && (
+                  <div style={{ marginTop: '0.4rem', padding: '0.5rem 0.75rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', color: '#EF4444', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1rem' }}>🚫</span> {blockedError}
+                  </div>
+                )}
               </div>
             </div>
 
