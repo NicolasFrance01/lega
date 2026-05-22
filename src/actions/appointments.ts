@@ -512,8 +512,3 @@ export async function deleteBlockedDay(id: number) {
   }
 }
 
-// backward-compat aliases used by existing pages before rename
-export { ensureBlockedDaysTable as ensureAiresBlockedDaysTable };
-export { getBlockedDays as getAiresBlockedDays };
-export { createBlockedDay as createAiresBlockedDay };
-export { deleteBlockedDay as deleteAiresBlockedDay };
