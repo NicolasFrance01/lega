@@ -1,17 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, subMonths, addMonths } from "date-fns";
 import { es } from "date-fns/locale";
-import { Clock, ChevronLeft, ChevronRight, Wind, AlertCircle, Edit2, CheckCircle, MessageSquare, Loader2 } from "lucide-react";
-import { toggleIndicationsStatus } from "@/actions/appointments";
+import { Clock, ChevronLeft, ChevronRight, Wind, AlertCircle, Edit2, CheckCircle, MessageSquare, Loader2, Ban, Trash2, Plus } from "lucide-react";
+import { toggleIndicationsStatus, createAiresBlockedDay, deleteAiresBlockedDay } from "@/actions/appointments";
 import { useRouter } from "next/navigation";
 import AppointmentModal from "./AppointmentModal";
 import EditAppointmentModal from "./EditAppointmentModal";
 import EvolutionModal from "./EvolutionModal";
 import MoveReasonModal from "./MoveReasonModal";
 
-export default function AiresCalendarView({ appointments }: { appointments: any[] }) {
+type BlockedDay = { id: number; fecha: string; descripcion: string | null };
+
+export default function AiresCalendarView({
+  appointments,
+  blockedDays: initialBlockedDays,
+}: {
+  appointments: any[];
+  blockedDays: BlockedDay[];
+}) {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -22,6 +30,14 @@ export default function AiresCalendarView({ appointments }: { appointments: any[
   const [isMovingModalOpen, setIsMovingModalOpen] = useState(false);
   const [movingAppt, setMovingAppt] = useState<{ id: string, targetDate: string } | null>(null);
 
+  const [blockedDays, setBlockedDays] = useState<BlockedDay[]>(initialBlockedDays);
+  const [showBlockedPanel, setShowBlockedPanel] = useState(false);
+  const [newBlockedDate, setNewBlockedDate] = useState('');
+  const [newBlockedDesc, setNewBlockedDesc] = useState('');
+  const [savingBlocked, setSavingBlocked] = useState(false);
+
+  useEffect(() => { setBlockedDays(initialBlockedDays); }, [initialBlockedDays]);
+
   if (!appointments) return null;
 
   const monthStart = startOfMonth(currentDate);
@@ -29,61 +45,66 @@ export default function AiresCalendarView({ appointments }: { appointments: any[
   const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
   const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
 
-  const daysGrid = [];
+  const daysGrid: Date[] = [];
   let day = startDate;
-  while (day <= endDate) {
-    daysGrid.push(day);
-    day = addDays(day, 1);
-  }
+  while (day <= endDate) { daysGrid.push(day); day = addDays(day, 1); }
 
-  // Filter ONLY Test de aire appointments AND EXCLUDE Domicilio
   const airTestNames = ['Test de aire', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'Aires'];
-  const airesAppts = (appointments || []).filter(a => 
-    a && 
-    (airTestNames.includes(a.analysis_type) || a.aire_test_type || (a.analyses && a.analyses.some((ana: any) => airTestNames.includes(ana.name)))) && 
+  const airesAppts = (appointments || []).filter(a =>
+    a &&
+    (airTestNames.includes(a.analysis_type) || a.aire_test_type || (a.analyses && a.analyses.some((ana: any) => airTestNames.includes(ana.name)))) &&
     !a.is_domicilio
   );
-  
-  // Stats for the current month view
+
   const currentMonthAppts = airesAppts.filter(a => a && a.appointment_date && isSameMonth(new Date(a.appointment_date), monthStart));
   const completedThisMonth = currentMonthAppts.filter(a => a?.status === 'COMPLETADO').length;
-  
   const siboTotal = currentMonthAppts.filter(a => a?.aire_test_type === 'SIBO').length;
   const siboCompleted = currentMonthAppts.filter(a => a?.aire_test_type === 'SIBO' && a?.status === 'COMPLETADO').length;
-
   const siboLactulonTotal = currentMonthAppts.filter(a => a?.aire_test_type === 'SIBO c/Lactulon').length;
   const siboLactulonCompleted = currentMonthAppts.filter(a => a?.aire_test_type === 'SIBO c/Lactulon' && a?.status === 'COMPLETADO').length;
-
   const lactosaTotal = currentMonthAppts.filter(a => a?.aire_test_type === 'Lactosa').length;
   const lactosaCompleted = currentMonthAppts.filter(a => a?.aire_test_type === 'Lactosa' && a?.status === 'COMPLETADO').length;
-
   const fructuosaTotal = currentMonthAppts.filter(a => a?.aire_test_type === 'Fructuosa').length;
   const fructuosaCompleted = currentMonthAppts.filter(a => a?.aire_test_type === 'Fructuosa' && a?.status === 'COMPLETADO').length;
 
+  function getBlockedInfo(d: Date): BlockedDay | null {
+    const key = format(d, 'yyyy-MM-dd');
+    return blockedDays.find(b => b.fecha.slice(0, 10) === key) || null;
+  }
+
+  async function handleAddBlockedDay() {
+    if (!newBlockedDate) return;
+    setSavingBlocked(true);
+    const res = await createAiresBlockedDay(newBlockedDate, newBlockedDesc);
+    if (!res.error) {
+      setNewBlockedDate('');
+      setNewBlockedDesc('');
+      router.refresh();
+    } else {
+      alert(res.error);
+    }
+    setSavingBlocked(false);
+  }
+
+  async function handleDeleteBlockedDay(id: number) {
+    const res = await deleteAiresBlockedDay(id);
+    if (!res.error) {
+      setBlockedDays(prev => prev.filter(b => b.id !== id));
+    } else {
+      alert(res.error);
+    }
+  }
+
   const getTypeStyle = (type?: string, status?: string) => {
-    let base = { 
-      border: '1px solid var(--glass-border)', 
-      borderLeft: '5px solid var(--glass-border)', 
-      background: 'var(--glass-bg)', 
-      opacity: 1 
-    };
-    
-    if (status === 'CANCELADO') {
-      return { ...base, opacity: 0.5, background: 'rgba(0,0,0,0.1)', border: '1px solid var(--glass-border)', borderLeft: '5px solid #94a3b8' };
-    }
-
+    let base = { border: '1px solid var(--glass-border)', borderLeft: '5px solid var(--glass-border)', background: 'var(--glass-bg)', opacity: 1 };
+    if (status === 'CANCELADO') return { ...base, opacity: 0.5, background: 'rgba(0,0,0,0.1)', border: '1px solid var(--glass-border)', borderLeft: '5px solid #94a3b8' };
     switch(type) {
-      case 'SIBO': base = { ...base, border: '1px solid #A855F7', borderLeft: '5px solid #A855F7', background: status === 'COMPLETADO' ? 'rgba(168, 85, 247, 0.1)' : 'rgba(168, 85, 247, 0.05)' }; break;
-      case 'SIBO c/Lactulon': base = { ...base, border: '1px solid #06B6D4', borderLeft: '5px solid #06B6D4', background: status === 'COMPLETADO' ? 'rgba(6, 182, 212, 0.1)' : 'rgba(6, 182, 212, 0.05)' }; break;
-      case 'Lactosa': base = { ...base, border: '1px solid #EC4899', borderLeft: '5px solid #EC4899', background: status === 'COMPLETADO' ? 'rgba(236, 72, 153, 0.1)' : 'rgba(236, 72, 153, 0.05)' }; break;
-      case 'Fructuosa': base = { ...base, border: '1px solid #F97316', borderLeft: '5px solid #F97316', background: status === 'COMPLETADO' ? 'rgba(249, 115, 22, 0.1)' : 'rgba(249, 115, 22, 0.05)' }; break;
+      case 'SIBO': base = { ...base, border: '1px solid #A855F7', borderLeft: '5px solid #A855F7', background: status === 'COMPLETADO' ? 'rgba(168,85,247,0.1)' : 'rgba(168,85,247,0.05)' }; break;
+      case 'SIBO c/Lactulon': base = { ...base, border: '1px solid #06B6D4', borderLeft: '5px solid #06B6D4', background: status === 'COMPLETADO' ? 'rgba(6,182,212,0.1)' : 'rgba(6,182,212,0.05)' }; break;
+      case 'Lactosa': base = { ...base, border: '1px solid #EC4899', borderLeft: '5px solid #EC4899', background: status === 'COMPLETADO' ? 'rgba(236,72,153,0.1)' : 'rgba(236,72,153,0.05)' }; break;
+      case 'Fructuosa': base = { ...base, border: '1px solid #F97316', borderLeft: '5px solid #F97316', background: status === 'COMPLETADO' ? 'rgba(249,115,22,0.1)' : 'rgba(249,115,22,0.05)' }; break;
     }
-    
-    if (status === 'COMPLETADO') {
-      base.border = '1px solid var(--success)';
-      base.borderLeft = '5px solid var(--success)';
-    }
-
+    if (status === 'COMPLETADO') { base.border = '1px solid var(--success)'; base.borderLeft = '5px solid var(--success)'; }
     return base;
   };
 
@@ -106,8 +127,23 @@ export default function AiresCalendarView({ appointments }: { appointments: any[
           </h3>
           <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>{currentMonthAppts.length} turnos este mes ({completedThisMonth} completados)</p>
         </div>
-        
+
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setShowBlockedPanel(!showBlockedPanel)}
+            style={{
+              padding: '0.5rem 1rem',
+              background: showBlockedPanel ? 'rgba(239,68,68,0.1)' : 'var(--glass-bg)',
+              borderRadius: '8px',
+              border: `1px solid ${showBlockedPanel ? '#EF4444' : 'var(--glass-border)'}`,
+              color: showBlockedPanel ? '#EF4444' : 'var(--text-muted)',
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '0.5rem',
+              fontWeight: 600, fontSize: '0.85rem',
+            }}
+          >
+            <Ban size={16} /> Feriados {blockedDays.length > 0 && `(${blockedDays.length})`}
+          </button>
           <button onClick={() => setCurrentDate(subMonths(currentDate, 1))} style={{ padding: '0.5rem', background: 'var(--glass-bg)', borderRadius: '8px', border: '1px solid var(--glass-border)', color: 'var(--text-main)', cursor: 'pointer' }}><ChevronLeft size={20} /></button>
           <span style={{ fontWeight: 800, minWidth: '180px', textAlign: 'center', fontSize: '1.25rem', color: 'var(--text-main)' }}>
             {format(monthStart, "MMMM yyyy", { locale: es }).toUpperCase()}
@@ -116,193 +152,249 @@ export default function AiresCalendarView({ appointments }: { appointments: any[
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '1.5rem', padding: '0.5rem 0', borderBottom: '1px solid var(--glass-border)', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 700, color: '#A855F7' }}>
-             <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#A855F7' }}></span> SIBO ({siboTotal}/{siboCompleted})
+      {showBlockedPanel && (
+        <div className="glass-panel" style={{ padding: '1.5rem', background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.3)' }}>
+          <h4 style={{ margin: '0 0 1rem', color: '#EF4444', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.95rem' }}>
+            <Ban size={15} /> Feriados / Días sin atención
+          </h4>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <div>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Fecha</label>
+              <input type="date" value={newBlockedDate} onChange={(e) => setNewBlockedDate(e.target.value)} className="input-field" style={{ minWidth: '160px' }} />
+            </div>
+            <div style={{ flex: 1, minWidth: '180px' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Descripción (opcional)</label>
+              <input type="text" value={newBlockedDesc} onChange={(e) => setNewBlockedDesc(e.target.value)} className="input-field" placeholder="Ej: Feriado Nacional" />
+            </div>
+            <button
+              onClick={handleAddBlockedDay}
+              disabled={savingBlocked || !newBlockedDate}
+              className="btn-primary"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: !newBlockedDate ? 0.5 : 1 }}
+            >
+              {savingBlocked ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} Agregar
+            </button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 700, color: '#06B6D4' }}>
-             <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#06B6D4' }}></span> SIBO C/ LACTULON ({siboLactulonTotal}/{siboLactulonCompleted})
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 700, color: '#EC4899' }}>
-             <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#EC4899' }}></span> LACTOSA ({lactosaTotal}/{lactosaCompleted})
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 700, color: '#F97316' }}>
-             <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#F97316' }}></span> FRUCTUOSA ({fructuosaTotal}/{fructuosaCompleted})
-          </div>
-      </div>
+          {blockedDays.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>No hay días bloqueados.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {[...blockedDays].sort((a, b) => a.fecha.localeCompare(b.fecha)).map(bd => (
+                <div key={bd.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 1rem', background: 'rgba(239,68,68,0.07)', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.2)' }}>
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700, color: '#EF4444', fontSize: '0.9rem' }}>
+                      {format(new Date(bd.fecha.slice(0, 10) + 'T12:00:00'), "dd 'de' MMMM yyyy", { locale: es })}
+                    </span>
+                    {bd.descripcion && <span style={{ color: 'var(--text-muted)', fontSize: '0.83rem' }}>{bd.descripcion}</span>}
+                  </div>
+                  <button onClick={() => handleDeleteBlockedDay(bd.id)} style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem' }}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
+      <div style={{ display: 'flex', gap: '1.5rem', padding: '0.5rem 0', borderBottom: '1px solid var(--glass-border)', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 700, color: '#A855F7' }}>
+          <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#A855F7' }}></span> SIBO ({siboTotal}/{siboCompleted})
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 700, color: '#06B6D4' }}>
+          <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#06B6D4' }}></span> SIBO C/ LACTULON ({siboLactulonTotal}/{siboLactulonCompleted})
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 700, color: '#EC4899' }}>
+          <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#EC4899' }}></span> LACTOSA ({lactosaTotal}/{lactosaCompleted})
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 700, color: '#F97316' }}>
+          <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#F97316' }}></span> FRUCTUOSA ({fructuosaTotal}/{fructuosaCompleted})
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 700, color: '#EF4444' }}>
+          <Ban size={12} color="#EF4444" /> SIN ATENCIÓN
+        </div>
+      </div>
 
       <div style={{ overflowX: 'auto', flex: 1 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.75rem', minWidth: '800px', paddingBottom: '1rem' }}>
           {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map(d => (
-             <div key={d} style={{ fontWeight: 600, textAlign: 'center', paddingBottom: '0.5rem', color: 'var(--text-muted)' }}>{d}</div>
+            <div key={d} style={{ fontWeight: 600, textAlign: 'center', paddingBottom: '0.5rem', color: 'var(--text-muted)' }}>{d}</div>
           ))}
-        
-        {daysGrid.map(day => {
-          const dayAppts = (airesAppts || []).filter(a => a && a.appointment_date && isSameDay(new Date(a.appointment_date), day));
-          const isCurrentMonth = isSameMonth(day, monthStart);
-          const isToday = isSameDay(day, new Date());
-          const isFull = dayAppts.length >= 4;
 
-          return (
-            <div 
-              key={day.toISOString()} 
-              onClick={() => {
-                 if (isFull) {
-                   alert("Límite de turnos alcanzado para este día (Máx 4).");
-                   return;
-                 }
-                 setSelectedDate(day);
-                 setIsModalOpen(true);
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.currentTarget.style.background = 'rgba(14, 165, 233, 0.1)';
-              }}
-              onDragLeave={(e) => {
-                e.currentTarget.style.background = isCurrentMonth ? 'var(--glass-bg)' : 'rgba(0,0,0,0.05)';
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                e.currentTarget.style.background = isCurrentMonth ? 'var(--glass-bg)' : 'rgba(0,0,0,0.05)';
-                const apptId = e.dataTransfer.getData("appointmentId");
-                if (apptId) {
-                  if (isFull) {
-                    alert("No se pueden mover turnos a este día: Límite de 4 alcanzado.");
-                    return;
-                  }
-                  const originalAppt = airesAppts.find(a => a.id === apptId);
-                  let targetDateTime = day.toISOString();
-                  
-                  if (originalAppt && originalAppt.appointment_date) {
-                    const originalDate = new Date(originalAppt.appointment_date);
-                    const newDateWithTime = new Date(day);
-                    newDateWithTime.setHours(originalDate.getHours(), originalDate.getMinutes(), 0, 0);
-                    targetDateTime = format(newDateWithTime, "yyyy-MM-dd'T'HH:mm:ssxxx");
-                  }
+          {daysGrid.map(day => {
+            const dayAppts = (airesAppts || []).filter(a => a && a.appointment_date && isSameDay(new Date(a.appointment_date), day));
+            const isCurrentMonth = isSameMonth(day, monthStart);
+            const isToday = isSameDay(day, new Date());
+            const isFull = dayAppts.length >= 4;
+            const blocked = getBlockedInfo(day);
+            const isBlocked = blocked !== null;
 
-                  setMovingAppt({ id: apptId, targetDate: targetDateTime });
-                  setIsMovingModalOpen(true);
-                }
-              }}
-              style={{ 
-                background: isCurrentMonth ? (isFull ? 'rgba(239, 68, 68, 0.05)' : 'var(--glass-bg)') : 'rgba(0,0,0,0.05)',
-                border: isFull ? '2px dashed var(--danger)' : (isToday ? '2px solid var(--primary)' : '1px solid var(--glass-border)'), 
-                borderRadius: '8px', 
-                cursor: isFull ? 'not-allowed' : 'pointer',
-                padding: '0.5rem',
-                display: 'flex', flexDirection: 'column', gap: '0.25rem',
-                minHeight: '120px', opacity: isCurrentMonth ? 1 : 0.4,
-                transition: 'all 0.2s ease'
-              }}
-              className={!isFull && isCurrentMonth ? "hoverable-day" : ""}
-            >
-               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                 <p style={{ fontWeight: 700, fontSize: '0.875rem', margin: 0, color: isToday ? 'var(--primary)' : (isCurrentMonth ? 'var(--text-main)' : 'var(--text-muted)') }}>
+            return (
+              <div
+                key={day.toISOString()}
+                onClick={() => {
+                  if (isBlocked) return;
+                  if (isFull) { alert("Límite de turnos alcanzado para este día (Máx 4)."); return; }
+                  setSelectedDate(day);
+                  setIsModalOpen(true);
+                }}
+                onDragOver={(e) => {
+                  if (isBlocked) return;
+                  e.preventDefault();
+                  e.currentTarget.style.background = 'rgba(14, 165, 233, 0.1)';
+                }}
+                onDragLeave={(e) => {
+                  if (isBlocked) return;
+                  e.currentTarget.style.background = isCurrentMonth ? 'var(--glass-bg)' : 'rgba(0,0,0,0.05)';
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (isBlocked) return;
+                  e.currentTarget.style.background = isCurrentMonth ? 'var(--glass-bg)' : 'rgba(0,0,0,0.05)';
+                  const apptId = e.dataTransfer.getData("appointmentId");
+                  if (apptId) {
+                    if (isFull) { alert("No se pueden mover turnos a este día: Límite de 4 alcanzado."); return; }
+                    const originalAppt = airesAppts.find(a => a.id === apptId);
+                    let targetDateTime = day.toISOString();
+                    if (originalAppt && originalAppt.appointment_date) {
+                      const originalDate = new Date(originalAppt.appointment_date);
+                      const newDateWithTime = new Date(day);
+                      newDateWithTime.setHours(originalDate.getHours(), originalDate.getMinutes(), 0, 0);
+                      targetDateTime = format(newDateWithTime, "yyyy-MM-dd'T'HH:mm:ssxxx");
+                    }
+                    setMovingAppt({ id: apptId, targetDate: targetDateTime });
+                    setIsMovingModalOpen(true);
+                  }
+                }}
+                style={{
+                  background: isBlocked
+                    ? 'rgba(239,68,68,0.1)'
+                    : (isCurrentMonth ? (isFull ? 'rgba(239,68,68,0.05)' : 'var(--glass-bg)') : 'rgba(0,0,0,0.05)'),
+                  border: isBlocked
+                    ? '2px solid rgba(239,68,68,0.45)'
+                    : (isFull ? '2px dashed var(--danger)' : (isToday ? '2px solid var(--primary)' : '1px solid var(--glass-border)')),
+                  borderRadius: '8px',
+                  cursor: (isBlocked || isFull) ? 'not-allowed' : 'pointer',
+                  padding: '0.5rem',
+                  display: 'flex', flexDirection: 'column', gap: '0.25rem',
+                  minHeight: '120px',
+                  opacity: isCurrentMonth ? 1 : 0.4,
+                  transition: 'all 0.2s ease',
+                }}
+                className={!isFull && isCurrentMonth && !isBlocked ? "hoverable-day" : ""}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                  <p style={{ fontWeight: 700, fontSize: '0.875rem', margin: 0, color: isBlocked ? '#EF4444' : (isToday ? 'var(--primary)' : (isCurrentMonth ? 'var(--text-main)' : 'var(--text-muted)')) }}>
                     {format(day, 'dd', { locale: es })}
-                 </p>
-                 <span style={{ 
-                    fontSize: '0.65rem', fontWeight: 700, 
-                    background: isFull ? 'var(--danger)' : (dayAppts.length > 0 ? 'var(--primary)' : 'rgba(0,0,0,0.1)'),
-                    color: dayAppts.length > 0 ? 'white' : 'var(--text-muted)',
-                    padding: '0.1rem 0.4rem', borderRadius: '4px'
-                 }}>
-                    {dayAppts.length}/4
-                 </span>
-               </div>
+                  </p>
+                  {isBlocked ? (
+                    <Ban size={14} color="#EF4444" />
+                  ) : (
+                    <span style={{
+                      fontSize: '0.65rem', fontWeight: 700,
+                      background: isFull ? 'var(--danger)' : (dayAppts.length > 0 ? 'var(--primary)' : 'rgba(0,0,0,0.1)'),
+                      color: dayAppts.length > 0 ? 'white' : 'var(--text-muted)',
+                      padding: '0.1rem 0.4rem', borderRadius: '4px',
+                    }}>
+                      {dayAppts.length}/4
+                    </span>
+                  )}
+                </div>
 
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto', flex: 1, maxHeight: '280px' }}>
-                 {dayAppts.filter(Boolean).map(apt => (
-                     <div key={apt.id}
-                     draggable={true}
-                     onDragStart={(e) => {
-                       e.stopPropagation();
-                       e.dataTransfer.setData("appointmentId", apt.id);
-                       e.dataTransfer.effectAllowed = "move";
-                     }}
-                     style={{
-                       ...getTypeStyle(apt.aire_test_type, apt.status),
-                       padding: '0.65rem',
-                       borderRadius: '8px',
-                       boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
-                       position: 'relative',
-                       borderLeft: apt?.status === 'COMPLETADO' ? '5px solid var(--success)' : `5px solid ${getBadgeColor(apt?.aire_test_type)}`,
-                       background: apt?.status === 'COMPLETADO' ? 'rgba(16, 185, 129, 0.12)' : undefined,
-                       cursor: 'grab',
-                       transition: 'all 0.2s ease',
-                       flexShrink: 0,
-                       minHeight: 'fit-content'
-                     }}
-                     onClick={(e) => {
-                       e.stopPropagation();
-                       setSelectedAp(apt);
-                     }}
-                     >
-                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem' }}>
-                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: getBadgeColor(apt?.aire_test_type), fontWeight: 800, fontSize: '0.75rem' }}>
-                           <Clock size={11} />
-                           {format(new Date(apt?.appointment_date || new Date()), "HH:mm")}
-                           {apt?.status === 'COMPLETADO' && <CheckCircle size={11} color="var(--success)" />}
-                         </div>
-                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                           {loadingId === apt.id ? (
-                             <Loader2 size={11} className="animate-spin" color="var(--primary)" />
-                           ) : (
-                             <input 
-                               type="checkbox" 
-                               title="Indicaciones Enviadas"
-                               checked={apt.indications_sent || false}
-                               onClick={(e) => e.stopPropagation()}
-                               onChange={async (e) => {
-                                 const newStatus = e.target.checked;
-                                 setLoadingId(apt.id);
-                                 try {
-                                   const res = await toggleIndicationsStatus(apt.id, newStatus);
-                                   if (res.success) {
-                                     router.refresh();
-                                   } else {
-                                     alert(res.error);
-                                   }
-                                 } catch (err) {
-                                   alert("Error al actualizar indicaciones");
-                                 } finally {
-                                   setLoadingId(null);
-                                 }
-                               }}
-                               style={{ width: '13px', height: '13px', cursor: 'pointer', accentColor: 'var(--primary)', margin: 0 }}
-                             />
-                           )}
-                           <button 
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               setSelectedAp(apt);
-                             }}
-                             style={{ border: 'none', background: 'none', color: '#94a3b8', cursor: 'pointer', padding: '1px' }}
-                           >
-                             <Edit2 size={10} />
-                           </button>
-                         </div>
-                       </div>
-                       <p style={{ fontWeight: 800, fontSize: '0.9rem', lineHeight: 1.15, color: apt?.status === 'CANCELADO' ? 'var(--text-muted)' : 'var(--text-main)', margin: '0.1rem 0', textDecoration: apt?.status === 'CANCELADO' ? 'line-through' : 'none', opacity: apt?.status === 'CANCELADO' ? 0.6 : 1, wordBreak: 'break-word' }}>{apt?.name}</p>
-                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.05rem' }}>
-                         <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, margin: 0 }}>{apt.aire_test_type || 'Prueba'}</p>
-                         {apt.observations && <MessageSquare size={10} color="var(--primary)" />}
-                       </div>
-                     </div>
-                  ))}
-                  {isFull && <div style={{ marginTop: 'auto', color: '#e11d48', display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.6rem', fontWeight: 800 }}> <AlertCircle size={10} /> CUPO AGOTADO </div>}
-               </div>
-            </div>
-          );
-        })}
+                {isBlocked ? (
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '0.3rem', padding: '0.25rem' }}>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#EF4444', textAlign: 'center', letterSpacing: '0.03em' }}>SIN ATENCIÓN</span>
+                    {blocked.descripcion && (
+                      <span style={{ fontSize: '0.63rem', color: 'rgba(239,68,68,0.75)', textAlign: 'center', lineHeight: 1.3 }}>
+                        {blocked.descripcion}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto', flex: 1, maxHeight: '280px' }}>
+                    {dayAppts.filter(Boolean).map(apt => (
+                      <div key={apt.id}
+                        draggable={true}
+                        onDragStart={(e) => {
+                          e.stopPropagation();
+                          e.dataTransfer.setData("appointmentId", apt.id);
+                          e.dataTransfer.effectAllowed = "move";
+                        }}
+                        style={{
+                          ...getTypeStyle(apt.aire_test_type, apt.status),
+                          padding: '0.65rem',
+                          borderRadius: '8px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                          position: 'relative',
+                          borderLeft: apt?.status === 'COMPLETADO' ? '5px solid var(--success)' : `5px solid ${getBadgeColor(apt?.aire_test_type)}`,
+                          background: apt?.status === 'COMPLETADO' ? 'rgba(16,185,129,0.12)' : undefined,
+                          cursor: 'grab',
+                          transition: 'all 0.2s ease',
+                          flexShrink: 0,
+                          minHeight: 'fit-content',
+                        }}
+                        onClick={(e) => { e.stopPropagation(); setSelectedAp(apt); }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: getBadgeColor(apt?.aire_test_type), fontWeight: 800, fontSize: '0.75rem' }}>
+                            <Clock size={11} />
+                            {format(new Date(apt?.appointment_date || new Date()), "HH:mm")}
+                            {apt?.status === 'COMPLETADO' && <CheckCircle size={11} color="var(--success)" />}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            {loadingId === apt.id ? (
+                              <Loader2 size={11} className="animate-spin" color="var(--primary)" />
+                            ) : (
+                              <input
+                                type="checkbox"
+                                title="Indicaciones Enviadas"
+                                checked={apt.indications_sent || false}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={async (e) => {
+                                  const newStatus = e.target.checked;
+                                  setLoadingId(apt.id);
+                                  try {
+                                    const res = await toggleIndicationsStatus(apt.id, newStatus);
+                                    if (res.success) { router.refresh(); } else { alert(res.error); }
+                                  } catch { alert("Error al actualizar indicaciones"); }
+                                  finally { setLoadingId(null); }
+                                }}
+                                style={{ width: '13px', height: '13px', cursor: 'pointer', accentColor: 'var(--primary)', margin: 0 }}
+                              />
+                            )}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setSelectedAp(apt); }}
+                              style={{ border: 'none', background: 'none', color: '#94a3b8', cursor: 'pointer', padding: '1px' }}
+                            >
+                              <Edit2 size={10} />
+                            </button>
+                          </div>
+                        </div>
+                        <p style={{ fontWeight: 800, fontSize: '0.9rem', lineHeight: 1.15, color: apt?.status === 'CANCELADO' ? 'var(--text-muted)' : 'var(--text-main)', margin: '0.1rem 0', textDecoration: apt?.status === 'CANCELADO' ? 'line-through' : 'none', opacity: apt?.status === 'CANCELADO' ? 0.6 : 1, wordBreak: 'break-word' }}>{apt?.name}</p>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.05rem' }}>
+                          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, margin: 0 }}>{apt.aire_test_type || 'Prueba'}</p>
+                          {apt.observations && <MessageSquare size={10} color="var(--primary)" />}
+                        </div>
+                      </div>
+                    ))}
+                    {isFull && (
+                      <div style={{ marginTop: 'auto', color: '#e11d48', display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.6rem', fontWeight: 800 }}>
+                        <AlertCircle size={10} /> CUPO AGOTADO
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      <AppointmentModal 
+      <AppointmentModal
         key={selectedDate ? selectedDate.toISOString() : "new"}
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        defaultDate={selectedDate} 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        defaultDate={selectedDate}
         isAire={true}
       />
 
@@ -325,11 +417,11 @@ export default function AiresCalendarView({ appointments }: { appointments: any[
         apptId={movingAppt?.id || null}
         newDate={movingAppt?.targetDate || null}
       />
-      
+
       <style jsx>{`
         .hoverable-day:hover {
           transform: translateY(-4px);
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+          box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
           border-color: var(--primary);
           z-index: 10;
         }

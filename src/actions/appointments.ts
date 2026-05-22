@@ -440,3 +440,57 @@ export async function toggleIndicationsStatus(id: string, status: boolean) {
     return { error: error.message };
   }
 }
+
+// --- DÍAS BLOQUEADOS (Feriados / Sin atención) ---
+
+export async function ensureAiresBlockedDaysTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS aires_blocked_days (
+        id SERIAL PRIMARY KEY,
+        fecha DATE NOT NULL UNIQUE,
+        descripcion TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function getAiresBlockedDays() {
+  try {
+    const res = await pool.query("SELECT * FROM aires_blocked_days ORDER BY fecha ASC");
+    return { data: res.rows, error: null };
+  } catch (error: any) {
+    return { data: null, error: error.message };
+  }
+}
+
+export async function createAiresBlockedDay(fecha: string, descripcion: string) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+    await pool.query(
+      "INSERT INTO aires_blocked_days (fecha, descripcion) VALUES ($1, $2) ON CONFLICT (fecha) DO UPDATE SET descripcion = EXCLUDED.descripcion",
+      [fecha, descripcion || null]
+    );
+    revalidatePath("/calendario-aire");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function deleteAiresBlockedDay(id: number) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+    await pool.query("DELETE FROM aires_blocked_days WHERE id = $1", [id]);
+    revalidatePath("/calendario-aire");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
