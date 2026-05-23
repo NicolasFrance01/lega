@@ -512,3 +512,20 @@ export async function deleteBlockedDay(id: number) {
   }
 }
 
+export async function updateBlockedDay(id: number, descripcion: string) {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+    await pool.query(
+      "UPDATE blocked_days SET descripcion = $1 WHERE id = $2",
+      [descripcion || null, id]
+    );
+    revalidatePath("/calendario");
+    revalidatePath("/calendario-aire");
+    revalidatePath("/calendario-domicilio");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+

@@ -7,9 +7,8 @@ import AppointmentModal from "./AppointmentModal";
 import EvolutionModal from "./EvolutionModal";
 import EditAppointmentModal from "./EditAppointmentModal";
 import MoveReasonModal from "./MoveReasonModal";
-import { Clock, ChevronLeft, ChevronRight, Edit2, MessageSquare, Ban, Trash2, Plus, Loader2 } from "lucide-react";
-import { createBlockedDay, deleteBlockedDay } from "@/actions/appointments";
-import { useRouter } from "next/navigation";
+import { Clock, ChevronLeft, ChevronRight, Edit2, MessageSquare, Ban } from "lucide-react";
+import BlockedDaysPanel from "./BlockedDaysPanel";
 
 type BlockedDay = { id: number; fecha: string; descripcion: string | null };
 
@@ -20,7 +19,6 @@ export default function MonthClientView({
   appointments: any[];
   blockedDays: BlockedDay[];
 }) {
-  const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -32,9 +30,6 @@ export default function MonthClientView({
 
   const [blockedDays, setBlockedDays] = useState<BlockedDay[]>(initialBlockedDays);
   const [showBlockedPanel, setShowBlockedPanel] = useState(false);
-  const [newBlockedDate, setNewBlockedDate] = useState('');
-  const [newBlockedDesc, setNewBlockedDesc] = useState('');
-  const [savingBlocked, setSavingBlocked] = useState(false);
 
   useEffect(() => { setBlockedDays(initialBlockedDays); }, [initialBlockedDays]);
 
@@ -61,29 +56,6 @@ export default function MonthClientView({
   function getBlockedInfo(d: Date): BlockedDay | null {
     const key = format(d, 'yyyy-MM-dd');
     return blockedDays.find(b => b.fecha.slice(0, 10) === key) || null;
-  }
-
-  async function handleAddBlockedDay() {
-    if (!newBlockedDate) return;
-    setSavingBlocked(true);
-    const res = await createBlockedDay(newBlockedDate, newBlockedDesc);
-    if (!res.error) {
-      setNewBlockedDate('');
-      setNewBlockedDesc('');
-      router.refresh();
-    } else {
-      alert(res.error);
-    }
-    setSavingBlocked(false);
-  }
-
-  async function handleDeleteBlockedDay(id: number) {
-    const res = await deleteBlockedDay(id);
-    if (!res.error) {
-      setBlockedDays(prev => prev.filter(b => b.id !== id));
-    } else {
-      alert(res.error);
-    }
   }
 
   return (
@@ -114,50 +86,7 @@ export default function MonthClientView({
         </div>
       </div>
 
-      {showBlockedPanel && (
-        <div className="glass-panel" style={{ padding: '1.5rem', background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.3)' }}>
-          <h4 style={{ margin: '0 0 1rem', color: '#EF4444', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.95rem' }}>
-            <Ban size={15} /> Feriados / Días sin atención
-          </h4>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', marginBottom: '1rem', flexWrap: 'wrap' }}>
-            <div>
-              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Fecha</label>
-              <input type="date" value={newBlockedDate} onChange={(e) => setNewBlockedDate(e.target.value)} className="input-field" style={{ minWidth: '160px' }} />
-            </div>
-            <div style={{ flex: 1, minWidth: '180px' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Descripción (opcional)</label>
-              <input type="text" value={newBlockedDesc} onChange={(e) => setNewBlockedDesc(e.target.value)} className="input-field" placeholder="Ej: Feriado Nacional" />
-            </div>
-            <button
-              onClick={handleAddBlockedDay}
-              disabled={savingBlocked || !newBlockedDate}
-              className="btn-primary"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: !newBlockedDate ? 0.5 : 1 }}
-            >
-              {savingBlocked ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} Agregar
-            </button>
-          </div>
-          {blockedDays.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>No hay días bloqueados.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {[...blockedDays].sort((a, b) => a.fecha.localeCompare(b.fecha)).map(bd => (
-                <div key={bd.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 1rem', background: 'rgba(239,68,68,0.07)', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.2)' }}>
-                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 700, color: '#EF4444', fontSize: '0.9rem' }}>
-                      {format(new Date(bd.fecha.slice(0, 10) + 'T12:00:00'), "dd 'de' MMMM yyyy", { locale: es })}
-                    </span>
-                    {bd.descripcion && <span style={{ color: 'var(--text-muted)', fontSize: '0.83rem' }}>{bd.descripcion}</span>}
-                  </div>
-                  <button onClick={() => handleDeleteBlockedDay(bd.id)} style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem' }}>
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {showBlockedPanel && <BlockedDaysPanel blockedDays={blockedDays} />}
 
       <div style={{ overflowX: 'auto', flex: 1 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', minWidth: '800px', paddingBottom: '1rem' }}>
