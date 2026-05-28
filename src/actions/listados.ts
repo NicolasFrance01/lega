@@ -473,15 +473,26 @@ export async function createApross(formData: FormData) {
     // --- Patient Persistence Logic ---
     const dni_clean = dni ? String(dni).trim() : "-";
     if (dni_clean !== "-") {
-      await client.query(
-        `INSERT INTO patients (id, name, dni, phone, health_insurance)
-         VALUES (gen_random_uuid(), $1, $2, $3, 'APROSS')
-         ON CONFLICT (dni) DO UPDATE SET
-            name = EXCLUDED.name,
-            phone = EXCLUDED.phone,
-            health_insurance = EXCLUDED.health_insurance`,
-        [paciente, dni_clean, telefono]
+      const patientRes = await client.query(
+        "SELECT id FROM patients WHERE dni = $1 AND UPPER(name) = UPPER($2)",
+        [dni_clean, paciente]
       );
+      if (patientRes.rows.length > 0) {
+        const patientId = patientRes.rows[0].id;
+        await client.query(
+          `UPDATE patients SET
+             phone = $1,
+             health_insurance = 'APROSS'
+           WHERE id = $2`,
+          [telefono, patientId]
+        );
+      } else {
+        await client.query(
+          `INSERT INTO patients (id, name, dni, phone, health_insurance)
+           VALUES (gen_random_uuid(), $1, $2, $3, 'APROSS')`,
+          [paciente, dni_clean, telefono]
+        );
+      }
     }
     // ---------------------------------
 
@@ -542,15 +553,26 @@ export async function updateApross(id: number, data: any) {
     // --- Patient Persistence Logic ---
     const dni_clean = dni ? String(dni).trim() : "-";
     if (dni_clean !== "-") {
-      await pool.query(
-        `INSERT INTO patients (id, name, dni, phone, health_insurance)
-         VALUES (gen_random_uuid(), $1, $2, $3, 'APROSS')
-         ON CONFLICT (dni) DO UPDATE SET
-            name = EXCLUDED.name,
-            phone = EXCLUDED.phone,
-            health_insurance = EXCLUDED.health_insurance`,
-        [paciente, dni_clean, telefono]
+      const patientRes = await pool.query(
+        "SELECT id FROM patients WHERE dni = $1 AND UPPER(name) = UPPER($2)",
+        [dni_clean, paciente]
       );
+      if (patientRes.rows.length > 0) {
+        const patientId = patientRes.rows[0].id;
+        await pool.query(
+          `UPDATE patients SET
+             phone = $1,
+             health_insurance = 'APROSS'
+           WHERE id = $2`,
+          [telefono, patientId]
+        );
+      } else {
+        await pool.query(
+          `INSERT INTO patients (id, name, dni, phone, health_insurance)
+           VALUES (gen_random_uuid(), $1, $2, $3, 'APROSS')`,
+          [paciente, dni_clean, telefono]
+        );
+      }
     }
     // ---------------------------------
 
