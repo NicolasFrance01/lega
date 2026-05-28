@@ -10,6 +10,12 @@ export async function getIngresos(search?: string) {
     // This includes historical data from internal calendar and domicilio if they have these statuses.
     const res = await pool.query(`
       SELECT a.*, p.name, p.dni, p.phone, p.email, p.health_insurance, p.birth_date, p.address, a.biochemical_notice,
+             COALESCE((
+               SELECT SUM(cp.monto) 
+               FROM coseguro_pagos cp 
+               JOIN pago_obrasocial po ON cp.pago_obrasocial_id = po.id 
+               WHERE po.ingreso_id = a.id
+             ), 0) as total_coseguro_pagado,
              (
                SELECT json_agg(json_build_object('id', aa.id, 'name', aa.analysis_name, 'subtype', aa.aire_test_subtype, 'status', aa.status))
                FROM appointment_analyses aa
@@ -39,6 +45,7 @@ export async function getIngresos(search?: string) {
         name: row.name ? row.name.toUpperCase() : row.name,
         appointment_date: row.appointment_date ? new Date(row.appointment_date).toISOString() : null,
         result_date: row.result_date ? new Date(row.result_date).toISOString() : null,
+        total_coseguro_pagado: parseFloat(row.total_coseguro_pagado) || 0
       })),
       error: null 
     };

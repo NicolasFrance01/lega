@@ -67,6 +67,7 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
     const paymentMap: Record<string, number> = { 'Efectivo': 0, 'Transferencia': 0, 'Tarjeta': 0, 'Particular': 0, 'Obra Social': 0 };
 
     let totalRevenue = 0;
+    let totalAgregadosCobrados = 0;
 
     filteredData.forEach(item => {
       // Multiple Analyses Support
@@ -96,7 +97,15 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
         paymentMap['Particular']++;
         totalRevenue += parseFloat(item.particular_price) || 0;
       }
-      if (item.coseguro) {
+      
+      if (item.coseguro_agregado) {
+        const pagado = parseFloat(item.total_coseguro_pagado) || 0;
+        totalAgregadosCobrados += pagado;
+        if (pagado > 0) {
+          paymentMap['Obra Social']++;
+          totalRevenue += pagado;
+        }
+      } else if (item.coseguro) {
         paymentMap['Obra Social']++;
         totalRevenue += parseFloat(item.coseguro) || 0;
       }
@@ -118,7 +127,8 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
       professionalData: toChartData(professionalMap).slice(0, 7),
       paymentData: Object.entries(paymentMap).map(([name, value]) => ({ name, value })).filter(d => d.value > 0),
       totalEntries: filteredData.length,
-      totalRevenue
+      totalRevenue,
+      totalAgregadosCobrados
     };
   }, [filteredData]);
 
@@ -163,6 +173,7 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
       '',
       `Total pacientes,${stats.totalEntries}`,
       `Caja estimada,$${stats.totalRevenue.toLocaleString()}`,
+      `Agregados cobrados,$${stats.totalAgregadosCobrados.toLocaleString()}`,
     ];
     const blob = new Blob(['﻿' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -321,6 +332,17 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
               <div>
                 <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>CAJA ESTIMADA</p>
                 <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>$ {stats.totalRevenue.toLocaleString()}</h3>
+              </div>
+            </div>
+          </div>
+          <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid #8B5CF6' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ padding: '0.75rem', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '12px' }}>
+                <DollarSign size={24} color="#8B5CF6" />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>AGREGADOS COBRADOS</p>
+                <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>$ {stats.totalAgregadosCobrados.toLocaleString()}</h3>
               </div>
             </div>
           </div>
