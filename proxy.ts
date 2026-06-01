@@ -34,7 +34,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  const BIOQUIMICO_ALLOWED = ['/ingresos', '/pacientes', '/perfil'];
+  const BIOQUIMICO_ALLOWED = ['/ingresos', '/pacientes', '/perfil', '/resumen-medico'];
 
   try {
     const { payload } = await jwtVerify(token, SECRET_KEY);
