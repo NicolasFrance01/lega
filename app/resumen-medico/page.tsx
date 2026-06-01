@@ -14,7 +14,7 @@ export default async function ResumenMedicoPage() {
       </header>
       
       <div className="glass-panel" style={{ flex: 1, padding: '2rem' }}>
-        <MedicalResultsManager currentUser={session.user} />
+        <MedicalResultsManager currentUser={session} />
       </div>
     </div>
   );
