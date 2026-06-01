@@ -15,6 +15,7 @@ export default function SidebarNav({ userRole, isCollapsed }: { userRole?: strin
     ? [
         { name: "Ingresos", path: "/ingresos", icon: <IngresosIcon size={20} /> },
         { name: "Pacientes", path: "/pacientes", icon: <Users size={20} /> },
+        { name: "Resumen Médico", path: "/resumen-medico", icon: <ClipboardList size={20} /> },
         { name: "Mi Perfil", path: "/perfil", icon: <UserCircle size={20} /> },
       ]
     : [

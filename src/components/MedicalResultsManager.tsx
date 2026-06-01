@@ -197,16 +197,18 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                             >
                               <Plus size={16} /> Cargar Resultado
                             </button>
-                            <button 
-                              onClick={() => {
-                                const msg = `Hola ${selectedPatient.name}, tu INFORME MÉDICO N° ${apt.report_id || '-'} del día ${format(new Date(apt.appointment_date), "dd/MM")} ya está disponible en: https://legalaboratorio.vercel.app/resultado`;
-                                window.open(`https://wa.me/${selectedPatient.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
-                              }}
-                              style={{ padding: '0.5rem', borderRadius: '10px', background: '#25D366', color: 'white', display: 'flex', alignItems: 'center' }}
-                              title="Avisar por WhatsApp"
-                            >
-                              <MessageSquare size={16} />
-                            </button>
+                            {currentUser?.role !== 'bioquimico' && (
+                              <button 
+                                onClick={() => {
+                                  const msg = `Hola ${selectedPatient.name}, tu INFORME MÉDICO N° ${apt.report_id || '-'} del día ${format(new Date(apt.appointment_date), "dd/MM")} ya está disponible en: https://legalaboratorio.vercel.app/resultado`;
+                                  window.open(`https://wa.me/${selectedPatient.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+                                }}
+                                style={{ padding: '0.5rem', borderRadius: '10px', background: '#25D366', color: 'white', display: 'flex', alignItems: 'center' }}
+                                title="Avisar por WhatsApp"
+                              >
+                                <MessageSquare size={16} />
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -397,18 +399,20 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                     </td>
                     <td style={{ padding: '1rem', textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                        <button 
-                          onClick={async () => {
-                            const msg = `Hola ${res.patient_name}, tu INFORME MÉDICO N° ${res.report_id || '-'} del día ${format(new Date(res.appointment_date), "dd/MM")} ya está disponible en: https://laboratoriolega.vercel.app/resultado`;
-                            window.open(`https://wa.me/${res.patient_phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
-                            await markAsNotified(res.id);
-                            loadAllResults();
-                          }}
-                          style={{ padding: '0.4rem', borderRadius: '8px', background: '#25D366', color: 'white', display: 'flex', alignItems: 'center' }}
-                          title="Avisar por WhatsApp"
-                        >
-                          <MessageSquare size={14} />
-                        </button>
+                        {currentUser?.role !== 'bioquimico' && (
+                          <button 
+                            onClick={async () => {
+                              const msg = `Hola ${res.patient_name}, tu INFORME MÉDICO N° ${res.report_id || '-'} del día ${format(new Date(res.appointment_date), "dd/MM")} ya está disponible en: https://laboratoriolega.vercel.app/resultado`;
+                              window.open(`https://wa.me/${res.patient_phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+                              await markAsNotified(res.id);
+                              loadAllResults();
+                            }}
+                            style={{ padding: '0.4rem', borderRadius: '8px', background: '#25D366', color: 'white', display: 'flex', alignItems: 'center' }}
+                            title="Avisar por WhatsApp"
+                          >
+                            <MessageSquare size={14} />
+                          </button>
+                        )}
                         <a 
                           href={`/api/medical-result/file/${res.id}`} 
                           target="_blank"
