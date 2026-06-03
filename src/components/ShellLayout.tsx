@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import SidebarNav from "./SidebarNav";
 import ThemeToggle from "./ThemeToggle";
+import NotificationsBell from "./NotificationsBell";
 import { logoutAction } from "@/actions/auth";
 
 interface ShellLayoutProps {
@@ -85,7 +86,11 @@ export default function ShellLayout({ children, session, userData }: ShellLayout
            <ThemeToggle />
         </div>
         
-        <div style={{ marginTop: isCollapsed ? '1rem' : '0' }}>
+        <div style={{ marginTop: isCollapsed ? '1rem' : '0.5rem', display: 'flex', justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
+           <NotificationsBell userRole={userRole} />
+        </div>
+
+        <div style={{ marginTop: isCollapsed ? '1rem' : '1rem' }}>
           <SidebarNav userRole={userRole} isCollapsed={isCollapsed} />
         </div>
 

@@ -314,12 +314,24 @@ export async function updateIngresoField(id: string, field: string, value: any) 
 
     await pool.query(`UPDATE appointments SET ${field} = $1 WHERE id = $2`, [value, id]);
 
+    const sessionData = await getSession() as any;
+    const authorName = sessionData?.full_name || sessionData?.username || "Usuario";
+
+    if (field === 'checkbox_checked') {
+      const actionText = value ? "tildó" : "destildó";
+      await pool.query(
+        `INSERT INTO system_notifications (type, message, target_roles, created_by) VALUES ($1, $2, $3, $4)`,
+        ['CHECKLIST_TOGGLE', `${authorName} ${actionText} el ingreso de ${details?.name}.`, 'admin,gerente,administracion', authorName]
+      );
+    }
+
     await logAction("UPDATE_INGRESO_FIELD", {
       patient_name: details?.name,
       field: field,
       old_value: details?.[field],
       new_value: value,
-      report_id: details?.report_id
+      report_id: details?.report_id,
+      by: authorName
     });
 
     revalidatePath("/ingresos");
@@ -348,14 +360,24 @@ export async function getNextReportId() {
 
 export async function updateInternalNote(id: string, note: string) {
   try {
+    const session = await getSession() as any;
+    const authorName = session?.full_name || session?.username || "Usuario Desconocido";
+    const authorRole = session?.role || "staff";
+
     const res = await pool.query('SELECT a.*, p.name FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = $1', [id]);
     const details = res.rows[0];
 
     if (!details) {
-      console.error("No appointment found for id:", id);
       return { error: "No se encontró el registro" };
     }
 
+    // Insert into internal notes history
+    await pool.query(
+      `INSERT INTO appointment_internal_notes (appointment_id, note, status, created_by) VALUES ($1, $2, 'unread', $3)`,
+      [id, note, authorName]
+    );
+
+    // Also update main table for backward compatibility/quick access
     await pool.query(
       `UPDATE appointments SET internal_note = $1, internal_note_status = 'unread' WHERE id = $2`,
       [note, id]
@@ -367,6 +389,18 @@ export async function updateInternalNote(id: string, note: string) {
       note: note
     });
 
+    // Create system notification for internal note
+    // If Admin/Gerente/Administracion adds it, biochemicals should see it too.
+    let targetRoles = 'admin,gerente,administracion';
+    if (['admin', 'gerente', 'administracion'].includes(authorRole)) {
+      targetRoles = 'admin,gerente,administracion,bioquimico';
+    }
+
+    await pool.query(
+      `INSERT INTO system_notifications (type, message, target_roles, created_by) VALUES ($1, $2, $3, $4)`,
+      ['INTERNAL_NOTE', `Nota Interna añadida para paciente ${details.name} por ${authorName}.`, targetRoles, authorName]
+    );
+
     revalidatePath("/ingresos");
     return { success: true };
   } catch (error: any) {
@@ -375,27 +409,108 @@ export async function updateInternalNote(id: string, note: string) {
   }
 }
 
-export async function markInternalNoteAsRead(id: string) {
+export async function getInternalNotesHistory(appointmentId: string) {
   try {
-    const res = await pool.query('SELECT a.*, p.name FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = $1', [id]);
+    const res = await pool.query(
+      'SELECT * FROM appointment_internal_notes WHERE appointment_id = $1 ORDER BY created_at DESC',
+      [appointmentId]
+    );
+    return { success: true, notes: res.rows };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function markInternalNoteAsRead(noteId: number, appointmentId: string) {
+  try {
+    const session = await getSession() as any;
+    const readerName = session?.full_name || session?.username || "Usuario";
+
+    const res = await pool.query('SELECT a.*, p.name FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = $1', [appointmentId]);
     const details = res.rows[0];
 
     if (!details) return { error: "No se encontró el registro" };
 
+    // Update specific note
     await pool.query(
-      `UPDATE appointments SET internal_note_status = 'read' WHERE id = $1`,
-      [id]
+      `UPDATE appointment_internal_notes SET status = 'read', read_by = $1, read_at = CURRENT_TIMESTAMP WHERE id = $2`,
+      [readerName, noteId]
     );
+
+    // Check if there are any unread notes left for this appointment
+    const unreadRes = await pool.query(
+      `SELECT COUNT(*) FROM appointment_internal_notes WHERE appointment_id = $1 AND status = 'unread'`,
+      [appointmentId]
+    );
+    
+    if (parseInt(unreadRes.rows[0].count) === 0) {
+      // All notes read, update main table status
+      await pool.query(`UPDATE appointments SET internal_note_status = 'read' WHERE id = $1`, [appointmentId]);
+    }
 
     await logAction("READ_INTERNAL_NOTE", {
       patient_name: details?.name,
-      report_id: details?.report_id
+      report_id: details?.report_id,
+      reader: readerName
     });
 
     revalidatePath("/ingresos");
     return { success: true };
   } catch (error: any) {
     console.error("Error in markInternalNoteAsRead:", error);
+    return { error: error.message };
+  }
+}
+
+export async function getGlobalNotifications() {
+  try {
+    const session = await getSession() as any;
+    if (!session) return { data: [] };
+    const role = session.role;
+    
+    const res = await pool.query(
+      `SELECT * FROM system_notifications 
+       WHERE target_roles ILIKE $1 
+       ORDER BY created_at DESC LIMIT 50`,
+      [`%${role}%`]
+    );
+    return { data: res.rows };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function markGlobalNotificationRead(notifId: number) {
+  try {
+    const session = await getSession() as any;
+    const readerName = session?.full_name || session?.username || "Usuario";
+
+    await pool.query(
+      `UPDATE system_notifications SET status = 'read', read_by = $1, read_at = CURRENT_TIMESTAMP WHERE id = $2`,
+      [readerName, notifId]
+    );
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function markAllGlobalNotificationsRead() {
+  try {
+    const session = await getSession() as any;
+    if (!session) return { error: 'No auth' };
+    const readerName = session?.full_name || session?.username || "Usuario";
+    const role = session.role;
+
+    await pool.query(
+      `UPDATE system_notifications SET status = 'read', read_by = $1, read_at = CURRENT_TIMESTAMP 
+       WHERE target_roles ILIKE $2 AND status = 'unread'`,
+      [readerName, `%${role}%`]
+    );
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
     return { error: error.message };
   }
 }
@@ -428,6 +543,29 @@ export async function ensureIngresosExtColumns() {
       );
       ALTER TABLE pago_obrasocial ADD COLUMN IF NOT EXISTS payment_method VARCHAR(100);
       ALTER TABLE coseguro_pagos ADD COLUMN IF NOT EXISTS payment_method VARCHAR(100);
+      
+      CREATE TABLE IF NOT EXISTS appointment_internal_notes (
+        id SERIAL PRIMARY KEY,
+        appointment_id UUID REFERENCES appointments(id) ON DELETE CASCADE,
+        note TEXT NOT NULL,
+        status VARCHAR(20) DEFAULT 'unread',
+        created_by VARCHAR(100),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        read_by VARCHAR(100),
+        read_at TIMESTAMP WITH TIME ZONE
+      );
+      
+      CREATE TABLE IF NOT EXISTS system_notifications (
+        id SERIAL PRIMARY KEY,
+        type VARCHAR(50) NOT NULL,
+        message TEXT NOT NULL,
+        status VARCHAR(20) DEFAULT 'unread',
+        target_roles TEXT,
+        created_by VARCHAR(100),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        read_by VARCHAR(100),
+        read_at TIMESTAMP WITH TIME ZONE
+      );
     `);
     return { success: true };
   } catch (error: any) {
