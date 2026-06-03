@@ -60,6 +60,9 @@ export default function ShellLayout({ children, session, userData }: ShellLayout
           {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
 
+        {/* Notifications Bell */}
+        <NotificationsBell userRole={userRole} />
+
         {/* Logo Section */}
         <div style={{ 
           display: 'flex', alignItems: 'center', justifyContent: 'center', 
@@ -84,10 +87,6 @@ export default function ShellLayout({ children, session, userData }: ShellLayout
 
         <div style={{ display: isCollapsed ? 'none' : 'block' }}>
            <ThemeToggle />
-        </div>
-        
-        <div style={{ marginTop: isCollapsed ? '1rem' : '0.5rem', display: 'flex', justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
-           <NotificationsBell userRole={userRole} />
         </div>
 
         <div style={{ marginTop: isCollapsed ? '1rem' : '1rem' }}>

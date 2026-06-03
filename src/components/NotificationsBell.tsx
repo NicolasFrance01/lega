@@ -41,25 +41,26 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
   };
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'absolute', top: '3rem', right: '0.75rem', zIndex: 100 }}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
         style={{
-          background: unreadCount > 0 ? 'rgba(245, 158, 11, 0.1)' : 'var(--glass-bg)',
+          background: unreadCount > 0 ? 'rgba(245, 158, 11, 0.15)' : 'var(--glass-bg)',
           border: '1px solid var(--glass-border)',
-          borderRadius: '50%', width: '40px', height: '40px',
+          borderRadius: '50%', width: '28px', height: '28px',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', color: unreadCount > 0 ? '#F59E0B' : 'var(--text-muted)',
-          position: 'relative', transition: 'all 0.3s ease'
+          cursor: 'pointer', color: unreadCount > 0 ? '#F59E0B' : 'var(--primary)',
+          position: 'relative', transition: 'all 0.3s ease',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}
         title="Notificaciones"
       >
-        <Bell size={20} fill={unreadCount > 0 ? 'currentColor' : 'none'} />
+        <Bell size={14} fill={unreadCount > 0 ? 'currentColor' : 'none'} />
         {unreadCount > 0 && (
           <span style={{
             position: 'absolute', top: '-4px', right: '-4px',
-            background: '#EF4444', color: 'white', fontSize: '0.65rem', fontWeight: 800,
-            width: '18px', height: '18px', borderRadius: '50%',
+            background: '#EF4444', color: 'white', fontSize: '0.55rem', fontWeight: 800,
+            width: '14px', height: '14px', borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             border: '2px solid var(--bg-main)'
           }}>
@@ -70,14 +71,16 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
 
       {isOpen && (
         <div style={{
-          position: 'absolute', top: '50px', left: 0,
+          position: 'absolute', top: '35px', left: 'auto', right: '0',
           width: '320px', maxHeight: '400px', overflowY: 'auto',
-          background: 'var(--bg-main)', border: '1px solid var(--glass-border)',
-          borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+          backgroundColor: 'var(--bg-main)', 
+          backdropFilter: 'blur(20px)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
           zIndex: 1000, display: 'flex', flexDirection: 'column',
           animation: 'fadeIn 0.2s ease'
         }}>
-          <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg)' }}>
+          <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--glass-bg)' }}>
             <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)' }}>Notificaciones</h4>
             {unreadCount > 0 && (
               <button 
