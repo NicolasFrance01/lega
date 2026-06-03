@@ -12,7 +12,7 @@ export async function searchPatients(query: string) {
       SELECT DISTINCT p.id, p.name, p.dni, p.phone, p.email, p.birth_date, p.health_insurance 
       FROM patients p
       LEFT JOIN appointments a ON p.id = a.patient_id
-      WHERE p.name ILIKE $1 
+      WHERE translate(p.name, 'ÁÉÍÓÚáéíóúÄËÏÖÜäëïöü', 'AEIOUaeiouAEIOUaeiou') ILIKE translate($1, 'ÁÉÍÓÚáéíóúÄËÏÖÜäëïöü', 'AEIOUaeiouAEIOUaeiou') 
          OR p.dni ILIKE $1 
          OR a.report_id ILIKE $1
       LIMIT 10

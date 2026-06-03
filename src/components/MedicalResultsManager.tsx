@@ -346,11 +346,12 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
               </thead>
               <tbody>
                 {allResults.filter(res => {
-                  const s = historySearch.toLowerCase();
-                  return res.patient_name?.toLowerCase().includes(s) || 
+                  const normalize = (str: string) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
+                  const s = normalize(historySearch);
+                  return normalize(res.patient_name).includes(s) || 
                          res.patient_dni?.includes(s) || 
-                         res.report_id?.toLowerCase().includes(s) ||
-                         res.analysis_type?.toLowerCase().includes(s);
+                         normalize(res.report_id).includes(s) ||
+                         normalize(res.analysis_type).includes(s);
                 }).map((res: any) => (
                   <tr key={res.id} className="hoverable-row" style={{ borderBottom: '1px solid var(--glass-border)', fontSize: '0.85rem', color: 'var(--text-main)' }}>
                     <td style={{ padding: '1rem', fontWeight: 600 }}>{format(new Date(res.created_at), "dd/MM/yyyy HH:mm")} hs</td>
