@@ -2,21 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
-
-const BASE_OPTIONS = [
-  'Particular', 'A.A.T.R.A. - OSTYR - (SCIS S.A. )', 'A.M.U.R.', 'A.P.M.', 'ALCAT',
-  'APROSS', 'AVALIAN', 'CAJA DE ABOGADOS', 'CAJA NOTARIAL', 'CEA - SAN PEDRO',
-  'CIENCIAS ECONOMICAS', 'CIBIC', 'COBERTURA DE SALUD S.A. (BOREAL)', 'D.A.S.P.U.',
-  'DA.SU.Te.N', 'Derivacion', 'FEDERADA SALUD', 'Galeno', 'GRUPO PREMEDIC', 'IOSFA',
-  'JERARQUICOS SALUD', 'Jujuy', 'LUIS PASTEUR', 'Medife', 'Metabolomica',
-  'O.P.D.E.A.', 'O.S.P.E.R.Y.H.R.A.', 'O.S.P.I.A.', 'O.S.P.I.G.P.C.',
-  'OBRA SOCIAL PERSONAL DE FARMACIA (O.S.P.F.)', 'OSADEF', 'OSFFENTOS', 'OSMISS',
-  'OSPACA', 'OSPCRA', 'OSPECOR', 'OSPEP', 'OSPICAL ENSALUD', 'OSPIHMP', 'OSPIM',
-  'OSPJTAP', 'OSPL', 'OSSACRA AMA SALUD', 'OSTEL', 'Osde', 'PAMI', 'PODER JUDICIAL',
-  'PREVENCION SALUD', 'Rio 1°', 'S.A.D.A.I.C.', 'S.A.P.', 'SANCOR SALUD',
-  'SUPERINTEND.DE BIENESTAR POLICIA FEDERAL ARG.', 'Swiss medical',
-  'UNION PERSONAL', 'VETERANOS DE GUERRA',
-];
+import { getObrasSociales } from "@/actions/listados";
 
 interface Props {
   name?: string;
@@ -42,8 +28,17 @@ export default function HealthInsuranceInput({
   const [inputValue, setInputValue] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState(-1);
+  const [options, setOptions] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    getObrasSociales().then(res => {
+      if (res.data) {
+        setOptions(res.data.filter((o: any) => o.activo).map((o: any) => o.nombre));
+      }
+    });
+  }, []);
 
   useEffect(() => {
     setSelected(parseValue(defaultValue));
@@ -65,7 +60,7 @@ export default function HealthInsuranceInput({
     }
   }, [highlightIdx]);
 
-  const filteredOptions = BASE_OPTIONS.filter(opt =>
+  const filteredOptions = options.filter(opt =>
     !selected.includes(opt) &&
     (inputValue.trim() === '' || opt.toLowerCase().includes(inputValue.toLowerCase()))
   );

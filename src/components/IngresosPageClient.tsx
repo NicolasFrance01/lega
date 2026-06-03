@@ -18,6 +18,7 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"table" | "reports">("table");
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'MMMM yyyy', { locale: es }));
+  const [bioqFilter, setBioqFilter] = useState<string>('');
 
   const isBioq = userRole === 'bioquimico';
 
@@ -59,6 +60,7 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
   const filteredIngresos = ingresos.filter(ing => {
     const monthYear = format(new Date(ing.appointment_date), 'MMMM yyyy', { locale: es });
     if (monthYear !== selectedMonth) return false;
+    if (bioqFilter && ing.biochemical_notice !== bioqFilter) return false;
     if (!searchTerm) return true;
     const s = searchTerm.toLowerCase();
     return (
@@ -165,16 +167,36 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
                 <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Encontrados</span>
               </div>
             </div>
-            <button
-              onClick={fetchData}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem',
-                borderRadius: '12px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)',
-                fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-muted)', cursor: 'pointer'
-              }}
-            >
-              <Activity size={18} /> Actualizar
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <button
+                onClick={() => setBioqFilter(bioqFilter === 'LISTO P/ ENVIAR' ? '' : 'LISTO P/ ENVIAR')}
+                style={{
+                  padding: '0.65rem 1rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
+                  border: `1px solid ${bioqFilter === 'LISTO P/ ENVIAR' ? '#166534' : 'var(--glass-border)'}`,
+                  background: bioqFilter === 'LISTO P/ ENVIAR' ? '#dcfce7' : 'var(--glass-bg)',
+                  color: bioqFilter === 'LISTO P/ ENVIAR' ? '#166534' : 'var(--text-muted)'
+                }}
+              >LISTO P/ ENVIAR</button>
+              <button
+                onClick={() => setBioqFilter(bioqFilter === 'RTO PARCIALES' ? '' : 'RTO PARCIALES')}
+                style={{
+                  padding: '0.65rem 1rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
+                  border: `1px solid ${bioqFilter === 'RTO PARCIALES' ? '#9a3412' : 'var(--glass-border)'}`,
+                  background: bioqFilter === 'RTO PARCIALES' ? '#ffedd5' : 'var(--glass-bg)',
+                  color: bioqFilter === 'RTO PARCIALES' ? '#9a3412' : 'var(--text-muted)'
+                }}
+              >RTO PARCIALES</button>
+              <button
+                onClick={fetchData}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem',
+                  borderRadius: '10px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)',
+                  fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-muted)', cursor: 'pointer'
+                }}
+              >
+                <Activity size={18} /> Actualizar
+              </button>
+            </div>
           </div>
 
           {(loading && ingresos.length === 0) ? (

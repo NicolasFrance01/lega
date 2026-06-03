@@ -6,8 +6,10 @@ import CreateUserModal from "@/components/CreateUserModal";
 import UserManagementClient from "@/components/UserManagementClient";
 import AuditLogHistory from "@/components/AuditLogHistory";
 import ObrasSocialesAdmin from "@/components/ObrasSocialesAdmin";
+import ProfesionalesAdmin from "@/components/ProfesionalesAdmin";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { getProfesionales } from "@/actions/listados";
 
 export const revalidate = 0;
 
@@ -18,6 +20,7 @@ export default async function AdminLegaPage() {
   const { data: users, error: userError } = await getUsers();
   const { data: auditLogs, error: auditError } = await getAuditLogs();
   const { data: obrasSociales } = await getObrasSociales();
+  const { data: profesionales } = await getProfesionales();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -47,15 +50,27 @@ export default async function AdminLegaPage() {
         </section>
       </div>
 
-      <section className="glass-panel" style={{ padding: '2rem' }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '1.25rem' }}>
-          <Building2 color="var(--primary)" /> Obras Sociales
-        </h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-          Listado centralizado de todas las obras sociales del sistema. Los cambios se reflejan en todos los módulos.
-        </p>
-        <ObrasSocialesAdmin initialData={obrasSociales || []} />
-      </section>
+      <div className="grid-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
+        <section className="glass-panel" style={{ padding: '2rem' }}>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '1.25rem' }}>
+            <Building2 color="var(--primary)" /> Obras Sociales
+          </h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+            Listado centralizado de todas las obras sociales del sistema. Los cambios se reflejan en todos los módulos.
+          </p>
+          <ObrasSocialesAdmin initialData={obrasSociales || []} />
+        </section>
+
+        <section className="glass-panel" style={{ padding: '2rem' }}>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '1.25rem' }}>
+            <Building2 color="var(--primary)" /> Profesionales
+          </h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+            Listado centralizado de médicos profesionales. Los cambios se reflejan en ingresos y turnos.
+          </p>
+          <ProfesionalesAdmin initialData={profesionales || []} />
+        </section>
+      </div>
     </div>
   );
 }

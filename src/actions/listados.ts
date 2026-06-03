@@ -897,9 +897,18 @@ export async function ensureObrasSocialesTable() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
       INSERT INTO obras_sociales_catalog (nombre) VALUES
-        ('OSDE'), ('SWISS MEDICAL'), ('GALENO'), ('MEDIFE'),
-        ('CIBIC'), ('METABOLOMICA'), ('FEDERACION'), ('ASOCIACION'),
-        ('APROSS'), ('PARTICULAR')
+        ('PARTICULAR'), ('A.A.T.R.A. - OSTYR - (SCIS S.A. )'), ('A.M.U.R.'), ('A.P.M.'), ('ALCAT'),
+        ('APROSS'), ('AVALIAN'), ('CAJA DE ABOGADOS'), ('CAJA NOTARIAL'), ('CEA - SAN PEDRO'),
+        ('CIENCIAS ECONOMICAS'), ('CIBIC'), ('COBERTURA DE SALUD S.A. (BOREAL)'), ('D.A.S.P.U.'),
+        ('DA.SU.Te.N'), ('DERIVACION'), ('FEDERADA SALUD'), ('GALENO'), ('GRUPO PREMEDIC'), ('IOSFA'),
+        ('JERARQUICOS SALUD'), ('JUJUY'), ('LUIS PASTEUR'), ('MEDIFE'), ('METABOLOMICA'),
+        ('O.P.D.E.A.'), ('O.S.P.E.R.Y.H.R.A.'), ('O.S.P.I.A.'), ('O.S.P.I.G.P.C.'),
+        ('OBRA SOCIAL PERSONAL DE FARMACIA (O.S.P.F.)'), ('OSADEF'), ('OSFFENTOS'), ('OSMISS'),
+        ('OSPACA'), ('OSPCRA'), ('OSPECOR'), ('OSPEP'), ('OSPICAL ENSALUD'), ('OSPIHMP'), ('OSPIM'),
+        ('OSPJTAP'), ('OSPL'), ('OSSACRA AMA SALUD'), ('OSTEL'), ('OSDE'), ('PAMI'), ('PODER JUDICIAL'),
+        ('PREVENCION SALUD'), ('RIO 1°'), ('S.A.D.A.I.C.'), ('S.A.P.'), ('SANCOR SALUD'),
+        ('SUPERINTEND.DE BIENESTAR POLICIA FEDERAL ARG.'), ('SWISS MEDICAL'),
+        ('UNION PERSONAL'), ('VETERANOS DE GUERRA')
       ON CONFLICT (nombre) DO NOTHING;
     `);
     return { success: true };
@@ -960,6 +969,83 @@ export async function deleteObraSocial(id: number) {
     if (!session || session.role !== 'admin') throw new Error("Sin permiso");
 
     await pool.query("DELETE FROM obras_sociales_catalog WHERE id = $1", [id]);
+    revalidatePath("/admin-lega");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+// --- PROFESIONALES ADMIN ---
+
+export async function ensureProfesionalesTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS profesionales_catalog (
+        id SERIAL PRIMARY KEY,
+        nombre VARCHAR(255) NOT NULL UNIQUE,
+        activo BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function getProfesionales() {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    await ensureProfesionalesTable();
+    const res = await pool.query("SELECT * FROM profesionales_catalog ORDER BY nombre ASC");
+    return { data: res.rows, error: null };
+  } catch (error: any) {
+    return { data: null, error: error.message };
+  }
+}
+
+export async function createProfesional(nombre: string) {
+  try {
+    const session = await getSession() as any;
+    if (!session || session.role !== 'admin') throw new Error("Sin permiso");
+
+    const nombreUpper = nombre.trim().toUpperCase();
+    await pool.query(
+      "INSERT INTO profesionales_catalog (nombre) VALUES ($1) ON CONFLICT (nombre) DO UPDATE SET activo = TRUE",
+      [nombreUpper]
+    );
+    revalidatePath("/admin-lega");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function updateProfesional(id: number, nombre: string, activo: boolean) {
+  try {
+    const session = await getSession() as any;
+    if (!session || session.role !== 'admin') throw new Error("Sin permiso");
+
+    await pool.query(
+      "UPDATE profesionales_catalog SET nombre = $1, activo = $2 WHERE id = $3",
+      [nombre.trim().toUpperCase(), activo, id]
+    );
+    revalidatePath("/admin-lega");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function deleteProfesional(id: number) {
+  try {
+    const session = await getSession() as any;
+    if (!session || session.role !== 'admin') throw new Error("Sin permiso");
+
+    await pool.query("DELETE FROM profesionales_catalog WHERE id = $1", [id]);
     revalidatePath("/admin-lega");
     return { success: true };
   } catch (error: any) {

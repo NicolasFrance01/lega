@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Search, ChevronRight } from "lucide-react";
+import { Search, ChevronRight, User, X, CloudUpload, FileText } from "lucide-react";
 import HealthInsuranceInput from "./HealthInsuranceInput";
+import ProfesionalInput from "./ProfesionalInput";
 import { searchPatients } from "@/actions/medical_results";
 import { getTodayAppointments } from "@/actions/appointments";
 import { createIngreso, getNextReportId } from "@/actions/ingresos";
@@ -378,7 +379,7 @@ function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setS
 
         <div style={{ gridColumn: 'span 2' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Profesional</label>
-          <input name="professional_name" defaultValue={src?.professional_name} style={inputStyle} placeholder="Nombre del médico" />
+          <ProfesionalInput name="professional_name" defaultValue={src?.professional_name} style={inputStyle} placeholder="Nombre del médico" />
         </div>
 
         {/* Payment section */}

@@ -62,6 +62,7 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
   // Statistics Processing
   const stats = useMemo(() => {
     const analysisMap: Record<string, number> = {};
+    const airesMap: Record<string, number> = {};
     const insuranceMap: Record<string, number> = {};
     const professionalMap: Record<string, number> = {};
     const paymentMap: Record<string, number> = { 'Efectivo': 0, 'Transferencia': 0, 'Tarjeta': 0, 'Particular': 0, 'Obra Social': 0 };
@@ -78,10 +79,24 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
       itemAnalyses.forEach((ana: any) => {
         let type = (ana.analysis_name || ana.name || 'Otros').trim().toUpperCase();
         // Remap generic 'TEST DE AIRE' to specific sub-type when available
-        if (AIR_TEST_NAMES.has(type) && item.aire_test_type) {
-          type = item.aire_test_type.trim().toUpperCase();
+        let isAire = false;
+        let aireType = type;
+        
+        if (AIR_TEST_NAMES.has(type)) {
+          if (item.aire_test_type) {
+            type = item.aire_test_type.trim().toUpperCase();
+            aireType = type;
+          }
+          isAire = true;
+        } else if (type === 'SIBO' || type === 'SIBO C/LACTULON' || type === 'SIBO C/ LACTULON' || type === 'LACTOSA' || type === 'FRUCTUOSA' || type === 'PYLORI') {
+          isAire = true;
         }
+
         analysisMap[type] = (analysisMap[type] || 0) + 1;
+        
+        if (isAire) {
+          airesMap[aireType] = (airesMap[aireType] || 0) + 1;
+        }
       });
 
       // Insurance
@@ -123,6 +138,7 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
 
     return {
       analysisData: toChartData(analysisMap).slice(0, 7),
+      airesData: toChartData(airesMap),
       insuranceData: toChartData(insuranceMap).slice(0, 7),
       professionalData: toChartData(professionalMap).slice(0, 7),
       paymentData: Object.entries(paymentMap).map(([name, value]) => ({ name, value })).filter(d => d.value > 0),
@@ -383,6 +399,31 @@ export default function IngresosReports({ data, onBack }: IngresosReportsProps) 
                   ))}
                 </Pie>
                 <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Test de aires */}
+          <div className="glass-panel" style={{ padding: '1.5rem', height: '400px' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '1.5rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Activity size={18} /> Test de aires
+            </h3>
+            <ResponsiveContainer width="100%" height="80%">
+              <PieChart>
+                <Pie
+                  data={stats.airesData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  dataKey="value"
+                  label={({ name, value }) => `${name}: ${value}`}
+                >
+                  {stats.airesData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[(index + 3) % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
               </PieChart>
             </ResponsiveContainer>
           </div>
