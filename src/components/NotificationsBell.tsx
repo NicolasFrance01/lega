@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { getGlobalNotifications, markGlobalNotificationRead, markAllGlobalNotificationsRead } from "@/actions/ingresos";
 import { format } from "date-fns";
+import Portal from "./Portal";
 
 export default function NotificationsBell({ userRole }: { userRole: string }) {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
 
   // Solo roles permitidos
   if (!['admin', 'gerente', 'administracion', 'bioquimico'].includes(userRole)) {
@@ -40,10 +43,19 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
     await fetchNotifications();
   };
 
+  const toggleOpen = () => {
+    if (!isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPopupPos({ top: rect.bottom + 10, left: rect.left });
+    }
+    setIsOpen(!isOpen);
+  };
+
   return (
-    <div style={{ position: 'absolute', top: '3rem', right: '0.75rem', zIndex: 100 }}>
+    <div style={{ position: 'absolute', top: '3.25rem', right: '0.75rem', zIndex: 100 }}>
       <button 
-        onClick={() => setIsOpen(!isOpen)}
+        ref={buttonRef}
+        onClick={toggleOpen}
         style={{
           background: unreadCount > 0 ? 'rgba(245, 158, 11, 0.15)' : 'var(--glass-bg)',
           border: '1px solid var(--glass-border)',
@@ -70,17 +82,19 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
       </button>
 
       {isOpen && (
-        <div style={{
-          position: 'absolute', top: '35px', left: 'auto', right: '0',
-          width: '320px', maxHeight: '400px', overflowY: 'auto',
-          backgroundColor: 'var(--bg-main)', 
-          backdropFilter: 'blur(20px)',
-          border: '1px solid var(--glass-border)',
-          borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
-          zIndex: 1000, display: 'flex', flexDirection: 'column',
-          animation: 'fadeIn 0.2s ease'
-        }}>
-          <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--glass-bg)' }}>
+        <Portal>
+          <div style={{
+            position: 'fixed', 
+            top: `${popupPos.top}px`, 
+            left: `${popupPos.left}px`,
+            width: '320px', maxHeight: '400px', overflowY: 'auto',
+            backgroundColor: 'var(--bg-main)', 
+            border: '1px solid var(--glass-border)',
+            borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+            zIndex: 99999, display: 'flex', flexDirection: 'column',
+            animation: 'fadeIn 0.2s ease'
+          }}>
+            <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--glass-bg)' }}>
             <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)' }}>Notificaciones</h4>
             {unreadCount > 0 && (
               <button 
@@ -127,6 +141,7 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
             )}
           </div>
         </div>
+        </Portal>
       )}
     </div>
   );
