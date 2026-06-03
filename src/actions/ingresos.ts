@@ -467,12 +467,16 @@ export async function getGlobalNotifications() {
     const session = await getSession() as any;
     if (!session) return { data: [] };
     const role = session.role;
+    const readerName = session?.full_name || session?.username || "Usuario";
     
     const res = await pool.query(
-      `SELECT * FROM system_notifications 
-       WHERE target_roles ILIKE $1 
-       ORDER BY created_at DESC LIMIT 50`,
-      [`%${role}%`]
+      `SELECT n.*, 
+              (CASE WHEN r.username IS NOT NULL THEN 'read' ELSE 'unread' END) as status
+       FROM system_notifications n
+       LEFT JOIN system_notification_reads r ON n.id = r.notification_id AND r.username = $2
+       WHERE n.target_roles ILIKE $1 
+       ORDER BY n.created_at DESC LIMIT 50`,
+      [`%${role}%`, readerName]
     );
     return { data: res.rows };
   } catch (error: any) {
@@ -486,8 +490,9 @@ export async function markGlobalNotificationRead(notifId: number) {
     const readerName = session?.full_name || session?.username || "Usuario";
 
     await pool.query(
-      `UPDATE system_notifications SET status = 'read', read_by = $1, read_at = CURRENT_TIMESTAMP WHERE id = $2`,
-      [readerName, notifId]
+      `INSERT INTO system_notification_reads (notification_id, username) 
+       VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [notifId, readerName]
     );
     revalidatePath("/");
     return { success: true };
@@ -504,8 +509,10 @@ export async function markAllGlobalNotificationsRead() {
     const role = session.role;
 
     await pool.query(
-      `UPDATE system_notifications SET status = 'read', read_by = $1, read_at = CURRENT_TIMESTAMP 
-       WHERE target_roles ILIKE $2 AND status = 'unread'`,
+      `INSERT INTO system_notification_reads (notification_id, username)
+       SELECT n.id, $1 FROM system_notifications n
+       WHERE n.target_roles ILIKE $2
+       ON CONFLICT DO NOTHING`,
       [readerName, `%${role}%`]
     );
     revalidatePath("/");
@@ -565,6 +572,13 @@ export async function ensureIngresosExtColumns() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         read_by VARCHAR(100),
         read_at TIMESTAMP WITH TIME ZONE
+      );
+      
+      CREATE TABLE IF NOT EXISTS system_notification_reads (
+        notification_id INTEGER REFERENCES system_notifications(id) ON DELETE CASCADE,
+        username VARCHAR(100) NOT NULL,
+        read_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (notification_id, username)
       );
     `);
     return { success: true };
