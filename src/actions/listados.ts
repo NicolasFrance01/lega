@@ -1053,3 +1053,85 @@ export async function deleteProfesional(id: number) {
   }
 }
 
+// --- TIPOS DE ANALISIS ADMIN ---
+
+export async function ensureTiposAnalisisTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS tipos_analisis_catalog (
+        id SERIAL PRIMARY KEY,
+        nombre VARCHAR(255) NOT NULL UNIQUE,
+        activo BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT INTO tipos_analisis_catalog (nombre) VALUES
+        ('TEST DE AIRE'), ('SIBO'), ('LACTOSA'), ('FRUCTUOSA'), ('PYLORI'), 
+        ('EXTRACCION'), ('MATERIA FECAL'), ('ORINA'), ('PANEL 105'), ('PANEL 63'), 
+        ('ALCAT'), ('CIBIC')
+      ON CONFLICT (nombre) DO NOTHING;
+    `);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function getTiposAnalisis() {
+  try {
+    const session = await getSession() as any;
+    if (!session) throw new Error("No autenticado");
+
+    await ensureTiposAnalisisTable();
+    const res = await pool.query("SELECT * FROM tipos_analisis_catalog ORDER BY nombre ASC");
+    return { data: res.rows, error: null };
+  } catch (error: any) {
+    return { data: null, error: error.message };
+  }
+}
+
+export async function createTipoAnalisis(nombre: string) {
+  try {
+    const session = await getSession() as any;
+    if (!session || session.role !== 'admin') throw new Error("Sin permiso");
+
+    const nombreUpper = nombre.trim().toUpperCase();
+    await pool.query(
+      "INSERT INTO tipos_analisis_catalog (nombre) VALUES ($1) ON CONFLICT (nombre) DO UPDATE SET activo = TRUE",
+      [nombreUpper]
+    );
+    revalidatePath("/admin-lega");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function updateTipoAnalisis(id: number, nombre: string, activo: boolean) {
+  try {
+    const session = await getSession() as any;
+    if (!session || session.role !== 'admin') throw new Error("Sin permiso");
+
+    await pool.query(
+      "UPDATE tipos_analisis_catalog SET nombre = $1, activo = $2 WHERE id = $3",
+      [nombre.trim().toUpperCase(), activo, id]
+    );
+    revalidatePath("/admin-lega");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function deleteTipoAnalisis(id: number) {
+  try {
+    const session = await getSession() as any;
+    if (!session || session.role !== 'admin') throw new Error("Sin permiso");
+
+    await pool.query("DELETE FROM tipos_analisis_catalog WHERE id = $1", [id]);
+    revalidatePath("/admin-lega");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { deleteDocument, updateAppointment, deleteAppointment } from "@/actions/appointments";
 import { X, Calendar, Edit, Loader2, Info, CloudUpload, Trash2, Plus } from "lucide-react";
 import HealthInsuranceInput from "./HealthInsuranceInput";
+import TipoAnalisisInput from "./TipoAnalisisInput";
 import { format } from "date-fns";
 import { compressImage } from "@/lib/compression";
 import Portal from "./Portal";
@@ -232,10 +233,9 @@ export default function EditAppointmentModal({ isOpen, onClose, ap, isAires }: {
                     {visibleAnalyses.map((ana, idx) => (
                       <div key={idx} style={{ display: 'flex', gap: '0.5rem', animation: 'fadeIn 0.2s ease' }}>
                         <div style={{ flex: 1 }}>
-                          <input 
-                            required 
+                          <TipoAnalisisInput
                             name="analysis_name"
-                            value={ana.analysis_name}
+                            defaultValue={ana.analysis_name}
                             onChange={(e) => {
                               const newAnalyses = [...analyses];
                               const realIndex = analyses.indexOf(ana);
@@ -243,10 +243,9 @@ export default function EditAppointmentModal({ isOpen, onClose, ap, isAires }: {
                               setAnalyses(newAnalyses);
                             }}
                             placeholder="Ej: SIBO, Rutina..."
-                            type="text" 
-                            list="analysis-list-edit" 
-                            className="input-field" 
+                            className="input-field"
                             style={inputStyle}
+                            required
                           />
                         </div>
                         {airTestNames.includes(ana.analysis_name) && (
@@ -290,11 +289,6 @@ export default function EditAppointmentModal({ isOpen, onClose, ap, isAires }: {
                 );
               })()}
             </div>
-            <datalist id="analysis-list-edit">
-              {['Test de aire', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'EXTRACCION', 'MATERIA FECAL', 'ORINA', 'PANEL 105', 'PANEL 63', 'ALCAT', 'CIBIC'].map(opt => (
-                <option key={opt} value={opt} />
-              ))}
-            </datalist>
             <input type="hidden" name="analyses_count" value={analyses.length} />
           </div>
 

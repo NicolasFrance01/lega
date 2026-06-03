@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Search, ChevronRight, User, X, CloudUpload, FileText } from "lucide-react";
 import HealthInsuranceInput from "./HealthInsuranceInput";
 import ProfesionalInput from "./ProfesionalInput";
+import TipoAnalisisInput from "./TipoAnalisisInput";
 import { searchPatients } from "@/actions/medical_results";
 import { getTodayAppointments } from "@/actions/appointments";
 import { createIngreso, getNextReportId } from "@/actions/ingresos";
@@ -331,7 +332,14 @@ function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setS
             {analyses.map((a: any, index: number) => (
               <div key={index} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
-                  <input name="analysis_name" required list="analysis-list" value={a.name} onChange={(e) => updateAnalysis(index, 'name', e.target.value)} placeholder="Seleccioná o escribí estudio..." style={{ ...inputStyle, background: 'var(--glass-bg)' }} />
+                  <TipoAnalisisInput
+                    name="analysis_name"
+                    required
+                    defaultValue={a.name}
+                    onChange={(e) => updateAnalysis(index, 'name', e.target.value)}
+                    placeholder="Seleccioná o escribí estudio..."
+                    style={{ ...inputStyle, background: 'var(--glass-bg)' }}
+                  />
                   {a.name === 'Test de aire' && (
                     <select name="aire_test_subtype" required value={a.subtype} onChange={(e) => updateAnalysis(index, 'subtype', e.target.value)} style={{ ...inputStyle, marginTop: '0.4rem', background: 'var(--glass-bg)', color: 'var(--text-main)', fontSize: '0.8rem', padding: '0.4rem' }}>
                       <option value="">-- Seleccionar Prueba --</option>
@@ -349,11 +357,7 @@ function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setS
               </div>
             ))}
           </div>
-          <datalist id="analysis-list">
-            {['Test de aire', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'PYLORI', 'EXTRACCION', 'MATERIA FECAL', 'ORINA', 'PANEL 105', 'PANEL 63', 'ALCAT', 'CIBIC'].map(opt => (
-              <option key={opt} value={opt} />
-            ))}
-          </datalist>
+          <input type="hidden" name="analyses_count" value={analyses.length} />
         </div>
 
         <div style={{ gridColumn: 'span 2' }}>

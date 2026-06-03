@@ -7,6 +7,7 @@ import { searchPatients } from "@/actions/patients";
 import { format } from "date-fns";
 import { User, FileText, Calendar, CloudUpload, X, Loader2, Search } from "lucide-react";
 import HealthInsuranceInput from "./HealthInsuranceInput";
+import TipoAnalisisInput from "./TipoAnalisisInput";
 import { compressImage } from "@/lib/compression";
 import Portal from "./Portal";
 
@@ -322,22 +323,15 @@ export default function AppointmentModal({
               </div>
               <div>
                 <label style={labelStyle}>Tipo de Análisis</label>
-                <input
-                  required
+                <TipoAnalisisInput
                   name="analysis_type"
-                  type="text"
-                  list="analysis-list"
+                  defaultValue={isAire ? "Test de aire" : (initialData?.analysis_type || "")}
+                  onChange={(e) => setAnalysisType(e.target.value)}
                   className="modern-input"
                   style={inputStyle}
                   placeholder="Ej: SIBO, Rutina, etc."
-                  defaultValue={isAire ? "Test de aire" : initialData?.analysis_type}
-                  onChange={(e) => setAnalysisType(e.target.value)}
+                  required
                 />
-                <datalist id="analysis-list">
-                  {['Test de aire', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'PYLORI', 'EXTRACCION', 'MATERIA FECAL', 'ORINA', 'PANEL 105', 'PANEL 63', 'ALCAT', 'CIBIC'].map(opt => (
-                    <option key={opt} value={opt} />
-                  ))}
-                </datalist>
               </div>
             </div>
 

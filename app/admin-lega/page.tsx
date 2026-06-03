@@ -1,15 +1,15 @@
 import { getUsers } from "@/actions/users";
 import { getAuditLogs } from "@/actions/audit";
-import { getObrasSociales } from "@/actions/listados";
 import { ShieldCheck, History, Building2 } from "lucide-react";
 import CreateUserModal from "@/components/CreateUserModal";
 import UserManagementClient from "@/components/UserManagementClient";
 import AuditLogHistory from "@/components/AuditLogHistory";
 import ObrasSocialesAdmin from "@/components/ObrasSocialesAdmin";
 import ProfesionalesAdmin from "@/components/ProfesionalesAdmin";
+import TiposAnalisisAdmin from "@/components/TiposAnalisisAdmin";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getProfesionales } from "@/actions/listados";
+import { getProfesionales, getTiposAnalisis, getObrasSociales } from "@/actions/listados";
 
 export const revalidate = 0;
 
@@ -21,6 +21,7 @@ export default async function AdminLegaPage() {
   const { data: auditLogs, error: auditError } = await getAuditLogs();
   const { data: obrasSociales } = await getObrasSociales();
   const { data: profesionales } = await getProfesionales();
+  const { data: tiposAnalisis } = await getTiposAnalisis();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -69,6 +70,16 @@ export default async function AdminLegaPage() {
             Listado centralizado de médicos profesionales. Los cambios se reflejan en ingresos y turnos.
           </p>
           <ProfesionalesAdmin initialData={profesionales || []} />
+        </section>
+
+        <section className="glass-panel" style={{ padding: '2rem' }}>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '1.25rem' }}>
+            <Building2 color="var(--primary)" /> Tipos de Análisis
+          </h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+            Catálogo de tipos de análisis/estudios para agendar turnos e ingresos.
+          </p>
+          <TiposAnalisisAdmin initialData={tiposAnalisis || []} />
         </section>
       </div>
     </div>
