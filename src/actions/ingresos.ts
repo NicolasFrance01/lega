@@ -471,7 +471,8 @@ export async function getGlobalNotifications() {
     
     const res = await pool.query(
       `SELECT n.*, 
-              (CASE WHEN r.username IS NOT NULL THEN 'read' ELSE 'unread' END) as status
+              (CASE WHEN r.username IS NOT NULL THEN 'read' ELSE 'unread' END) as status,
+              (SELECT username FROM system_notification_reads WHERE notification_id = n.id ORDER BY read_at ASC LIMIT 1) as first_reader
        FROM system_notifications n
        LEFT JOIN system_notification_reads r ON n.id = r.notification_id AND r.username = $2
        WHERE n.target_roles ILIKE $1 

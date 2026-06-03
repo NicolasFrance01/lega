@@ -137,7 +137,7 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
                     <span>{format(new Date(notif.created_at), "dd/MM/yy HH:mm")}</span>
                     {notif.status === 'read' && (
                       <span style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
-                        <Check size={10} /> Leído por {notif.read_by}
+                        <Check size={10} /> Leído por {notif.first_reader || notif.read_by || 'Usuario'} primeramente
                       </span>
                     )}
                   </div>
