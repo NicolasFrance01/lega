@@ -74,7 +74,7 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
             background: '#EF4444', color: 'white', fontSize: '0.55rem', fontWeight: 800,
             width: '14px', height: '14px', borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: '2px solid var(--bg-main)'
+            border: '2px solid var(--table-sticky-bg)'
           }}>
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
@@ -83,14 +83,11 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
 
       {isOpen && (
         <Portal>
-          <div style={{
+          <div className="glass-panel" style={{
             position: 'fixed', 
             top: `${popupPos.top}px`, 
             left: `${popupPos.left}px`,
             width: '320px', maxHeight: '400px', overflowY: 'auto',
-            backgroundColor: 'var(--bg-main)', 
-            border: '1px solid var(--glass-border)',
-            borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
             zIndex: 99999, display: 'flex', flexDirection: 'column',
             animation: 'fadeIn 0.2s ease'
           }}>

@@ -68,7 +68,7 @@ export default function InternalNotesModal({
         </div>
 
         {/* History List */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-main)' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--table-sticky-bg)' }}>
           {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
               <Loader2 className="spin" size={24} color="var(--primary)" />
@@ -123,7 +123,7 @@ export default function InternalNotesModal({
               placeholder="Escribe una nueva nota..."
               style={{
                 flex: 1, minHeight: '60px', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--glass-border)',
-                background: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '0.9rem', outline: 'none',
+                background: 'var(--table-sticky-bg)', color: 'var(--text-main)', fontSize: '0.9rem', outline: 'none',
                 resize: 'none', lineHeight: 1.4
               }}
             />
