@@ -28,9 +28,17 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
 
   useEffect(() => {
     fetchNotifications();
-    // Poll every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    // Poll every 15 seconds
+    const interval = setInterval(fetchNotifications, 15000);
+    
+    // Listen for local triggers to update instantly
+    const handleRefresh = () => fetchNotifications();
+    window.addEventListener('refresh-notifications', handleRefresh);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('refresh-notifications', handleRefresh);
+    };
   }, [userRole]);
 
   const handleMarkRead = async (id: number) => {

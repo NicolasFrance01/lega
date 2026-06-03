@@ -39,6 +39,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
     const res = await updateIngresoField(id, 'checkbox_checked', newVal);
     if (res.success) {
       onRefresh();
+      window.dispatchEvent(new Event('refresh-notifications'));
     } else {
       // Revert if failed
       setOptimisticChecks(prev => ({ ...prev, [id]: current }));

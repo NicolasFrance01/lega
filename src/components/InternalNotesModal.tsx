@@ -40,6 +40,7 @@ export default function InternalNotesModal({
       setNewNote("");
       await loadNotes();
       onRefresh();
+      window.dispatchEvent(new Event('refresh-notifications'));
     }
     setSaving(false);
   }
@@ -49,6 +50,7 @@ export default function InternalNotesModal({
     if (res.success) {
       await loadNotes();
       onRefresh();
+      window.dispatchEvent(new Event('refresh-notifications'));
     }
   }
 
