@@ -52,35 +52,39 @@ export default async function AdminLegaPage() {
       </div>
 
       <div className="grid-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
-        <section className="glass-panel" style={{ padding: '2rem' }}>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '1.25rem' }}>
-            <Building2 color="var(--primary)" /> Obras Sociales
-          </h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-            Listado centralizado de todas las obras sociales del sistema. Los cambios se reflejan en todos los módulos.
-          </p>
-          <ObrasSocialesAdmin initialData={obrasSociales || []} />
-        </section>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <section className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '1.25rem' }}>
+              <Building2 color="var(--primary)" /> Obras Sociales
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+              Listado centralizado de todas las obras sociales del sistema. Los cambios se reflejan en todos los módulos.
+            </p>
+            <ObrasSocialesAdmin initialData={obrasSociales || []} />
+          </section>
+        </div>
 
-        <section className="glass-panel" style={{ padding: '2rem' }}>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '1.25rem' }}>
-            <Building2 color="var(--primary)" /> Profesionales
-          </h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-            Listado centralizado de médicos profesionales. Los cambios se reflejan en ingresos y turnos.
-          </p>
-          <ProfesionalesAdmin initialData={profesionales || []} />
-        </section>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <section className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '1.25rem' }}>
+              <Building2 color="var(--primary)" /> Profesionales
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+              Listado centralizado de médicos profesionales. Los cambios se reflejan en ingresos y turnos.
+            </p>
+            <ProfesionalesAdmin initialData={profesionales || []} />
+          </section>
 
-        <section className="glass-panel" style={{ padding: '2rem' }}>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '1.25rem' }}>
-            <Building2 color="var(--primary)" /> Tipos de Análisis
-          </h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-            Catálogo de tipos de análisis/estudios para agendar turnos e ingresos.
-          </p>
-          <TiposAnalisisAdmin initialData={tiposAnalisis || []} />
-        </section>
+          <section className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '1.25rem' }}>
+              <Building2 color="var(--primary)" /> Tipos de Análisis
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+              Catálogo de tipos de análisis/estudios para agendar turnos e ingresos.
+            </p>
+            <TiposAnalisisAdmin initialData={tiposAnalisis || []} />
+          </section>
+        </div>
       </div>
     </div>
   );
