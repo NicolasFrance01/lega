@@ -25,6 +25,8 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
   const [currentPage, setCurrentPage] = useState(1);
   const [isEditingPage, setIsEditingPage] = useState(false);
   const [pageInput, setPageInput] = useState("1");
+  const [editingGroup, setEditingGroup] = useState<any>(null); // For EditResultModal
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   
   useEffect(() => {
     loadAllResults();
@@ -62,6 +64,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
     setLoading(false);
     setModalStep(1);
     setIsModalOpen(true);
+    setSelectedFiles([]); // Reset files when opening
   }
 
   async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
@@ -78,6 +81,24 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
       loadAllResults(); // Real-time refresh
     } else {
       alert("Error: " + res.error);
+    }
+    setUploading(false);
+  }
+
+  async function handleAddFilesToGroup(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setUploading(true);
+    const formData = new FormData(e.currentTarget);
+    formData.append("appointment_id", editingGroup.appointment_id);
+    formData.append("patient_id", editingGroup.patient_id);
+    if (editingGroup.analysis_id) formData.append("analysis_id", editingGroup.analysis_id);
+    
+    const res = await uploadMedicalResult(formData);
+    if (res.success) {
+      loadAllResults(); // Real-time refresh
+      setEditingGroup(null); // Close modal
+    } else {
+      alert("Error al subir archivo: " + res.error);
     }
     setUploading(false);
   }
@@ -319,8 +340,26 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                           multiple 
                           accept="image/*,application/pdf" 
                           style={{ display: 'none' }} 
+                          onChange={(e) => {
+                            if (e.target.files) {
+                              setSelectedFiles(Array.from(e.target.files));
+                            }
+                          }}
                         />
                       </div>
+
+                      {selectedFiles.length > 0 && (
+                        <div style={{ marginBottom: '1rem', background: 'rgba(14, 165, 233, 0.05)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(14, 165, 233, 0.1)' }}>
+                          <h5 style={{ margin: '0 0 0.5rem 0', color: 'var(--primary)', fontWeight: 700 }}>Archivos Seleccionados ({selectedFiles.length}):</h5>
+                          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {selectedFiles.map((file, i) => (
+                              <li key={i} style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <CheckCircle size={14} color="var(--success)" /> {file.name}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
 
                       <textarea 
                         name="note_content" 
@@ -442,13 +481,21 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                       ) : '-'}
                     </td>
                     <td style={{ padding: '1rem' }}>
-                      <span style={{ 
-                        background: res.result_type === 'pdf' ? '#fee2e2' : (res.result_type === 'image' ? '#f0f9ff' : '#fef9c3'),
-                        color: res.result_type === 'pdf' ? '#ef4444' : (res.result_type === 'image' ? 'var(--primary)' : '#ca8a04'),
-                        padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase'
-                      }}>
-                        {res.result_type}
-                      </span>
+                      {res.files && res.files.length > 1 ? (
+                        <span style={{ 
+                          background: 'var(--primary)', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800
+                        }}>
+                          {res.files.length} ARCHIVOS
+                        </span>
+                      ) : (
+                        <span style={{ 
+                          background: res.result_type === 'pdf' ? '#fee2e2' : (res.result_type === 'image' ? '#f0f9ff' : '#fef9c3'),
+                          color: res.result_type === 'pdf' ? '#ef4444' : (res.result_type === 'image' ? 'var(--primary)' : '#ca8a04'),
+                          padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase'
+                        }}>
+                          {res.result_type}
+                        </span>
+                      )}
                     </td>
                     <td style={{ padding: '1rem' }}>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={res.notes}>
@@ -485,15 +532,28 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                           href={`/api/medical-result/file/${res.id}`} 
                           target="_blank"
                           style={{ padding: '0.4rem', borderRadius: '8px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--primary)', display: 'inline-flex', alignItems: 'center' }}
-                          title="Ver archivo"
+                          title={res.files && res.files.length > 1 ? "Ver primer archivo" : "Ver archivo"}
                         >
                           <Eye size={14} />
                         </a>
                         <button 
+                          onClick={() => setEditingGroup(res)}
+                          style={{ padding: '0.4rem', borderRadius: '8px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-main)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
+                          title="Editar / Gestionar Archivos"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                        </button>
+                        <button 
                           onClick={async () => {
-                            if (confirm(`¿Estás seguro de eliminar el resultado de ${res.patient_name}?`)) {
+                            if (confirm(`¿Estás seguro de eliminar TODO el resultado (y sus archivos) de ${res.patient_name}?`)) {
                               setLoading(true);
-                              await deleteMedicalResult(res.id);
+                              if (res.files && res.files.length > 0) {
+                                for (const f of res.files) {
+                                  await deleteMedicalResult(f.id);
+                                }
+                              } else {
+                                await deleteMedicalResult(res.id);
+                              }
                               loadAllResults();
                               setLoading(false);
                             }
@@ -511,6 +571,70 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
             </table>
           </div>
         </div>
+
+        {editingGroup && (
+          <Portal>
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+              <div className="glass-panel" style={{ width: '100%', maxWidth: '500px', padding: '2rem', borderRadius: '24px', position: 'relative' }}>
+                <button 
+                  onClick={() => setEditingGroup(null)} 
+                  style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                >
+                  <X size={24} />
+                </button>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary)' }}>
+                  <FilePlus2 /> Gestionar Archivos
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                  Archivos adjuntos para el informe de <strong>{editingGroup.patient_name}</strong>.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
+                  {editingGroup.files && editingGroup.files.map((file: any, index: number) => (
+                    <div key={file.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(14, 165, 233, 0.05)', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(14, 165, 233, 0.1)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+                        <span style={{ fontWeight: 800, color: 'var(--primary)' }}>#{index + 1}</span>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {file.filename || file.result_type}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <a href={`/api/medical-result/file/${file.id}`} target="_blank" style={{ padding: '0.4rem', borderRadius: '8px', background: 'var(--glass-bg)', color: 'var(--primary)', cursor: 'pointer', border: '1px solid var(--glass-border)' }}>
+                          <Eye size={14} />
+                        </a>
+                        <button 
+                          onClick={async () => {
+                            if (confirm('¿Eliminar este archivo?')) {
+                              setLoading(true);
+                              await deleteMedicalResult(file.id);
+                              // Refrescar modal temporalmente recargando los datos
+                              const newFiles = editingGroup.files.filter((f: any) => f.id !== file.id);
+                              setEditingGroup({ ...editingGroup, files: newFiles });
+                              loadAllResults();
+                              setLoading(false);
+                            }
+                          }}
+                          style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', cursor: 'pointer', border: 'none' }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <form onSubmit={handleAddFilesToGroup} style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>Agregar nuevos archivos</h4>
+                  <input type="hidden" name="type" value="pdf" />
+                  <input type="file" name="files" multiple required style={inputStyle} accept="image/*,application/pdf" />
+                  <button type="submit" disabled={uploading} style={{ width: '100%', padding: '0.8rem', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: uploading ? 'not-allowed' : 'pointer' }}>
+                    {uploading ? 'Subiendo...' : 'Subir Archivos Extra'}
+                  </button>
+                </form>
+              </div>
+            </div>
+          </Portal>
+        )}
       </div>
   );
 }

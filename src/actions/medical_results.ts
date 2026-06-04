@@ -125,7 +125,24 @@ export async function getPatientResults(dni: string) {
       ORDER BY mr.created_at DESC
     `, [dni]);
     
-    return { data: res.rows, error: null };
+    const grouped = new Map();
+    for (const row of res.rows) {
+      const key = `${row.appointment_id}-${row.analysis_id || 'none'}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, { ...row, files: [] });
+      }
+      grouped.get(key).files.push({
+        id: row.id,
+        filename: row.filename,
+        content: row.content,
+        result_type: row.result_type,
+        notes: row.notes,
+        created_at: row.created_at,
+        notified_at: row.notified_at
+      });
+    }
+    
+    return { data: Array.from(grouped.values()), error: null };
   } catch (error: any) {
     console.error("Error fetching patient results:", error);
     return { data: null, error: error.message };
@@ -180,7 +197,24 @@ export async function getAllMedicalResults() {
       ORDER BY mr.created_at DESC
       LIMIT 100
     `);
-    return { data: res.rows, error: null };
+    const grouped = new Map();
+    for (const row of res.rows) {
+      const key = `${row.appointment_id}-${row.analysis_id || 'none'}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, { ...row, files: [] });
+      }
+      grouped.get(key).files.push({
+        id: row.id,
+        filename: row.filename,
+        content: row.content,
+        result_type: row.result_type,
+        notes: row.notes,
+        created_at: row.created_at,
+        notified_at: row.notified_at
+      });
+    }
+
+    return { data: Array.from(grouped.values()), error: null };
   } catch (error: any) {
     console.error("Error fetching all results:", error);
     return { data: null, error: error.message };
@@ -197,11 +231,16 @@ export async function markAsNotified(id: string) {
     `, [id]);
     const details = res.rows[0];
 
-    await pool.query('UPDATE medical_results SET notified_at = NOW() WHERE id = $1', [id]);
+    // Mark all files from the same appointment/analysis as notified
+    await pool.query(`
+      UPDATE medical_results 
+      SET notified_at = NOW() 
+      WHERE appointment_id = $1 AND (analysis_id = $2 OR (analysis_id IS NULL AND $2 IS NULL))
+    `, [details.appointment_id, details.analysis_id]);
     
     await logAction("NOTIFIED_PATIENT", { 
       patient_name: details?.name, 
-      result_id: id 
+      appointment_id: details?.appointment_id 
     });
 
     return { success: true };

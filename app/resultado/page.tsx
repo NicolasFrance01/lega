@@ -171,22 +171,14 @@ export default function ResultadoPortal() {
                 <p style={{ color: '#64748b', maxWidth: '400px', margin: '0 auto', fontWeight: 500 }}>{portalSearch ? "No hay resultados que coincidan con tu búsqueda." : "Tus informes aparecerán aquí una vez que el laboratorio los procese."}</p>
               </div>
             ) : (
-              Object.values(filteredResults.reduce((acc: any, res: any) => {
-                const key = res.appointment_id || res.id;
-                if (!acc[key]) acc[key] = { 
-                    id: key, 
-                    date: res.appointment_date, 
-                    report_id: res.report_id, 
-                    items: [] 
-                };
-                acc[key].items.push(res);
-                return acc;
-              }, {})).map((group: any) => (
-                <div key={group.id} style={{ borderRadius: '24px', overflow: 'hidden', border: selectedResult?.appointment_id === group.id || selectedResult?.id === group.id ? '2px solid var(--primary)' : '1px solid #e2e8f0', background: 'white', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: selectedResult?.appointment_id === group.id ? '0 20px 25px -5px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)' }}>
+              filteredResults.map((group: any) => {
+                const isSelected = selectedResult?.id === group.id;
+                // group.files is the array of files
+                return (
+                <div key={group.id} style={{ borderRadius: '24px', overflow: 'hidden', border: isSelected ? '2px solid var(--primary)' : '1px solid #e2e8f0', background: 'white', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: isSelected ? '0 20px 25px -5px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)' }}>
                   <div 
                     onClick={() => {
-                        const firstItem = group.items[0];
-                        setSelectedResult(selectedResult?.id === firstItem.id ? null : firstItem);
+                        setSelectedResult(isSelected ? null : group);
                     }}
                     className="portal-card-header"
                     style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
@@ -197,7 +189,7 @@ export default function ResultadoPortal() {
                       </div>
                       <div>
                         <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#1e293b' }}>
-                            {group.items.length > 1 ? `Múltiples Resultados (${group.items.length})` : (group.items[0].analysis_type || "Informe Médico")}
+                            {group.files && group.files.length > 1 ? `Múltiples Archivos (${group.files.length})` : (group.analysis_type || "Informe Médico")}
                         </h4>
                         <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
                           {group.report_id && (
@@ -206,84 +198,73 @@ export default function ResultadoPortal() {
                             </span>
                           )}
                           <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 700 }}>
-                             Turno del {format(new Date(group.date), "d 'de' MMMM, yyyy", { locale: es })}
+                             Turno del {format(new Date(group.appointment_date), "d 'de' MMMM, yyyy", { locale: es })}
                           </div>
                         </div>
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <ChevronRight size={20} style={{ transform: (selectedResult?.appointment_id === group.id || selectedResult?.id === group.id) ? 'rotate(90deg)' : 'none', transition: 'all 0.3s', opacity: 0.3 }} />
+                      <ChevronRight size={20} style={{ transform: isSelected ? 'rotate(90deg)' : 'none', transition: 'all 0.3s', opacity: 0.3 }} />
                     </div>
                   </div>
 
-                  {(selectedResult?.appointment_id === group.id || selectedResult?.id === group.id) && (
+                  {isSelected && (
                     <div style={{ padding: '0 1.5rem 1.5rem', borderTop: '1px solid #f1f5f9', animation: 'fadeIn 0.3s ease' }}>
                       
-                      {group.items.length > 1 && (
+                      {group.files && group.files.length > 1 && (
                         <div style={{ padding: '1.25rem 0', display: 'flex', gap: '0.75rem', flexWrap: 'wrap', borderBottom: '1px solid #f1f5f9', marginBottom: '1.5rem' }}>
-                            {group.items.map((item: any) => (
-                                <button 
-                                    key={item.id}
-                                    onClick={() => setSelectedResult(item)}
+                            {group.files.map((file: any, index: number) => (
+                                <a 
+                                    key={file.id}
+                                    href={`/api/medical-result/file/${file.id}`}
+                                    target="_blank"
                                     style={{ 
                                         padding: '0.6rem 1.25rem', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 800,
-                                        background: selectedResult?.id === item.id ? 'var(--primary)' : 'rgba(14, 165, 233, 0.05)',
-                                        color: selectedResult?.id === item.id ? 'white' : 'var(--primary)',
-                                        border: 'none', cursor: 'pointer', transition: 'all 0.2s'
+                                        background: 'rgba(14, 165, 233, 0.05)',
+                                        color: 'var(--primary)',
+                                        border: '1px solid rgba(14, 165, 233, 0.2)', textDecoration: 'none', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem'
                                     }}
                                 >
-                                    {item.analysis_type}
-                                </button>
+                                    <Eye size={14} /> Ver Archivo {index + 1}
+                                </a>
                             ))}
                         </div>
                       )}
-
                       <div style={{ padding: '1.25rem 0', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: '#64748b', fontWeight: 700 }}>
-                          <CheckCircle size={18} color="var(--success)" /> {selectedResult?.analysis_type}
+                          <CheckCircle size={18} color="var(--success)" /> {group.analysis_type}
                         </div>
                         <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 600 }}>
-                            Cargado el {format(new Date(selectedResult?.created_at), "dd/MM/yyyy HH:mm")} hs
+                            {group.files && group.files.length > 0 && `Cargado el ${format(new Date(group.files[0].created_at), "dd/MM/yyyy HH:mm")} hs`}
                         </div>
                       </div>
 
-                      {selectedResult?.notes && (
-                        <div style={{ background: '#f0f9ff', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', border: '1px solid #e0f2fe' }}>
-                          <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Nota del Profesional:</p>
-                          <p style={{ margin: 0, fontSize: '0.95rem', color: '#1e293b', fontWeight: 600, lineHeight: 1.5 }}>{selectedResult?.notes}</p>
+                      {group.files && group.files[0]?.notes && (
+                        <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '16px', border: '1px solid #f1f5f9', marginBottom: '1.5rem' }}>
+                          <h5 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', fontWeight: 800, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Notas Adicionales</h5>
+                          <p style={{ margin: 0, color: '#475569', fontSize: '0.95rem', lineHeight: 1.6 }}>{group.files[0].notes}</p>
                         </div>
                       )}
 
-                      {/* INLINE VIEWER */}
-                      <div style={{ background: '#f8fafc', borderRadius: '16px', border: '1px solid #f1f5f9', marginBottom: '1.5rem', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                        {selectedResult?.result_type === 'pdf' ? (
-                          <iframe src={`/api/medical-result/file/${selectedResult?.id}`} style={{ width: '100%', height: '650px', border: 'none' }} />
-                        ) : selectedResult?.result_type === 'image' ? (
-                          <img src={`/api/medical-result/file/${selectedResult?.id}`} alt="Resultado" style={{ maxWidth: '100%', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
-                        ) : (
-                          <div style={{ padding: '2rem', width: '100%', fontSize: '1rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', color: '#1e293b', fontWeight: 500 }}>
-                            {selectedResult?.content}
-                          </div>
-                        )}
-                      </div>
-
                       <div className="portal-card-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}>
+                        {group.files && group.files.length === 1 && (
+                          <a 
+                            href={`/api/medical-result/file/${group.files[0].id}`} 
+                            download={group.files[0].filename || `resultado_${group.files[0].id}`} 
+                            target="_blank"
+                            style={{ 
+                              display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.85rem 1.75rem', 
+                              background: 'white', border: '2px solid var(--primary)', color: 'var(--primary)',
+                              borderRadius: '12px', fontWeight: 800, fontSize: '0.95rem', transition: 'all 0.2s', textDecoration: 'none'
+                            }}
+                            onMouseOver={(e) => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.color = 'white'; }}
+                            onMouseOut={(e) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = 'var(--primary)'; }}
+                          >
+                            <Download size={20} /> <span className="hide-mobile">DESCARGAR</span> INFORME
+                          </a>
+                        )}
                         <a 
-                          href={`/api/medical-result/file/${selectedResult?.id}`} 
-                          download={selectedResult?.filename || `resultado_${selectedResult?.id}`} 
-                          target="_blank"
-                          style={{ 
-                            display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.85rem 1.75rem', 
-                            background: 'white', border: '2px solid var(--primary)', color: 'var(--primary)',
-                            borderRadius: '12px', fontWeight: 800, fontSize: '0.95rem', transition: 'all 0.2s', textDecoration: 'none'
-                          }}
-                          onMouseOver={(e) => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.color = 'white'; }}
-                          onMouseOut={(e) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = 'var(--primary)'; }}
-                        >
-                          <Download size={20} /> <span className="hide-mobile">DESCARGAR</span> INFORME
-                        </a>
-                        <a 
-                          href={`https://wa.me/5493513049709?text=${encodeURIComponent("Hola, necesito realizar una consulta sobre mi resultado de " + (selectedResult?.analysis_type || 'Análisis') + " (Informe N° " + (selectedResult?.report_id || '-') + ") del día " + format(new Date(selectedResult?.created_at), "dd/MM/yyyy"))}`} 
+                          href={`https://wa.me/5493513049709?text=${encodeURIComponent("Hola, necesito realizar una consulta sobre mi resultado de " + (group.analysis_type || 'Análisis') + " (Informe N° " + (group.report_id || '-') + ") del día " + format(new Date(group.files && group.files.length > 0 ? group.files[0].created_at : group.appointment_date || new Date()), "dd/MM/yyyy"))}`} 
                           target="_blank"
                           style={{ 
                             display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.85rem 1.75rem', 
@@ -297,7 +278,8 @@ export default function ResultadoPortal() {
                     </div>
                   )}
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         ) : (
