@@ -470,7 +470,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                         {currentUser?.role !== 'bioquimico' && (
                           <button 
                             onClick={async () => {
-                              const msg = `Hola ${res.patient_name}, tu INFORME MÉDICO N° ${res.report_id || '-'} del día ${format(new Date(res.appointment_date), "dd/MM")} ya está disponible en: https://laboratoriolega.vercel.app/resultado`;
+                              const msg = `👋🏻 Estimado paciente, Su Informe de Laboratorio N° ${res.report_id || '-'} del día ${format(new Date(res.appointment_date), "dd/MM")} ya se encuentra disponible en: https://laboratoriolega.vercel.app/resultado\n\nPara ingresar debe hacerlo con su N° de DNI\n\n¡Muchas gracias por elegirnos!\nSaludos ✨`;
                               window.open(`https://wa.me/${res.patient_phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
                               await markAsNotified(res.id);
                               loadAllResults();

@@ -4,11 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { getGlobalNotifications, markGlobalNotificationRead, markAllGlobalNotificationsRead } from "@/actions/ingresos";
 import { format } from "date-fns";
-import { useRouter } from "next/navigation";
 import Portal from "./Portal";
 
 export default function NotificationsBell({ userRole }: { userRole: string }) {
-  const router = useRouter();
   const popupRef = useRef<HTMLDivElement>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -138,7 +136,7 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
                   onDoubleClick={() => {
                      if(notif.status === 'unread') handleMarkRead(notif.id);
                      setIsOpen(false);
-                     if(notif.link) router.push(notif.link);
+                     if(notif.link) window.location.href = notif.link;
                   }}
                   style={{
                     padding: '1rem',
