@@ -405,6 +405,16 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
           onRefresh={onRefresh}
         />
       )}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes blinkHighlight {
+          0% { background-color: rgba(239, 68, 68, 0.4); }
+          50% { background-color: transparent; }
+          100% { background-color: rgba(239, 68, 68, 0.4); }
+        }
+        .blink-highlight {
+          animation: blinkHighlight 1s ease-in-out 3 !important;
+        }
+      `}} />
     </div>
   );
 }
