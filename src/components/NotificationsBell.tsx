@@ -4,9 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { getGlobalNotifications, markGlobalNotificationRead, markAllGlobalNotificationsRead } from "@/actions/ingresos";
 import { format } from "date-fns";
+import { useRouter } from "next/navigation";
 import Portal from "./Portal";
 
 export default function NotificationsBell({ userRole }: { userRole: string }) {
+  const router = useRouter();
+  const popupRef = useRef<HTMLDivElement>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -59,6 +62,17 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
     setIsOpen(!isOpen);
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (buttonRef.current?.contains(e.target as Node)) return;
+      if (popupRef.current?.contains(e.target as Node)) return;
+      setIsOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
   return (
     <div style={{ position: 'absolute', top: '3.25rem', right: '0.75rem', zIndex: 100 }}>
       <button 
@@ -91,8 +105,8 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
 
       {isOpen && (
         <Portal>
-          <div className="glass-panel" style={{
-            position: 'fixed', 
+          <div ref={popupRef} className="glass-panel" style={{
+            position: 'fixed',  
             top: `${popupPos.top}px`, 
             left: `${popupPos.left}px`,
             width: '320px', maxHeight: '400px', overflowY: 'auto',
@@ -121,14 +135,20 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
                 <div 
                   key={notif.id}
                   onClick={() => { if(notif.status === 'unread') handleMarkRead(notif.id); }}
+                  onDoubleClick={() => {
+                     if(notif.status === 'unread') handleMarkRead(notif.id);
+                     setIsOpen(false);
+                     if(notif.link) router.push(notif.link);
+                  }}
                   style={{
                     padding: '1rem',
                     borderBottom: '1px solid var(--glass-border)',
                     background: notif.status === 'unread' ? 'rgba(245, 158, 11, 0.05)' : 'transparent',
                     borderLeft: notif.status === 'unread' ? '3px solid #EF4444' : '3px solid transparent',
-                    cursor: notif.status === 'unread' ? 'pointer' : 'default',
+                    cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
+                  title="Doble clic para ir al detalle"
                 >
                   <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: 1.4 }}>
                     {notif.message}

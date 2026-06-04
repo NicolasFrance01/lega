@@ -320,8 +320,8 @@ export async function updateIngresoField(id: string, field: string, value: any) 
     if (field === 'checkbox_checked') {
       const actionText = value ? "tildó" : "destildó";
       await pool.query(
-        `INSERT INTO system_notifications (type, message, target_roles, created_by) VALUES ($1, $2, $3, $4)`,
-        ['CHECKLIST_TOGGLE', `${authorName} ${actionText} el ingreso de ${details?.name}.`, 'admin,gerente,administracion', authorName]
+        `INSERT INTO system_notifications (type, message, target_roles, created_by, link) VALUES ($1, $2, $3, $4, $5)`,
+        ['CHECKLIST_TOGGLE', `${authorName} ${actionText} el ingreso de ${details?.name}.`, 'admin,gerente,administracion', authorName, `/ingresos?highlight=${id}`]
       );
     }
 
@@ -397,8 +397,8 @@ export async function updateInternalNote(id: string, note: string) {
     }
 
     await pool.query(
-      `INSERT INTO system_notifications (type, message, target_roles, created_by) VALUES ($1, $2, $3, $4)`,
-      ['INTERNAL_NOTE', `Nota Interna añadida para paciente ${details.name} por ${authorName}.`, targetRoles, authorName]
+      `INSERT INTO system_notifications (type, message, target_roles, created_by, link) VALUES ($1, $2, $3, $4, $5)`,
+      ['INTERNAL_NOTE', `Nota Interna añadida para paciente ${details.name} por ${authorName}.`, targetRoles, authorName, `/ingresos?highlight=${id}`]
     );
 
     revalidatePath("/ingresos");

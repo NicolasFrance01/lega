@@ -1,5 +1,7 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+
 import { useState, useRef, useEffect } from "react";
 import { format, isToday } from "date-fns";
 import { es } from "date-fns/locale";
@@ -16,6 +18,20 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
   const [isAtToday, setIsAtToday] = useState(false);
   const [notesPopupId, setNotesPopupId] = useState<string | null>(null);
   const [optimisticChecks, setOptimisticChecks] = useState<Record<string, boolean>>({});
+
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get('highlight');
+
+  useEffect(() => {
+    if (highlightId && ingresos.length > 0) {
+      setTimeout(() => {
+        const el = document.getElementById(`row-${highlightId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 500); // small delay to allow render
+    }
+  }, [highlightId, ingresos]);
 
   const handleJump = () => {
     if (!isAtToday) {
@@ -156,13 +172,17 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
               const isTodayRow = isToday(new Date(ing.appointment_date));
               const isChecked = optimisticChecks[ing.id] ?? ing.checkbox_checked;
 
+              const isHighlighted = highlightId && parseInt(highlightId) === ing.id;
+
               return (
                 <tr
                   key={ing.id}
+                  id={`row-${ing.id}`}
                   ref={isTodayRow ? todayRef : null}
+                  className={isHighlighted ? "blink-highlight" : ""}
                   style={{
                     borderBottom: '1px solid var(--glass-border)',
-                    background: isTodayRow ? 'rgba(14, 165, 233, 0.15)' : (isChecked ? 'rgba(16, 185, 129, 0.1)' : 'transparent'),
+                    background: isHighlighted ? 'rgba(239, 68, 68, 0.1)' : (isTodayRow ? 'rgba(14, 165, 233, 0.15)' : (isChecked ? 'rgba(16, 185, 129, 0.1)' : 'transparent')),
                     transition: 'all 0.2s'
                   }}
                 >
