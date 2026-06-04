@@ -26,7 +26,7 @@ export default async function PacienteHistorialPage({ params }: { params: Promis
   // Obtener historial clinico (Turnos pasados y futuros) con su rastro de auditoría
   // Forzamos casting a text de IDs y detalles (JSONB) para evitar errores de serialización de BigInt en server components
   const apptsRes = await pool.query(`
-    SELECT a.id::text, a.appointment_date, a.status, a.analysis_type, a.aire_test_type, a.observations, a.evolution_notes,
+    SELECT a.id::text, a.appointment_date, a.status, a.analysis_type, a.aire_test_type, a.observations, a.evolution_notes, a.report_id,
            (SELECT json_agg(json_build_object('id', ad.id::text, 'url', ad.document_url, 'filename', ad.filename)) 
             FROM appointment_documents ad WHERE ad.appointment_id = a.id) as documents,
            (SELECT json_agg(row_to_json(audit_ordered))

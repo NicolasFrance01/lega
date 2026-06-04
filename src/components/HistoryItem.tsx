@@ -61,6 +61,11 @@ export default function HistoryItem({ apt }: { apt: any }) {
                     ({apt.aire_test_type})
                   </span>
                 )}
+                {apt.report_id && (
+                  <span style={{ fontSize: '0.9rem', color: 'var(--primary)', marginLeft: '0.75rem', fontWeight: 800, background: 'rgba(14, 165, 233, 0.1)', padding: '0.1rem 0.5rem', borderRadius: '4px' }}>
+                    INFORME N° {apt.report_id}
+                  </span>
+                )}
               </h4>
             </div>
             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>

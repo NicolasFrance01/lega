@@ -150,13 +150,14 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
               <th style={{ padding: '0.75rem 1rem' }}>INFORME</th>
               <th style={{ padding: '0.75rem 1rem' }}>NOMBRE</th>
               <th style={{ padding: '0.75rem 1rem' }}>DNI</th>
-              <th style={{ padding: '0.75rem 1rem' }}>DIRECCIÓN</th>
-              <th style={{ padding: '0.75rem 1rem' }}>MAIL</th>
+              {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>DIRECCIÓN</th>}
+              {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>MAIL</th>}
               <th style={{ padding: '0.75rem 1rem' }}>NACIMIENTO</th>
-              <th style={{ padding: '0.75rem 1rem' }}>TELÉFONO</th>
-              <th style={{ padding: '0.75rem 1rem' }}>PROFESIONAL</th>
+              <th style={{ padding: '0.75rem 1rem' }}>EDAD</th>
+              {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>TELÉFONO</th>}
+              {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>PROFESIONAL</th>}
               <th style={{ padding: '0.75rem 1rem' }}>ESTUDIO</th>
-              <th style={{ padding: '0.75rem 1rem' }}>OBRA SOCIAL</th>
+              {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>OBRA SOCIAL</th>}
               {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>COSEGURO</th>}
               {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>PARTICULAR</th>}
               {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>PAGO</th>}
@@ -281,21 +282,40 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
                   <td style={{ padding: '0.75rem 1rem' }}>
                     {ing.dni}
                   </td>
-                  <td style={{ padding: '0.75rem 1rem' }}>
-                    {ing.address || '-'}
-                  </td>
-                  <td style={{ padding: '0.75rem 1rem' }}>
-                    {ing.email || '-'}
-                  </td>
+                  {!isBioq && (
+                    <td style={{ padding: '0.75rem 1rem' }}>
+                      {ing.address || '-'}
+                    </td>
+                  )}
+                  {!isBioq && (
+                    <td style={{ padding: '0.75rem 1rem' }}>
+                      {ing.email || '-'}
+                    </td>
+                  )}
                   <td style={{ padding: '0.75rem 1rem' }}>
                     {ing.birth_date ? format(new Date(ing.birth_date), "dd/MM/yyyy") : '-'}
                   </td>
-                  <td style={{ padding: '0.75rem 1rem' }}>
-                    {ing.phone || '-'}
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>
+                    {ing.birth_date ? (() => {
+                      const d = new Date(ing.birth_date);
+                      if (isNaN(d.getTime())) return '-';
+                      const today = new Date();
+                      let age = today.getFullYear() - d.getFullYear();
+                      const m = today.getMonth() - d.getMonth();
+                      if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
+                      return `${age} años`;
+                    })() : '-'}
                   </td>
-                  <td style={{ padding: '0.75rem 1rem', color: 'var(--text-main)' }}>
-                    <EditableCell id={ing.id} field="professional_name" value={ing.professional_name} isReadOnly={isBioq} />
-                  </td>
+                  {!isBioq && (
+                    <td style={{ padding: '0.75rem 1rem' }}>
+                      {ing.phone || '-'}
+                    </td>
+                  )}
+                  {!isBioq && (
+                    <td style={{ padding: '0.75rem 1rem', color: 'var(--text-main)' }}>
+                      <EditableCell id={ing.id} field="professional_name" value={ing.professional_name} isReadOnly={isBioq} />
+                    </td>
+                  )}
                   <td style={{ padding: '0.75rem 1rem', color: 'var(--primary)', fontWeight: 700 }}>
                     {ing.analyses && ing.analyses.length > 0 ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
@@ -310,15 +330,17 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
                       ing.analysis_type
                     )}
                   </td>
-                  <td style={{ padding: '0.75rem 1rem' }}>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                      {(ing.health_insurance || 'PARTICULAR').split(',').map((os: string) => os.trim()).filter(Boolean).map((os: string) => (
-                        <span key={os} style={{ padding: '0.2rem 0.5rem', background: '#e0f2fe', color: '#0369a1', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                          {os}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
+                  {!isBioq && (
+                    <td style={{ padding: '0.75rem 1rem' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                        {(ing.health_insurance || 'PARTICULAR').split(',').map((os: string) => os.trim()).filter(Boolean).map((os: string) => (
+                          <span key={os} style={{ padding: '0.2rem 0.5rem', background: '#e0f2fe', color: '#0369a1', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                            {os}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                  )}
                   {!isBioq && (
                     <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--success)' }}>
                       <EditableCell id={ing.id} field="coseguro" value={ing.coseguro} type="number" />
