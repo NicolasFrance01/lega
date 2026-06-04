@@ -21,6 +21,10 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
   // Modal Step 1: History, Step 2: Upload
   const [modalStep, setModalStep] = useState(1);
   const [historySearch, setHistorySearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<'todos' | 'pendiente' | 'notificado'>('todos');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isEditingPage, setIsEditingPage] = useState(false);
+  const [pageInput, setPageInput] = useState("1");
   
   useEffect(() => {
     loadAllResults();
@@ -89,6 +93,32 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
     outline: "none",
     transition: "all 0.2s"
   };
+
+  const filteredResults = allResults.filter(res => {
+    const normalize = (str: string) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
+    const s = normalize(historySearch);
+    
+    const matchSearch = 
+      normalize(res.patient_name).includes(s) || 
+      res.patient_dni?.includes(s) || 
+      normalize(res.report_id).includes(s) ||
+      normalize(res.analysis_type).includes(s) ||
+      normalize(res.notes).includes(s) ||
+      normalize(res.uploaded_by_name).includes(s) ||
+      (res.appointment_date && format(new Date(res.appointment_date), "dd/MM/yyyy").includes(s)) ||
+      (res.created_at && format(new Date(res.created_at), "dd/MM/yyyy").includes(s));
+      
+    if (!matchSearch) return false;
+
+    if (statusFilter === 'pendiente') return !res.notified_at;
+    if (statusFilter === 'notificado') return !!res.notified_at;
+    return true;
+  });
+
+  const ITEMS_PER_PAGE = 50;
+  const totalPages = Math.ceil(filteredResults.length / ITEMS_PER_PAGE) || 1;
+  const validPage = Math.min(Math.max(1, currentPage), totalPages);
+  const currentItems = filteredResults.slice((validPage - 1) * ITEMS_PER_PAGE, validPage * ITEMS_PER_PAGE);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -317,16 +347,60 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem', gap: '1rem', flexWrap: 'wrap' }}>
           <h3 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-main)' }}>
             <History size={28} color="var(--primary)" /> Últimos Resultados
+            <span style={{ fontSize: '1.1rem', color: 'var(--text-muted)', fontWeight: 600 }}>({filteredResults.length})</span>
           </h3>
-          <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
-            <Search style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} size={18} />
-            <input 
-              type="text" 
-              placeholder="Filtrar por paciente, DNI o INFORME..." 
-              style={{ ...inputStyle, padding: '0.6rem 1rem 0.6rem 2.8rem', fontSize: '0.9rem' }}
-              value={historySearch}
-              onChange={(e) => setHistorySearch(e.target.value)}
-            />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', background: 'var(--glass-bg)', borderRadius: '12px', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
+              <button onClick={() => { setStatusFilter('todos'); setCurrentPage(1); }} style={{ padding: '0.5rem 1rem', background: statusFilter === 'todos' ? 'var(--primary)' : 'transparent', color: statusFilter === 'todos' ? 'white' : 'var(--text-main)', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s' }}>Todos</button>
+              <button onClick={() => { setStatusFilter('pendiente'); setCurrentPage(1); }} style={{ padding: '0.5rem 1rem', background: statusFilter === 'pendiente' ? '#dc2626' : 'transparent', color: statusFilter === 'pendiente' ? 'white' : 'var(--text-main)', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s' }}>Pendiente aviso</button>
+              <button onClick={() => { setStatusFilter('notificado'); setCurrentPage(1); }} style={{ padding: '0.5rem 1rem', background: statusFilter === 'notificado' ? '#16a34a' : 'transparent', color: statusFilter === 'notificado' ? 'white' : 'var(--text-main)', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s' }}>Notificado</button>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', padding: '0.4rem 0.75rem', borderRadius: '12px' }}>
+              <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={validPage === 1} style={{ border: 'none', background: 'none', cursor: 'pointer', opacity: validPage === 1 ? 0.3 : 1, color: 'var(--text-main)' }}>&lt;</button>
+              
+              {isEditingPage ? (
+                 <input 
+                    autoFocus
+                    type="number" 
+                    value={pageInput}
+                    onChange={e => setPageInput(e.target.value)}
+                    onBlur={() => {
+                       const p = parseInt(pageInput);
+                       if (!isNaN(p) && p >= 1 && p <= totalPages) setCurrentPage(p);
+                       else setPageInput(validPage.toString());
+                       setIsEditingPage(false);
+                    }}
+                    onKeyDown={e => {
+                       if (e.key === 'Enter') {
+                          const p = parseInt(pageInput);
+                          if (!isNaN(p) && p >= 1 && p <= totalPages) setCurrentPage(p);
+                          else setPageInput(validPage.toString());
+                          setIsEditingPage(false);
+                       }
+                    }}
+                    style={{ width: '40px', textAlign: 'center', background: 'transparent', border: '1px solid var(--primary)', color: 'var(--text-main)', borderRadius: '4px', outline: 'none' }}
+                 />
+              ) : (
+                 <span onDoubleClick={() => { setIsEditingPage(true); setPageInput(validPage.toString()); }} style={{ cursor: 'pointer', fontWeight: 700, color: 'var(--text-main)' }} title="Doble clic para saltar a una página">
+                   {validPage}
+                 </span>
+              )}
+              <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>/ {totalPages}</span>
+
+              <button onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={validPage === totalPages} style={{ border: 'none', background: 'none', cursor: 'pointer', opacity: validPage === totalPages ? 0.3 : 1, color: 'var(--text-main)' }}>&gt;</button>
+            </div>
+
+            <div style={{ position: 'relative', width: '100%', maxWidth: '350px' }}>
+              <Search style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} size={18} />
+              <input 
+                type="text" 
+                placeholder="Filtrar en toda la lista..." 
+                style={{ ...inputStyle, padding: '0.6rem 1rem 0.6rem 2.8rem', fontSize: '0.9rem' }}
+                value={historySearch}
+                onChange={(e) => { setHistorySearch(e.target.value); setCurrentPage(1); }}
+              />
+            </div>
           </div>
         </div>
         <div className="glass-panel" style={{ overflow: 'hidden', borderRadius: '20px' }}>
@@ -345,14 +419,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                 </tr>
               </thead>
               <tbody>
-                {allResults.filter(res => {
-                  const normalize = (str: string) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
-                  const s = normalize(historySearch);
-                  return normalize(res.patient_name).includes(s) || 
-                         res.patient_dni?.includes(s) || 
-                         normalize(res.report_id).includes(s) ||
-                         normalize(res.analysis_type).includes(s);
-                }).map((res: any) => (
+                {currentItems.map((res: any) => (
                   <tr key={res.id} className="hoverable-row" style={{ borderBottom: '1px solid var(--glass-border)', fontSize: '0.85rem', color: 'var(--text-main)' }}>
                     <td style={{ padding: '1rem', fontWeight: 600 }}>{format(new Date(res.created_at), "dd/MM/yyyy HH:mm")} hs</td>
                     <td style={{ padding: '1rem' }}>

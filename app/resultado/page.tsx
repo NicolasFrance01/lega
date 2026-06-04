@@ -310,7 +310,6 @@ export default function ResultadoPortal() {
                     <th style={{ padding: '1.25rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Fecha</th>
                     <th style={{ padding: '1.25rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>N° Informe</th>
                     <th style={{ padding: '1.25rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Análisis / Estudio</th>
-                    <th style={{ padding: '1.25rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Estado</th>
                     <th style={{ padding: '1.25rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Notas</th>
                   </tr>
                 </thead>
@@ -338,15 +337,6 @@ export default function ResultadoPortal() {
                             apt.analysis_type
                         )}
                       </td>
-                      <td style={{ padding: '1.25rem 1.5rem' }}>
-                        <span style={{ 
-                          background: apt.status === 'COMPLETADO' ? '#dcfce7' : '#fee2e2', 
-                          color: apt.status === 'COMPLETADO' ? '#166534' : '#991b1b',
-                          padding: '0.4rem 1rem', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 800
-                        }}>
-                          {apt.status === 'COMPLETADO' ? 'LISTO' : apt.status}
-                        </span>
-                      </td>
                       <td style={{ padding: '1.25rem 1.5rem', color: '#64748b', fontSize: '0.9rem', fontWeight: 500 }}>
                         {apt.notes || <span style={{ opacity: 0.3 }}>-</span>}
                       </td>
@@ -372,15 +362,6 @@ export default function ResultadoPortal() {
                         ) : (
                             apt.analysis_type
                         )}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                       <span style={{ 
-                          background: apt.status === 'COMPLETADO' ? '#dcfce7' : '#fee2e2', 
-                          color: apt.status === 'COMPLETADO' ? '#166534' : '#991b1b',
-                          padding: '0.3rem 1rem', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 800
-                       }}>
-                          {apt.status === 'COMPLETADO' ? 'RESULTADO LISTO' : apt.status}
-                       </span>
                     </div>
                     {apt.notes && (
                       <div style={{ marginTop: '0.5rem', padding: '0.75rem', background: 'white', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.9rem', color: '#475569', fontWeight: 600 }}>
