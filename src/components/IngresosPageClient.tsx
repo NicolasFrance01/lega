@@ -187,6 +187,15 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
                 }}
               >RTO PARCIALES</button>
               <button
+                onClick={() => setBioqFilter(bioqFilter === 'PAC AVISADO' ? '' : 'PAC AVISADO')}
+                style={{
+                  padding: '0.65rem 1rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
+                  border: `1px solid ${bioqFilter === 'PAC AVISADO' ? '#0369a1' : 'var(--glass-border)'}`,
+                  background: bioqFilter === 'PAC AVISADO' ? '#e0f2fe' : 'var(--glass-bg)',
+                  color: bioqFilter === 'PAC AVISADO' ? '#0369a1' : 'var(--text-muted)'
+                }}
+              >PAC AVISADO</button>
+              <button
                 onClick={fetchData}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem',

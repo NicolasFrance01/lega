@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useState, useRef, useTransition, useEffect } from "react";
 import { createFacturacionOS, updateFacturacionOS, deleteFacturacionOS, deleteFacturacionOSDocument, updateFacturacionOSSeguimiento } from "@/actions/listados";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -29,7 +29,13 @@ interface Props {
 const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
 export default function FacturacionOSTable({ allData, userRole }: Props) {
-  const [activeOS, setActiveOS] = useState(OBRAS_SOCIALES[0]);
+  const [activeOS, setActiveOS] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('facturacion_active_os') || OBRAS_SOCIALES[0];
+    }
+    return OBRAS_SOCIALES[0];
+  });
+  
   const [dataByOS, setDataByOS] = useState<Record<string, any[]>>(allData);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterYear, setFilterYear] = useState<string>("");
@@ -41,6 +47,10 @@ export default function FacturacionOSTable({ allData, userRole }: Props) {
   const [loading, setLoading] = useState(false);
   const [, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    localStorage.setItem('facturacion_active_os', activeOS);
+  }, [activeOS]);
 
   const canEditSeguimiento = userRole === 'admin' || userRole === 'gerente';
   const items = dataByOS[activeOS] || [];

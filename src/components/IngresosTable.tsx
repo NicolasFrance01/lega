@@ -18,6 +18,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
   const [isAtToday, setIsAtToday] = useState(false);
   const [notesPopupId, setNotesPopupId] = useState<string | null>(null);
   const [optimisticChecks, setOptimisticChecks] = useState<Record<string, boolean>>({});
+  const [optimisticNotices, setOptimisticNotices] = useState<Record<string, string>>({});
 
   const searchParams = useSearchParams();
   const highlightId = searchParams.get('highlight');
@@ -221,10 +222,12 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
                   </td>
                   <td style={{ padding: '0.75rem 1rem' }}>
                     <select
-                      value={ing.biochemical_notice || ''}
+                      value={optimisticNotices[ing.id] ?? (ing.biochemical_notice || '')}
                       onChange={async (e) => {
                         const val = e.target.value;
+                        setOptimisticNotices(prev => ({ ...prev, [ing.id]: val }));
                         await updateBiochemicalNotice(ing.id, val);
+                        onRefresh(); // Trigger parent refresh without blocking UI
                       }}
                       style={{
                         padding: '0.3rem 0.6rem',
@@ -235,13 +238,14 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
                         cursor: 'pointer',
                         outline: 'none',
                         width: '130px',
-                        background: ing.biochemical_notice === 'LISTO P/ ENVIAR' ? '#dcfce7' : (ing.biochemical_notice === 'RTO PARCIALES' ? '#ffedd5' : 'var(--glass-bg)'),
-                        color: ing.biochemical_notice === 'LISTO P/ ENVIAR' ? '#166534' : (ing.biochemical_notice === 'RTO PARCIALES' ? '#9a3412' : 'var(--text-main)'),
+                        background: (optimisticNotices[ing.id] ?? ing.biochemical_notice) === 'LISTO P/ ENVIAR' ? '#dcfce7' : ((optimisticNotices[ing.id] ?? ing.biochemical_notice) === 'RTO PARCIALES' ? '#ffedd5' : ((optimisticNotices[ing.id] ?? ing.biochemical_notice) === 'PAC AVISADO' ? '#e0f2fe' : 'var(--glass-bg)')),
+                        color: (optimisticNotices[ing.id] ?? ing.biochemical_notice) === 'LISTO P/ ENVIAR' ? '#166534' : ((optimisticNotices[ing.id] ?? ing.biochemical_notice) === 'RTO PARCIALES' ? '#9a3412' : ((optimisticNotices[ing.id] ?? ing.biochemical_notice) === 'PAC AVISADO' ? '#0369a1' : 'var(--text-main)')),
                       }}
                     >
                       <option value="">-</option>
                       <option value="LISTO P/ ENVIAR" style={{ background: '#dcfce7', color: '#166534' }}>LISTO P/ ENVIAR</option>
                       <option value="RTO PARCIALES" style={{ background: '#ffedd5', color: '#9a3412' }}>RTO PARCIALES</option>
+                      <option value="PAC AVISADO" style={{ background: '#e0f2fe', color: '#0369a1' }}>PAC AVISADO</option>
                     </select>
                   </td>
                   <td style={{ padding: '0.75rem 1rem', textAlign: 'center', position: 'relative' }}>
