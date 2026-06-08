@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { getGlobalNotifications, markGlobalNotificationRead, markAllGlobalNotificationsRead } from "@/actions/ingresos";
 import { format } from "date-fns";
+import { useRouter } from "next/navigation";
 import Portal from "./Portal";
 
 export default function NotificationsBell({ userRole }: { userRole: string }) {
@@ -13,6 +14,7 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
+  const router = useRouter();
 
   // Solo roles permitidos
   if (!['admin', 'gerente', 'administracion', 'bioquimico'].includes(userRole)) {
@@ -132,11 +134,10 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
               notifications.map((notif) => (
                 <div 
                   key={notif.id}
-                  onClick={() => { if(notif.status === 'unread') handleMarkRead(notif.id); }}
-                  onDoubleClick={() => {
+                  onClick={() => {
                      if(notif.status === 'unread') handleMarkRead(notif.id);
                      setIsOpen(false);
-                     if(notif.link) window.location.href = notif.link;
+                     if(notif.link) router.push(notif.link);
                   }}
                   style={{
                     padding: '1rem',
@@ -146,7 +147,7 @@ export default function NotificationsBell({ userRole }: { userRole: string }) {
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                  title="Doble clic para ir al detalle"
+                  title="Clic para ir al detalle"
                 >
                   <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: 1.4 }}>
                     {notif.message}

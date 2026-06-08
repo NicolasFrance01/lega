@@ -7,6 +7,7 @@ import NewIngresoModal from "@/components/NewIngresoModal";
 import { Plus, Calendar, Filter, Download, Activity, Clock, FileText, X, Car, CheckCircle, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useSearchParams } from "next/navigation";
 
 import IngresosReports from "@/components/IngresosReports";
 
@@ -21,6 +22,9 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
   const [bioqFilter, setBioqFilter] = useState<string>('');
   const [checklistFilter, setChecklistFilter] = useState<'all' | 'con' | 'sin'>('all');
   const [dateFilter, setDateFilter] = useState<string>('');
+
+  const searchParams = useSearchParams();
+  const highlightId = searchParams?.get('highlight');
 
   const isBioq = userRole === 'bioquimico';
 
@@ -58,6 +62,20 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
       }
     }
   }, [loading, ingresos, availableMonths, selectedMonth]);
+
+  useEffect(() => {
+    if (highlightId && ingresos.length > 0) {
+      const highlightedIngreso = ingresos.find(i => i.id === parseInt(highlightId));
+      if (highlightedIngreso) {
+        const monthOfHighlight = format(new Date(highlightedIngreso.appointment_date), 'MMMM yyyy', { locale: es });
+        if (selectedMonth !== monthOfHighlight) {
+          setSelectedMonth(monthOfHighlight);
+        }
+        // clear the date filter so the row is visible, or set it to the specific date
+        setDateFilter(''); 
+      }
+    }
+  }, [highlightId, ingresos]);
 
   const filteredIngresos = ingresos.filter(ing => {
     const monthYear = format(new Date(ing.appointment_date), 'MMMM yyyy', { locale: es });
