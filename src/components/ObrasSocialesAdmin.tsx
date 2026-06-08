@@ -13,6 +13,7 @@ export default function ObrasSocialesAdmin({ initialData }: { initialData: any[]
   const [newNombre, setNewNombre] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   async function handleCreate() {
     if (!newNombre.trim()) return;
@@ -54,7 +55,15 @@ export default function ObrasSocialesAdmin({ initialData }: { initialData: any[]
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+        <input 
+          type="text" 
+          placeholder="Buscar obra social..." 
+          value={searchTerm} 
+          onChange={e => setSearchTerm(e.target.value)} 
+          className="input-field" 
+          style={{ flex: 1, maxWidth: '300px' }} 
+        />
         <button onClick={() => setShowNew(true)} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', borderRadius: '8px', fontWeight: 700 }}>
           <Plus size={16} /> Nueva Obra Social
         </button>
@@ -81,8 +90,8 @@ export default function ObrasSocialesAdmin({ initialData }: { initialData: any[]
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        {items.map(item => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+        {items.filter(it => it.nombre.toLowerCase().includes(searchTerm.toLowerCase())).map(item => (
           <div key={item.id} style={{
             display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem 1rem',
             borderRadius: '8px', border: '1px solid var(--glass-border)',

@@ -1065,7 +1065,7 @@ export async function ensureTiposAnalisisTable() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
       INSERT INTO tipos_analisis_catalog (nombre) VALUES
-        ('TEST DE AIRE'), ('SIBO'), ('LACTOSA'), ('FRUCTUOSA'), ('PYLORI'), 
+        ('SIBO'), ('LACTOSA'), ('FRUCTUOSA'), ('SIBO C/LACTULON'), ('PYLORI'), 
         ('EXTRACCION'), ('MATERIA FECAL'), ('ORINA'), ('PANEL 105'), ('PANEL 63'), 
         ('ALCAT'), ('CIBIC')
       ON CONFLICT (nombre) DO NOTHING;
