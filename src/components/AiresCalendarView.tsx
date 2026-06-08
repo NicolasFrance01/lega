@@ -47,7 +47,7 @@ export default function AiresCalendarView({
   let day = startDate;
   while (day <= endDate) { daysGrid.push(day); day = addDays(day, 1); }
 
-  const airTestNames = ['Test de aire', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'Aires'];
+  const airTestNames = ['SIBO', 'LACTOSA', 'FRUCTUOSA', 'SIBO C/LACTULON', 'Aires'];
   const airesAppts = (appointments || []).filter(a =>
     a &&
     (airTestNames.includes(a.analysis_type) || a.aire_test_type || (a.analyses && a.analyses.some((ana: any) => airTestNames.includes(ana.name)))) &&

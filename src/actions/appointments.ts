@@ -88,15 +88,16 @@ export async function createAppointment(formData: FormData) {
     const google_maps_link = domicilio_address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(domicilio_address)}` : null;
     const files = formData.getAll("document") as File[];
 
-    // Turn limit for 'Test de aire' (Max 4 per day)
-    if (analysis_type === 'Test de aire') {
+    // Turn limit for 'Aires' (Max 4 per day)
+    const airTestNames = ['SIBO', 'LACTOSA', 'FRUCTUOSA', 'SIBO C/LACTULON'];
+    if (airTestNames.includes(analysis_type?.toUpperCase() || "")) {
       const targetDateStr = appointment_date.split('T')[0];
       const countRes = await client.query(
-        "SELECT COUNT(*) FROM appointments WHERE analysis_type = 'Test de aire' AND DATE(appointment_date) = $1",
-        [targetDateStr]
+        "SELECT COUNT(*) FROM appointments WHERE UPPER(analysis_type) = ANY($1::text[]) AND DATE(appointment_date) = $2",
+        [airTestNames, targetDateStr]
       );
       if (parseInt(countRes.rows[0].count) >= 4) {
-        throw new Error("Límite excedido: Solo se permiten 4 turnos de 'Test de aire' por día.");
+        throw new Error("Límite excedido: Solo se permiten 4 turnos de pruebas de aire por día.");
       }
     }
 
@@ -225,15 +226,16 @@ export async function updateAppointment(formData: FormData) {
     const google_maps_link = domicilio_address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(domicilio_address)}` : null;
     const files = formData.getAll("document") as File[];
 
-    // Check limit if changing type to Test de aire or changing date for an Test de aire appointment
-    if (analysis_type === 'Test de aire') {
+    // Check limit if changing type to an air test or changing date for an air test appointment
+    const airTestNames = ['SIBO', 'LACTOSA', 'FRUCTUOSA', 'SIBO C/LACTULON'];
+    if (airTestNames.includes(analysis_type?.toUpperCase() || "")) {
       const targetDateStr = appointment_date.split('T')[0];
       const countRes = await client.query(
-        "SELECT COUNT(*) FROM appointments WHERE analysis_type = 'Test de aire' AND DATE(appointment_date) = $1 AND id != $2",
-        [targetDateStr, id]
+        "SELECT COUNT(*) FROM appointments WHERE UPPER(analysis_type) = ANY($1::text[]) AND DATE(appointment_date) = $2 AND id != $3",
+        [airTestNames, targetDateStr, id]
       );
       if (parseInt(countRes.rows[0].count) >= 4) {
-        throw new Error("Límite excedido: Solo se permiten 4 turnos de 'Test de aire' por día.");
+        throw new Error("Límite excedido: Solo se permiten 4 turnos de pruebas de aire por día.");
       }
     }
 
@@ -324,15 +326,16 @@ export async function moveAppointment(appointmentId: string, newDate: string, re
     const current = await pool.query("SELECT p.name, a.analysis_type FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = $1", [appointmentId]);
     const apt = current.rows[0];
 
-    // Check limit if moving a Test de aire
-    if (apt?.analysis_type === 'Test de aire') {
+    // Check limit if moving an air test
+    const airTestNames = ['SIBO', 'LACTOSA', 'FRUCTUOSA', 'SIBO C/LACTULON'];
+    if (airTestNames.includes(apt?.analysis_type?.toUpperCase() || "")) {
       const targetDateStr = newDate.split('T')[0];
       const countRes = await pool.query(
-        "SELECT COUNT(*) FROM appointments WHERE analysis_type = 'Test de aire' AND DATE(appointment_date) = $1 AND id != $2",
-        [targetDateStr, appointmentId]
+        "SELECT COUNT(*) FROM appointments WHERE UPPER(analysis_type) = ANY($1::text[]) AND DATE(appointment_date) = $2 AND id != $3",
+        [airTestNames, targetDateStr, appointmentId]
       );
       if (parseInt(countRes.rows[0].count) >= 4) {
-        throw new Error("Límite excedido: Solo se permiten 4 turnos de 'Test de aire' por día.");
+        throw new Error("Límite excedido: Solo se permiten 4 turnos de pruebas de aire por día.");
       }
     }
 

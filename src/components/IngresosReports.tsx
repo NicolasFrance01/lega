@@ -11,7 +11,7 @@ import { es } from 'date-fns/locale';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
-const AIR_TEST_NAMES = new Set(['TEST DE AIRE', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'AIRES']);
+const AIR_TEST_NAMES = new Set(['SIBO', 'LACTOSA', 'FRUCTUOSA', 'SIBO C/LACTULON', 'AIRES']);
 
 const COLORS = ['#0EA5E9', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4'];
 
@@ -20,7 +20,7 @@ interface IngresosReportsProps {
   onBack: () => void;
 }
 
-const ANALYSIS_OPTIONS = ['Test de aire', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'PYLORI', 'EXTRACCION', 'MATERIA FECAL', 'ORINA', 'PANEL 105', 'PANEL 63', 'ALCAT', 'CIBIC'];
+const ANALYSIS_OPTIONS = ['SIBO', 'LACTOSA', 'FRUCTUOSA', 'SIBO C/LACTULON', 'PYLORI', 'EXTRACCION', 'MATERIA FECAL', 'ORINA', 'PANEL 105', 'PANEL 63', 'ALCAT', 'CIBIC'];
 const OBRAS_SOCIALES_FILTER = ['OSDE', 'SWISS MEDICAL', 'GALENO', 'MEDIFE', 'CIBIC', 'METABOLOMICA', 'FEDERACION', 'ASOCIACION', 'APROSS', 'PARTICULAR'];
 
 export default function IngresosReports({ data, onBack }: IngresosReportsProps) {

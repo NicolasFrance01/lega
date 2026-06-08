@@ -209,7 +209,7 @@ export default function EditAppointmentModal({ isOpen, onClose, ap, isAires }: {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {(() => {
-                const airTestNames = ['Test de aire', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'Aires'];
+                const airTestNames = ['SIBO', 'LACTOSA', 'FRUCTUOSA', 'SIBO C/LACTULON', 'Aires'];
                 
                 // If in Aires mode, separate visible and hidden analyses
                 const visibleAnalyses = isAires 
@@ -248,32 +248,6 @@ export default function EditAppointmentModal({ isOpen, onClose, ap, isAires }: {
                             required
                           />
                         </div>
-                        {airTestNames.includes(ana.analysis_name) && (
-                          <div style={{ flex: 1 }}>
-                            <select 
-                              name="aire_test_subtype"
-                              value={ana.aire_test_subtype}
-                              onChange={(e) => {
-                                const newAnalyses = [...analyses];
-                                const realIndex = analyses.indexOf(ana);
-                                newAnalyses[realIndex].aire_test_subtype = e.target.value;
-                                setAnalyses(newAnalyses);
-                              }}
-                              required 
-                              className="input-field" 
-                              style={inputStyle}
-                            >
-                              <option value="">-- Subtipo --</option>
-                              <option value="SIBO">SIBO</option>
-                              <option value="SIBO c/Lactulon">SIBO c/Lactulon</option>
-                              <option value="Lactosa">Lactosa</option>
-                              <option value="Fructuosa">Fructuosa</option>
-                            </select>
-                          </div>
-                        )}
-                        {!airTestNames.includes(ana.analysis_name) && (
-                          <input type="hidden" name="aire_test_subtype" value="" />
-                        )}
                         {(!isAires || visibleAnalyses.length > 1) && (
                           <button 
                             type="button" 
@@ -389,14 +363,6 @@ export default function EditAppointmentModal({ isOpen, onClose, ap, isAires }: {
             )}
           </div>
 
-          {analysisType === 'Test de aire' && (
-            <div style={{ padding: '0.75rem', background: '#eff6ff', borderRadius: '8px', display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-               <Info size={16} color="#3b82f6" style={{ marginTop: '2px' }} />
-               <p style={{ margin: 0, fontSize: '0.75rem', color: '#1e40af', lineHeight: 1.4 }}>
-                 Los turnos de **Test de aire** tienen un cupo máximo de 4 por día. Si cambias la fecha a un día lleno, el sistema no lo permitirá.
-               </p>
-            </div>
-          )}
 
           <div style={{ marginTop: "1rem", display: "flex", gap: "0.75rem" }}>
             <button 

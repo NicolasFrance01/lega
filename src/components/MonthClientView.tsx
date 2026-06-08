@@ -35,7 +35,7 @@ export default function MonthClientView({
 
   if (!appointments) return null;
 
-  const airTestNames = ['Test de aire', 'SIBO', 'LACTOSA', 'FRUCTUOSA', 'Aires'];
+  const airTestNames = ['SIBO', 'LACTOSA', 'FRUCTUOSA', 'SIBO C/LACTULON', 'Aires'];
   const filteredAppointments = (appointments || []).filter(a =>
     a &&
     !a.is_domicilio &&

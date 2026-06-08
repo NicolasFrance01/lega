@@ -340,16 +340,6 @@ function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setS
                     placeholder="Seleccioná o escribí estudio..."
                     style={{ ...inputStyle, background: 'var(--glass-bg)' }}
                   />
-                  {a.name === 'Test de aire' && (
-                    <select name="aire_test_subtype" required value={a.subtype} onChange={(e) => updateAnalysis(index, 'subtype', e.target.value)} style={{ ...inputStyle, marginTop: '0.4rem', background: 'var(--glass-bg)', color: 'var(--text-main)', fontSize: '0.8rem', padding: '0.4rem' }}>
-                      <option value="">-- Seleccionar Prueba --</option>
-                      <option value="SIBO">SIBO</option>
-                      <option value="SIBO c/Lactulon">SIBO c/Lactulon</option>
-                      <option value="Lactosa">Lactosa</option>
-                      <option value="Fructuosa">Fructuosa</option>
-                    </select>
-                  )}
-                  {a.name !== 'Test de aire' && <input type="hidden" name="aire_test_subtype" value="" />}
                 </div>
                 {analyses.length > 1 && (
                   <button type="button" onClick={() => removeAnalysis(index)} style={{ padding: '0.5rem', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>

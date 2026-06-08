@@ -60,7 +60,11 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
   const filteredIngresos = ingresos.filter(ing => {
     const monthYear = format(new Date(ing.appointment_date), 'MMMM yyyy', { locale: es });
     if (monthYear !== selectedMonth) return false;
-    if (bioqFilter && ing.biochemical_notice !== bioqFilter) return false;
+    if (bioqFilter === 'CON CHECKLIST') {
+      if (!ing.checkbox_checked) return false;
+    } else if (bioqFilter && ing.biochemical_notice !== bioqFilter) {
+      return false;
+    }
     if (!searchTerm) return true;
     const s = searchTerm.toLowerCase();
     return (
@@ -195,6 +199,15 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
                   color: bioqFilter === 'PAC AVISADO' ? '#0369a1' : 'var(--text-muted)'
                 }}
               >PAC AVISADO</button>
+              <button
+                onClick={() => setBioqFilter(bioqFilter === 'CON CHECKLIST' ? '' : 'CON CHECKLIST')}
+                style={{
+                  padding: '0.65rem 1rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
+                  border: `1px solid ${bioqFilter === 'CON CHECKLIST' ? '#4f46e5' : 'var(--glass-border)'}`,
+                  background: bioqFilter === 'CON CHECKLIST' ? '#e0e7ff' : 'var(--glass-bg)',
+                  color: bioqFilter === 'CON CHECKLIST' ? '#4f46e5' : 'var(--text-muted)'
+                }}
+              >CON CHECKLIST</button>
               <button
                 onClick={fetchData}
                 style={{

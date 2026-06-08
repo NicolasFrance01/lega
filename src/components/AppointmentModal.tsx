@@ -39,7 +39,7 @@ export default function AppointmentModal({
 }) {
   const [loading, setLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [analysisType, setAnalysisType] = useState(isAire ? "Test de aire" : "");
+  const [analysisType, setAnalysisType] = useState(isAire ? "SIBO" : "");
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
 
@@ -62,7 +62,7 @@ export default function AppointmentModal({
   useEffect(() => {
     if (isOpen) {
       setSelectedFiles([]);
-      setAnalysisType(isAire ? "Test de aire" : "");
+      setAnalysisType(isAire ? "SIBO" : "");
       setBlockedError(null);
       getBlockedDays().then(res => { if (res.data) setBlockedDays(res.data); });
       setNameValue(initialData?.name || "");
@@ -325,7 +325,7 @@ export default function AppointmentModal({
                 <label style={labelStyle}>Tipo de Análisis</label>
                 <TipoAnalisisInput
                   name="analysis_type"
-                  defaultValue={isAire ? "Test de aire" : (initialData?.analysis_type || "")}
+                  defaultValue={isAire ? "SIBO" : (initialData?.analysis_type || "")}
                   onChange={(e) => setAnalysisType(e.target.value)}
                   className="modern-input"
                   style={inputStyle}
@@ -335,18 +335,6 @@ export default function AppointmentModal({
               </div>
             </div>
 
-            {analysisType === 'Test de aire' && (
-              <div style={{ animation: 'fadeIn 0.3s ease' }}>
-                <label style={labelStyle}>Tipo de Aire Espirado</label>
-                <select name="aire_test_type" required className="modern-input" style={inputStyle}>
-                  <option value="">-- Seleccionar Prueba --</option>
-                  <option value="SIBO">SIBO</option>
-                  <option value="SIBO c/Lactulon">SIBO c/Lactulon</option>
-                  <option value="Lactosa">Lactosa</option>
-                  <option value="Fructuosa">Fructuosa</option>
-                </select>
-              </div>
-            )}
 
             <div className="modal-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
               <div style={{ gridColumn: "span 2" }}>
