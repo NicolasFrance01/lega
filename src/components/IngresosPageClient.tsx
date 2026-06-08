@@ -19,6 +19,7 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
   const [view, setView] = useState<"table" | "reports">("table");
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'MMMM yyyy', { locale: es }));
   const [bioqFilter, setBioqFilter] = useState<string>('');
+  const [checklistFilter, setChecklistFilter] = useState<'all' | 'con' | 'sin'>('all');
 
   const isBioq = userRole === 'bioquimico';
 
@@ -60,9 +61,10 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
   const filteredIngresos = ingresos.filter(ing => {
     const monthYear = format(new Date(ing.appointment_date), 'MMMM yyyy', { locale: es });
     if (monthYear !== selectedMonth) return false;
-    if (bioqFilter === 'CON CHECKLIST') {
-      if (!ing.checkbox_checked) return false;
-    } else if (bioqFilter && ing.biochemical_notice !== bioqFilter) {
+    if (checklistFilter === 'con' && !ing.checkbox_checked) return false;
+    if (checklistFilter === 'sin' && ing.checkbox_checked) return false;
+    
+    if (bioqFilter && ing.biochemical_notice !== bioqFilter) {
       return false;
     }
     if (!searchTerm) return true;
@@ -199,15 +201,23 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
                   color: bioqFilter === 'PAC AVISADO' ? '#0369a1' : 'var(--text-muted)'
                 }}
               >PAC AVISADO</button>
-              <button
-                onClick={() => setBioqFilter(bioqFilter === 'CON CHECKLIST' ? '' : 'CON CHECKLIST')}
+              <select
+                value={checklistFilter}
+                onChange={(e) => setChecklistFilter(e.target.value as 'all' | 'con' | 'sin')}
                 style={{
                   padding: '0.65rem 1rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
-                  border: `1px solid ${bioqFilter === 'CON CHECKLIST' ? '#4f46e5' : 'var(--glass-border)'}`,
-                  background: bioqFilter === 'CON CHECKLIST' ? '#e0e7ff' : 'var(--glass-bg)',
-                  color: bioqFilter === 'CON CHECKLIST' ? '#4f46e5' : 'var(--text-muted)'
+                  border: `1px solid ${checklistFilter !== 'all' ? '#4f46e5' : 'var(--glass-border)'}`,
+                  background: checklistFilter !== 'all' ? '#e0e7ff' : 'var(--glass-bg)',
+                  color: checklistFilter !== 'all' ? '#4f46e5' : 'var(--text-muted)',
+                  outline: 'none',
+                  appearance: 'none',
+                  textAlign: 'center'
                 }}
-              >CON CHECKLIST</button>
+              >
+                <option value="all">✔️</option>
+                <option value="con">Con ✔️</option>
+                <option value="sin">Sin ✔️</option>
+              </select>
               <button
                 onClick={fetchData}
                 style={{
