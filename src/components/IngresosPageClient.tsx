@@ -20,6 +20,7 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'MMMM yyyy', { locale: es }));
   const [bioqFilter, setBioqFilter] = useState<string>('');
   const [checklistFilter, setChecklistFilter] = useState<'all' | 'con' | 'sin'>('all');
+  const [dateFilter, setDateFilter] = useState<string>('');
 
   const isBioq = userRole === 'bioquimico';
 
@@ -61,6 +62,12 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
   const filteredIngresos = ingresos.filter(ing => {
     const monthYear = format(new Date(ing.appointment_date), 'MMMM yyyy', { locale: es });
     if (monthYear !== selectedMonth) return false;
+
+    if (dateFilter) {
+      const ingDate = format(new Date(ing.appointment_date), 'yyyy-MM-dd');
+      if (ingDate !== dateFilter) return false;
+    }
+
     if (checklistFilter === 'con' && !ing.checkbox_checked) return false;
     if (checklistFilter === 'sin' && ing.checkbox_checked) return false;
     
@@ -244,7 +251,15 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
                   Sincronizando...
                 </div>
               )}
-              <IngresosTable ingresos={filteredIngresos} onEdit={handleEdit} onRefresh={fetchData} period="all" userRole={userRole} />
+              <IngresosTable 
+                ingresos={filteredIngresos} 
+                onEdit={handleEdit} 
+                onRefresh={fetchData} 
+                period="all" 
+                userRole={userRole} 
+                dateFilter={dateFilter}
+                setDateFilter={setDateFilter}
+              />
             </div>
           )}
         </>

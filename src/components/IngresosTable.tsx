@@ -5,11 +5,11 @@ import { useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { format, isToday } from "date-fns";
 import { es } from "date-fns/locale";
-import { Check, Edit2, Trash2, Search, Filter, Calendar as CalendarIcon, Clock, User, Shield, CreditCard, DollarSign, Mail, MapPin, ArrowDown, ArrowUp, FileText } from "lucide-react";
+import { Check, Edit2, Trash2, Search, Filter, Calendar as CalendarIcon, Clock, User, Shield, CreditCard, DollarSign, Mail, MapPin, ArrowDown, ArrowUp, FileText, X } from "lucide-react";
 import { updateIngresoField, deleteIngreso, updateBiochemicalNotice } from "@/actions/ingresos";
 import InternalNotesModal from "./InternalNotesModal";
 
-export default function IngresosTable({ ingresos, onEdit, onRefresh, period, userRole }: { ingresos: any[], onEdit: (ingreso: any) => void, onRefresh: () => void, period: string, userRole?: string }) {
+export default function IngresosTable({ ingresos, onEdit, onRefresh, period, userRole, dateFilter, setDateFilter }: { ingresos: any[], onEdit: (ingreso: any) => void, onRefresh: () => void, period: string, userRole?: string, dateFilter?: string, setDateFilter?: (val: string) => void }) {
   const isBioq = userRole === 'bioquimico';
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const todayRef = useRef<HTMLTableRowElement>(null);
@@ -138,11 +138,48 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
 
   return (
     <div style={{ background: 'var(--glass-bg)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'hidden', position: 'relative', backdropFilter: 'blur(10px)' }}>
+      {notesPopupId && <InternalNotesModal ingresoId={notesPopupId} onClose={() => setNotesPopupId(null)} onRefresh={onRefresh} />}
       <div ref={containerRef} style={{ overflow: 'auto', maxHeight: 'calc(100vh - 50px)' }}>
         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, textAlign: 'left', fontSize: '0.85rem' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 30 }}>
             <tr style={{ background: '#244c7d', color: 'white', borderBottom: '2px solid var(--glass-border)' }}>
-              <th style={{ padding: '0.75rem 1rem', position: 'sticky', left: 0, background: 'var(--table-sticky-bg, #ffffff)', color: 'var(--table-sticky-text, #000000)', zIndex: 31, borderBottom: '2px solid var(--glass-border)' }}>FECHA</th>
+              <th style={{ padding: '0.75rem 1rem', position: 'sticky', left: 0, background: 'var(--table-sticky-bg, #ffffff)', color: 'var(--table-sticky-text, #000000)', zIndex: 31, borderBottom: '2px solid var(--glass-border)', minWidth: '130px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  FECHA
+                  {setDateFilter && (
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <input
+                        type="date"
+                        value={dateFilter || ''}
+                        onChange={e => setDateFilter(e.target.value)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: dateFilter ? 'var(--primary)' : 'var(--text-muted)',
+                          cursor: 'pointer',
+                          outline: 'none',
+                          fontSize: '0.8rem',
+                          padding: 0,
+                          width: dateFilter ? 'auto' : '20px'
+                        }}
+                        title="Filtrar por fecha"
+                      />
+                      {dateFilter && (
+                        <button
+                          onClick={() => setDateFilter('')}
+                          style={{
+                            background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer',
+                            padding: '0 0.2rem', marginLeft: '0.2rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center'
+                          }}
+                          title="Limpiar filtro de fecha"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </th>
               <th style={{ padding: '0.75rem 1rem' }}>RESULTADO</th>
               <th style={{ padding: '0.75rem 1rem' }}>AVISO BIOQ.</th>
               <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
