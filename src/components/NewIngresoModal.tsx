@@ -247,6 +247,7 @@ function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setS
   const [particularVal, setParticularVal] = useState(src?.particular_price ? String(src.particular_price) : '');
   const [coseguroAgregado, setCoseguroAgregado] = useState(src?.coseguro_agregado || false);
   const [facturaInstante, setFacturaInstante] = useState(src?.factura_instante || false);
+  const [selectedDocs, setSelectedDocs] = useState<File[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<string>(src?.payment_method || '-');
   const [paymentCombinado, setPaymentCombinado] = useState<boolean>(src?.payment_combined || false);
   const [coseguroMethods, setCoseguroMethods] = useState<string[]>(
@@ -519,12 +520,36 @@ function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setS
             onMouseOver={(e) => e.currentTarget.style.background = 'rgba(14, 165, 233, 0.08)'}
             onMouseOut={(e) => e.currentTarget.style.background = 'rgba(14, 165, 233, 0.02)'}
           >
-            <div style={{ marginBottom: '1rem', color: 'var(--primary)' }}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
-            </div>
-            <div style={{ fontWeight: 800, fontSize: '1.1rem', marginBottom: '0.25rem', color: 'var(--text-main)' }}>Subir Pedidos Médicos</div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Hacé clic aquí para seleccionar uno o varios archivos (PDF/Imagen)</div>
-            <input id="file-upload" name="document" type="file" multiple accept="image/*,application/pdf" style={{ display: 'none' }} />
+            {selectedDocs.length > 0 ? (
+              <div style={{ padding: '1rem', background: 'var(--table-sticky-bg)', borderRadius: '12px', border: '1px solid var(--glass-border)', textAlign: 'left' }}>
+                <div style={{ fontWeight: 800, fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>Archivos seleccionados ({selectedDocs.length}):</div>
+                <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.85rem', color: 'var(--primary)' }}>
+                  {selectedDocs.map((f, i) => <li key={i}>{f.name}</li>)}
+                </ul>
+                <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>(Haz clic para cambiar la selección)</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ marginBottom: '1rem', color: 'var(--primary)' }}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+                </div>
+                <div style={{ fontWeight: 800, fontSize: '1.1rem', marginBottom: '0.25rem', color: 'var(--text-main)' }}>Subir Pedidos Médicos</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Hacé clic aquí para seleccionar uno o varios archivos (PDF/Imagen)</div>
+              </>
+            )}
+            <input 
+              id="file-upload" 
+              name="document" 
+              type="file" 
+              multiple 
+              accept="image/*,application/pdf" 
+              style={{ display: 'none' }} 
+              onChange={(e) => {
+                if (e.target.files) {
+                  setSelectedDocs(Array.from(e.target.files));
+                }
+              }}
+            />
           </div>
         </div>
       </div>

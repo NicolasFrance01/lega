@@ -20,7 +20,12 @@ export async function getIngresos(search?: string) {
                SELECT json_agg(json_build_object('id', aa.id, 'name', aa.analysis_name, 'subtype', aa.aire_test_subtype, 'status', aa.status))
                FROM appointment_analyses aa
                WHERE aa.appointment_id = a.id
-             ) as analyses
+             ) as analyses,
+             (
+               SELECT json_agg(json_build_object('id', ad.id, 'document_url', ad.document_url, 'filename', ad.filename))
+               FROM appointment_documents ad
+               WHERE ad.appointment_id = a.id
+             ) as documents
       FROM appointments a
       JOIN patients p ON a.patient_id = p.id
       WHERE a.is_ingreso = TRUE 

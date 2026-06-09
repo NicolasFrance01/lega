@@ -72,7 +72,7 @@ export default function CobranzasTable({ data }: { data: any[] }) {
       it.paciente?.toLowerCase().includes(s) ||
       it.observacion?.toLowerCase().includes(s) ||
       it.nro_factura?.toLowerCase().includes(s) ||
-      it.fecha?.includes(s)
+      (it.fecha ? format(new Date(it.fecha), "dd/MM/yyyy").includes(s) : false)
     );
   });
 

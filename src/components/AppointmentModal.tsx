@@ -35,11 +35,13 @@ export default function AppointmentModal({
     domicilio_address?: string
   },
   isDomicilio?: boolean,
-  isAire?: boolean
+  isAire?: boolean,
+  slotId?: string
 }) {
   const [loading, setLoading] = useState(false);
+  const [selectedDocs, setSelectedDocs] = useState<File[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [analysisType, setAnalysisType] = useState(isAire ? "SIBO" : "");
+  const [analysisType, setAnalysisType] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
 
@@ -62,7 +64,8 @@ export default function AppointmentModal({
   useEffect(() => {
     if (isOpen) {
       setSelectedFiles([]);
-      setAnalysisType(isAire ? "SIBO" : "");
+      setSelectedDocs([]);
+      setAnalysisType("");
       setBlockedError(null);
       getBlockedDays().then(res => { if (res.data) setBlockedDays(res.data); });
       setNameValue(initialData?.name || "");
@@ -147,7 +150,9 @@ export default function AppointmentModal({
       formData.set("appointment_date", formattedDate);
       formData.delete("document");
 
-      for (const file of selectedFiles) {
+      const filesToProcess = selectedDocs.length > 0 ? selectedDocs : selectedFiles;
+
+      for (const file of filesToProcess) {
         if (file.type.startsWith("image/")) {
           const compressedBlob = await compressImage(file);
           formData.append("document", compressedBlob, file.name);
@@ -168,11 +173,16 @@ export default function AppointmentModal({
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) setSelectedFiles(Array.from(e.target.files));
+    if (e.target.files) {
+        const files = Array.from(e.target.files);
+        setSelectedFiles(files);
+        setSelectedDocs(files);
+    }
   };
 
   const removeFile = (index: number) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setSelectedDocs(prev => prev.filter((_, i) => i !== index));
   };
 
   const inputStyle = {
@@ -396,16 +406,31 @@ export default function AppointmentModal({
                 onMouseEnter={(e) => e.currentTarget.style.background = "rgba(14, 165, 233, 0.1)"}
                 onMouseLeave={(e) => e.currentTarget.style.background = "rgba(14, 165, 233, 0.05)"}
               >
-                <CloudUpload size={28} color="var(--primary)" style={{ margin: "0 auto 0.5rem auto" }} />
-                <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-main)", margin: 0 }}>
-                  {selectedFiles.length > 0 ? `${selectedFiles.length} archivos seleccionados` : "Subir Pedidos Médicos"}
-                </p>
-                <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", margin: "0.25rem 0 0 0" }}>
-                  Hacé clic aquí para seleccionar uno o varios archivos (PDF/Imagen)
-                </p>
-                <input name="document" type="file" multiple accept="image/*,.pdf" onChange={handleFileChange}
-                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }}
-                />
+            {selectedDocs.length > 0 ? (
+              <div style={{ padding: '1rem', background: 'var(--table-sticky-bg)', borderRadius: '12px', border: '1px solid var(--glass-border)', textAlign: 'left' }}>
+                <div style={{ fontWeight: 800, fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>Archivos seleccionados ({selectedDocs.length}):</div>
+                <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.85rem', color: 'var(--primary)' }}>
+                  {selectedDocs.map((f, i) => <li key={i}>{f.name}</li>)}
+                </ul>
+                <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>(Haz clic para cambiar la selección)</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ marginBottom: '0.5rem', color: 'var(--primary)' }}>
+                  <CloudUpload size={28} style={{ margin: "0 auto" }} />
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.25rem', color: 'var(--text-main)' }}>Subir Archivos</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Hacé clic para seleccionar PDF o Imágenes</div>
+              </>
+            )}
+            <input 
+              name="document" 
+              type="file" 
+              multiple 
+              accept="image/*,application/pdf" 
+              style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }} 
+              onChange={handleFileChange}
+            />
               </div>
 
               {selectedFiles.length > 0 && (

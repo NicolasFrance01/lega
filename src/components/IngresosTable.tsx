@@ -8,9 +8,11 @@ import { es } from "date-fns/locale";
 import { Check, Edit2, Trash2, Search, Filter, Calendar as CalendarIcon, Clock, User, Shield, CreditCard, DollarSign, Mail, MapPin, ArrowDown, ArrowUp, FileText, X } from "lucide-react";
 import { updateIngresoField, deleteIngreso, updateBiochemicalNotice } from "@/actions/ingresos";
 import InternalNotesModal from "./InternalNotesModal";
+import Portal from "./Portal";
 
-export default function IngresosTable({ ingresos, onEdit, onRefresh, period, userRole, dateFilter, setDateFilter }: { ingresos: any[], onEdit: (ingreso: any) => void, onRefresh: () => void, period: string, userRole?: string, dateFilter?: string, setDateFilter?: (val: string) => void }) {
+export default function IngresosTable({ ingresos, onEdit, onRefresh, period, userRole, dateFilter, setDateFilter, resultDateFilter, setResultDateFilter }: { ingresos: any[], onEdit: (ingreso: any) => void, onRefresh: () => void, period: string, userRole?: string, dateFilter?: string, setDateFilter?: (val: string) => void, resultDateFilter?: string, setResultDateFilter?: (val: string) => void }) {
   const isBioq = userRole === 'bioquimico';
+  const isAdmin = userRole === 'admin' || userRole === 'gerente';
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const todayRef = useRef<HTMLTableRowElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -138,7 +140,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
 
   return (
     <div style={{ background: 'var(--glass-bg)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'hidden', position: 'relative', backdropFilter: 'blur(10px)' }}>
-      {notesPopupId && <InternalNotesModal ingresoId={notesPopupId} onClose={() => setNotesPopupId(null)} onRefresh={onRefresh} />}
+      {notesPopupId && <Portal><InternalNotesModal ingresoId={notesPopupId} onClose={() => setNotesPopupId(null)} onRefresh={onRefresh} /></Portal>}
       <div ref={containerRef} style={{ overflow: 'auto', maxHeight: 'calc(100vh - 50px)' }}>
         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, textAlign: 'left', fontSize: '0.85rem' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 30 }}>
@@ -180,7 +182,43 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
                   )}
                 </div>
               </th>
-              <th style={{ padding: '0.75rem 1rem' }}>RESULTADO</th>
+              <th style={{ padding: '0.75rem 1rem', minWidth: '130px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  RESULTADO
+                  {setResultDateFilter && (
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <input
+                        type="date"
+                        value={resultDateFilter || ''}
+                        onChange={e => setResultDateFilter(e.target.value)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: resultDateFilter ? 'var(--primary)' : 'var(--text-muted)',
+                          cursor: 'pointer',
+                          outline: 'none',
+                          fontSize: '0.8rem',
+                          padding: 0,
+                          width: resultDateFilter ? 'auto' : '20px'
+                        }}
+                        title="Filtrar por fecha de resultado"
+                      />
+                      {resultDateFilter && (
+                        <button
+                          onClick={() => setResultDateFilter('')}
+                          style={{
+                            background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer',
+                            padding: '0 0.2rem', marginLeft: '0.2rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center'
+                          }}
+                          title="Limpiar filtro de fecha de resultado"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </th>
               <th style={{ padding: '0.75rem 1rem' }}>AVISO BIOQ.</th>
               <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
                 <Check size={16} />
@@ -191,7 +229,11 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
               {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>DIRECCIÓN</th>}
               {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>MAIL</th>}
               <th style={{ padding: '0.75rem 1rem' }}>NACIMIENTO</th>
-              <th style={{ padding: '0.75rem 1rem' }}>EDAD</th>
+              {isAdmin ? (
+                <th style={{ padding: '0.75rem 1rem' }}>EDAD</th>
+              ) : (
+                <th style={{ padding: '0.75rem 1rem' }}>DOCUMENTACIÓN</th>
+              )}
               {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>TELÉFONO</th>}
               {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>PROFESIONAL</th>}
               <th style={{ padding: '0.75rem 1rem' }}>ESTUDIO</th>
@@ -336,17 +378,33 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
                   <td style={{ padding: '0.75rem 1rem' }}>
                     {ing.birth_date ? format(new Date(ing.birth_date), "dd/MM/yyyy") : '-'}
                   </td>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>
-                    {ing.birth_date ? (() => {
-                      const d = new Date(ing.birth_date);
-                      if (isNaN(d.getTime())) return '-';
-                      const today = new Date();
-                      let age = today.getFullYear() - d.getFullYear();
-                      const m = today.getMonth() - d.getMonth();
-                      if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
-                      return `${age} años`;
-                    })() : '-'}
-                  </td>
+                  {isAdmin ? (
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>
+                      {ing.birth_date ? (() => {
+                        const d = new Date(ing.birth_date);
+                        if (isNaN(d.getTime())) return '-';
+                        const today = new Date();
+                        let age = today.getFullYear() - d.getFullYear();
+                        const m = today.getMonth() - d.getMonth();
+                        if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
+                        return `${age} años`;
+                      })() : '-'}
+                    </td>
+                  ) : (
+                    <td style={{ padding: '0.75rem 1rem' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        {ing.documents && ing.documents.length > 0 ? (
+                          ing.documents.map((doc: any, i: number) => (
+                            <a key={i} href={`/api/doc/file/${doc.id}`} target="_blank" title={doc.filename} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', background: 'rgba(14, 165, 233, 0.1)', color: 'var(--primary)', borderRadius: '6px', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.background='rgba(14, 165, 233, 0.2)'} onMouseOut={e => e.currentTarget.style.background='rgba(14, 165, 233, 0.1)'}>
+                              <FileText size={16} />
+                            </a>
+                          ))
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>-</span>
+                        )}
+                      </div>
+                    </td>
+                  )}
                   {!isBioq && (
                     <td style={{ padding: '0.75rem 1rem' }}>
                       {ing.phone || '-'}

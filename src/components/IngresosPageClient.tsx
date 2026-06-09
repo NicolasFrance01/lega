@@ -22,6 +22,7 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
   const [bioqFilter, setBioqFilter] = useState<string>('');
   const [checklistFilter, setChecklistFilter] = useState<'all' | 'con' | 'sin'>('all');
   const [dateFilter, setDateFilter] = useState<string>('');
+  const [resultDateFilter, setResultDateFilter] = useState<string>('');
 
   const searchParams = useSearchParams();
   const highlightId = searchParams?.get('highlight');
@@ -84,6 +85,12 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
     if (dateFilter) {
       const ingDate = format(new Date(ing.appointment_date), 'yyyy-MM-dd');
       if (ingDate !== dateFilter) return false;
+    }
+
+    if (resultDateFilter) {
+      if (!ing.result_date) return false;
+      const rDate = format(new Date(ing.result_date), 'yyyy-MM-dd');
+      if (rDate !== resultDateFilter) return false;
     }
 
     if (checklistFilter === 'con' && !ing.checkbox_checked) return false;
@@ -277,6 +284,8 @@ export default function IngresosPageClient({ userRole }: { userRole: string }) {
                 userRole={userRole} 
                 dateFilter={dateFilter}
                 setDateFilter={setDateFilter}
+                resultDateFilter={resultDateFilter}
+                setResultDateFilter={setResultDateFilter}
               />
             </div>
           )}

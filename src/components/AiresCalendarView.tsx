@@ -304,7 +304,9 @@ export default function AiresCalendarView({
                         </div>
                         <p style={{ fontWeight: 800, fontSize: '0.9rem', lineHeight: 1.15, color: apt?.status === 'CANCELADO' ? 'var(--text-muted)' : 'var(--text-main)', margin: '0.1rem 0', textDecoration: apt?.status === 'CANCELADO' ? 'line-through' : 'none', opacity: apt?.status === 'CANCELADO' ? 0.6 : 1, wordBreak: 'break-word' }}>{apt?.name}</p>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.05rem' }}>
-                          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, margin: 0 }}>{apt.aire_test_type || 'Prueba'}</p>
+                          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, margin: 0 }}>
+                            {apt.aire_test_type || apt.analysis_type || (apt.analyses && apt.analyses.length > 0 ? apt.analyses[0].name : 'Prueba')}
+                          </p>
                           {apt.observations && <MessageSquare size={10} color="var(--primary)" />}
                         </div>
                       </div>

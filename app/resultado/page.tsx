@@ -13,6 +13,7 @@ export default function ResultadoPortal() {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<"results" | "history">("results");
   const [selectedResult, setSelectedResult] = useState<any>(null);
+  const [selectedFileId, setSelectedFileId] = useState<number | null>(null);
   const [portalSearch, setPortalSearch] = useState("");
 
   async function handleLogin(e: React.FormEvent) {
@@ -178,7 +179,17 @@ export default function ResultadoPortal() {
                 <div key={group.id} style={{ borderRadius: '24px', overflow: 'hidden', border: isSelected ? '2px solid var(--primary)' : '1px solid #e2e8f0', background: 'white', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: isSelected ? '0 20px 25px -5px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)' }}>
                   <div 
                     onClick={() => {
-                        setSelectedResult(isSelected ? null : group);
+                        if (isSelected) {
+                          setSelectedResult(null);
+                          setSelectedFileId(null);
+                        } else {
+                          setSelectedResult(group);
+                          if (group.files && group.files.length > 0) {
+                            setSelectedFileId(group.files[0].id);
+                          } else {
+                            setSelectedFileId(null);
+                          }
+                        }
                     }}
                     className="portal-card-header"
                     style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
@@ -214,20 +225,25 @@ export default function ResultadoPortal() {
                       {group.files && group.files.length > 1 && (
                         <div style={{ padding: '1.25rem 0', display: 'flex', gap: '0.75rem', flexWrap: 'wrap', borderBottom: '1px solid #f1f5f9', marginBottom: '1.5rem' }}>
                             {group.files.map((file: any, index: number) => (
-                                <a 
+                                <button 
                                     key={file.id}
-                                    href={`/api/medical-result/file/${file.id}`}
-                                    target="_blank"
+                                    onClick={(e) => { e.stopPropagation(); setSelectedFileId(file.id); }}
                                     style={{ 
                                         padding: '0.6rem 1.25rem', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 800,
-                                        background: 'rgba(14, 165, 233, 0.05)',
-                                        color: 'var(--primary)',
-                                        border: '1px solid rgba(14, 165, 233, 0.2)', textDecoration: 'none', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem'
+                                        background: selectedFileId === file.id ? 'var(--primary)' : 'rgba(14, 165, 233, 0.05)',
+                                        color: selectedFileId === file.id ? 'white' : 'var(--primary)',
+                                        border: '1px solid rgba(14, 165, 233, 0.2)', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem'
                                     }}
                                 >
-                                    <Eye size={14} /> Ver Archivo {index + 1}
-                                </a>
+                                    <Eye size={14} /> Archivo {index + 1}
+                                </button>
                             ))}
+                        </div>
+                      )}
+                      
+                      {selectedFileId && (
+                        <div style={{ marginBottom: '1.5rem', width: '100%', height: '500px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                          <iframe src={`/api/medical-result/file/${selectedFileId}`} style={{ width: '100%', height: '100%', border: 'none' }} title="Visor de Resultados" />
                         </div>
                       )}
                       <div style={{ padding: '1.25rem 0', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
