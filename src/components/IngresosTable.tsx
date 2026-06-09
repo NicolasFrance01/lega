@@ -229,7 +229,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
               {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>DIRECCIÓN</th>}
               {!isBioq && <th style={{ padding: '0.75rem 1rem' }}>MAIL</th>}
               <th style={{ padding: '0.75rem 1rem' }}>NACIMIENTO</th>
-              {isAdmin ? (
+              {isBioq ? (
                 <th style={{ padding: '0.75rem 1rem' }}>EDAD</th>
               ) : (
                 <th style={{ padding: '0.75rem 1rem' }}>DOCUMENTACIÓN</th>
@@ -378,7 +378,7 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
                   <td style={{ padding: '0.75rem 1rem' }}>
                     {ing.birth_date ? format(new Date(ing.birth_date), "dd/MM/yyyy") : '-'}
                   </td>
-                  {isAdmin ? (
+                  {isBioq ? (
                     <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>
                       {ing.birth_date ? (() => {
                         const d = new Date(ing.birth_date);

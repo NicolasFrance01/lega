@@ -335,7 +335,7 @@ export default function AppointmentModal({
                 <label style={labelStyle}>Tipo de Análisis</label>
                 <TipoAnalisisInput
                   name="analysis_type"
-                  defaultValue={isAire ? "SIBO" : (initialData?.analysis_type || "")}
+                  defaultValue={initialData?.analysis_type || ""}
                   onChange={(e) => setAnalysisType(e.target.value)}
                   className="modern-input"
                   style={inputStyle}

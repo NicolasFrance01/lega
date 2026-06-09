@@ -22,7 +22,6 @@ export default function SidebarNav({ userRole, isCollapsed }: { userRole?: strin
         { name: "Turnos en Lista", path: "/", icon: <CalendarDays size={20} /> },
         { name: "Ingresos", path: "/ingresos", icon: <IngresosIcon size={20} /> },
         { name: "Pacientes", path: "/pacientes", icon: <Users size={20} /> },
-        { name: "Calendario Interno", path: "/calendario", icon: <Calendar size={20} /> },
         { name: "Turnos Aire", path: "/calendario-aire", icon: <Wind size={20} /> },
         { name: "Domicilio", path: "/calendario-domicilio", icon: <Car size={20} /> },
         { name: "Listados", path: "/listados", icon: <ListTodo size={20} /> },
