@@ -1,0 +1,23 @@
+import pg from 'pg';
+const { Pool } = pg;
+
+const pool = new Pool({
+  connectionString: 'postgresql://neondb_owner:npg_L5PDKCSB4lhf@ep-gentle-star-an2yqhb2-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require',
+});
+
+async function run() {
+  try {
+    await pool.query(`
+      ALTER TABLE patients 
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS created_by VARCHAR(100);
+    `);
+    console.log("Migration successful");
+  } catch (error) {
+    console.error("Migration failed:", error);
+  } finally {
+    pool.end();
+  }
+}
+
+run();

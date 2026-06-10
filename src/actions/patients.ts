@@ -10,7 +10,9 @@ export async function getPatients() {
       data: res.rows.map(row => ({
         ...row,
         name: row.name ? row.name.toUpperCase() : row.name,
-        birth_date: row.birth_date ? new Date(row.birth_date).toISOString() : null
+        birth_date: row.birth_date ? new Date(row.birth_date).toISOString() : null,
+        created_at: row.created_at ? new Date(row.created_at).toISOString() : null,
+        created_by: row.created_by || null
       })),
       error: null 
     };
@@ -74,5 +76,32 @@ export async function searchPatients(query: string) {
     return { data: res.rows, error: null };
   } catch (error: any) {
     return { data: null, error: error.message };
+  }
+}
+
+export async function mergePatients(keepId: string, mergeId: string) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Mover ingresos y resultados médicos
+    await client.query('UPDATE appointments SET patient_id = $1 WHERE patient_id = $2', [keepId, mergeId]);
+    await client.query('UPDATE medical_results SET patient_id = $1 WHERE patient_id = $2', [keepId, mergeId]);
+
+    // Eliminar el paciente duplicado
+    await client.query('DELETE FROM patients WHERE id = $1', [mergeId]);
+
+    await client.query('COMMIT');
+    
+    revalidatePath("/pacientes");
+    revalidatePath("/pacientes/[id]", "page");
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    await client.query('ROLLBACK');
+    console.error("Error merging patients:", error);
+    return { error: error.message };
+  } finally {
+    client.release();
   }
 }

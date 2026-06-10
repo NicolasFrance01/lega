@@ -487,10 +487,12 @@ export async function createApross(formData: FormData) {
           [telefono, patientId]
         );
       } else {
+        const session = await getSession() as any;
+        const creatorName = session?.full_name || session?.username || "Sistema";
         await client.query(
-          `INSERT INTO patients (id, name, dni, phone, health_insurance)
-           VALUES (gen_random_uuid(), $1, $2, $3, 'APROSS')`,
-          [paciente, dni_clean, telefono]
+          `INSERT INTO patients (id, name, dni, phone, health_insurance, created_by)
+           VALUES (gen_random_uuid(), $1, $2, $3, 'APROSS', $4)`,
+          [paciente, dni_clean, telefono, creatorName]
         );
       }
     }
@@ -567,10 +569,12 @@ export async function updateApross(id: number, data: any) {
           [telefono, patientId]
         );
       } else {
+        const session = await getSession() as any;
+        const creatorName = session?.full_name || session?.username || "Sistema";
         await pool.query(
-          `INSERT INTO patients (id, name, dni, phone, health_insurance)
-           VALUES (gen_random_uuid(), $1, $2, $3, 'APROSS')`,
-          [paciente, dni_clean, telefono]
+          `INSERT INTO patients (id, name, dni, phone, health_insurance, created_by)
+           VALUES (gen_random_uuid(), $1, $2, $3, 'APROSS', $4)`,
+          [paciente, dni_clean, telefono, creatorName]
         );
       }
     }

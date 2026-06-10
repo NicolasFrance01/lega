@@ -142,11 +142,12 @@ export async function createIngreso(formData: FormData) {
           [email, phone, health_insurance, birth_date, address, patientId]
         );
       } else {
+        const creatorName = session?.full_name || session?.username || "Sistema";
         const newPatientRes = await client.query(
-          `INSERT INTO patients (name, dni, email, phone, health_insurance, birth_date, address)
-           VALUES ($1, $2, $3, $4, $5, NULLIF($6, '')::date, $7)
+          `INSERT INTO patients (name, dni, email, phone, health_insurance, birth_date, address, created_by)
+           VALUES ($1, $2, $3, $4, $5, NULLIF($6, '')::date, $7, $8)
            RETURNING id`,
-          [name, dni, email, phone, health_insurance, birth_date, address]
+          [name, dni, email, phone, health_insurance, birth_date, address, creatorName]
         );
         patientId = newPatientRes.rows[0].id;
       }
@@ -225,7 +226,7 @@ export async function createIngreso(formData: FormData) {
         // If only coseguro exists, still surface the method there
         if (!cobranzaCoseguroMethod && !cobranzaParticularMethod) cobranzaCoseguroMethod = payment_method;
       }
-      if (hasNonCash) {
+      if (hasNonCash || factura_instante) {
         const tipo = factura_instante ? 'factura_instante' : 'pendiente';
         const total = ((parseFloat(coseguro || '0') || 0) + (parseFloat(particular_price || '0') || 0)).toFixed(2);
         const month_group = appointment_date_raw?.substring(0, 7) || new Date().toISOString().substring(0, 7);

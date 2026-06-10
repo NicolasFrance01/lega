@@ -4,11 +4,14 @@ import { useState } from "react";
 import { History, CalendarPlus, UserCog, Trash2 } from "lucide-react";
 import AppointmentModal from "./AppointmentModal";
 import EditPatientModal from "./EditPatientModal";
+import MergePatientModal from "./MergePatientModal";
 import { deletePatient } from "@/actions/patients";
+import { Merge } from "lucide-react";
 
 export default function PatientTableActions({ patient, userRole }: { patient: any, userRole?: string }) {
   const [isAptModalOpen, setIsAptModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
   const isBioq = userRole === 'bioquimico';
   const canDelete = userRole === 'admin' || userRole === 'gerente';
 
@@ -52,6 +55,23 @@ export default function PatientTableActions({ patient, userRole }: { patient: an
           <UserCog size={14} color="var(--primary)" /> Editar
         </button>
       )}
+
+      {canDelete && (
+        <button
+          onClick={() => setIsMergeModalOpen(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '0.4rem',
+            padding: '0.4rem 0.8rem', background: 'var(--glass-bg)',
+            color: '#B45309', fontWeight: 600, fontSize: '0.8rem',
+            borderRadius: '6px', transition: 'all 0.2s', border: '1px solid rgba(245, 158, 11, 0.2)',
+            cursor: 'pointer'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(245, 158, 11, 0.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--glass-bg)'}
+        >
+          <Merge size={14} color="#B45309" /> Unificar
+        </button>
+      )}
       
       {!isBioq && (
         <button
@@ -86,6 +106,12 @@ export default function PatientTableActions({ patient, userRole }: { patient: an
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         patient={patient}
+      />
+
+      <MergePatientModal
+        isOpen={isMergeModalOpen}
+        onClose={() => setIsMergeModalOpen(false)}
+        patientToKeep={patient}
       />
 
       {canDelete && (

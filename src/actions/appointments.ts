@@ -117,9 +117,11 @@ export async function createAppointment(formData: FormData) {
         [email, phone, health_insurance, patientId]
       );
     } else {
+      const session = await getSession() as any;
+      const creatorName = session?.full_name || session?.username || "Sistema";
       const newPatientRes = await client.query(
-        "INSERT INTO patients (name, dni, email, phone, health_insurance) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-        [name, dni, email, phone, health_insurance]
+        "INSERT INTO patients (name, dni, email, phone, health_insurance, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+        [name, dni, email, phone, health_insurance, creatorName]
       );
       patientId = newPatientRes.rows[0].id;
     }

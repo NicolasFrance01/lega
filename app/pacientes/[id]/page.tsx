@@ -11,7 +11,7 @@ export default async function PacienteHistorialPage({ params }: { params: Promis
   const { id } = await params;
   
   // Obtener data del paciente (incluyendo casting a text para evitar BigInt)
-  const patientRes = await pool.query("SELECT id::text, name, dni::text, phone, health_insurance FROM patients WHERE id = $1", [id]);
+  const patientRes = await pool.query("SELECT id::text, name, dni::text, phone, health_insurance, created_at, created_by FROM patients WHERE id = $1", [id]);
   const patient = patientRes.rows[0];
 
   if (!patient) {
@@ -84,6 +84,11 @@ export default async function PacienteHistorialPage({ params }: { params: Promis
           <p style={{ color: 'var(--text-muted)', marginTop: '0.3rem' }}>
             DNI: {patient.dni} • Teléfono: {patient.phone || 'No registrado'} • Obra Social: {patient.health_insurance}
           </p>
+          {(patient.created_by || patient.created_at) && (
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem', fontStyle: 'italic' }}>
+              Registrado en el sistema {patient.created_by ? `por ${patient.created_by}` : ''} {patient.created_at ? `el ${format(new Date(patient.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}` : ''}
+            </p>
+          )}
         </div>
       </header>
 
