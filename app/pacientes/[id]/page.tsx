@@ -23,6 +23,25 @@ export default async function PacienteHistorialPage({ params }: { params: Promis
     );
   }
 
+  let createdAtStr = '';
+  if (patient.created_at) {
+    try {
+      const d = new Date(patient.created_at);
+      if (!isNaN(d.getTime())) {
+        createdAtStr = `el ${format(d, 'dd/MM/yyyy HH:mm', { locale: es })}`;
+      }
+    } catch (e) {
+      console.error("Invalid date for created_at:", patient.created_at);
+    }
+  }
+  
+  let createdByStr = '';
+  if (patient.created_by) {
+    createdByStr = `por ${patient.created_by}`;
+  }
+
+  const showRegistrationInfo = createdByStr !== '' || createdAtStr !== '';
+
   // Obtener historial clinico (Turnos pasados y futuros) con su rastro de auditoría
   // Forzamos casting a text de IDs y detalles (JSONB) para evitar errores de serialización de BigInt en server components
   const apptsRes = await pool.query(`
@@ -84,9 +103,9 @@ export default async function PacienteHistorialPage({ params }: { params: Promis
           <p style={{ color: 'var(--text-muted)', marginTop: '0.3rem' }}>
             DNI: {patient.dni} • Teléfono: {patient.phone || 'No registrado'} • Obra Social: {patient.health_insurance}
           </p>
-          {(patient.created_by || patient.created_at) && (
+          {showRegistrationInfo && (
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem', fontStyle: 'italic' }}>
-              Registrado en el sistema {patient.created_by ? `por ${patient.created_by}` : ''} {patient.created_at ? `el ${format(new Date(patient.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}` : ''}
+              Registrado en el sistema {createdByStr} {createdAtStr}
             </p>
           )}
         </div>
