@@ -54,8 +54,23 @@ export default function MergePatientModal({
 
   return (
     <Portal>
-      <div className="modal-overlay" style={{ zIndex: 1000, position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="modal-content glass-panel" style={{ maxWidth: '600px', width: '90%', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }}>
+      <div className="modal-overlay" style={{ 
+        zIndex: 1000, 
+        position: 'fixed', 
+        inset: 0, 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        background: 'rgba(15, 23, 42, 0.4)', 
+        backdropFilter: 'blur(8px)',
+        animation: 'fadeIn 0.2s ease-out',
+        padding: '1rem'
+      }}>
+        <style>{`
+          @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+          @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        `}</style>
+        <div className="modal-content glass-panel" style={{ maxWidth: '600px', width: '100%', padding: '2rem', maxHeight: '90vh', overflowY: 'auto', animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               Unificar Pacientes
