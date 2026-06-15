@@ -3,6 +3,8 @@ import { useState } from "react";
 import { login } from "@/actions/auth";
 import { Stethoscope } from "lucide-react";
 
+import WelcomePopup from "@/components/WelcomePopup";
+
 export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,7 +25,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{
+    <>
+      <WelcomePopup id="login" imageUrl="/bio.jpeg" />
+      <div style={{
       width: "100%", maxWidth: "400px", padding: "2.5rem",
       background: "var(--glass-bg)", backdropFilter: "blur(16px)",
       borderRadius: "20px", boxShadow: "var(--glass-shadow)",
@@ -75,5 +79,6 @@ export default function LoginPage() {
         </button>
       </form>
     </div>
+    </>
   );
 }

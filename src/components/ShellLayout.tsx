@@ -7,6 +7,7 @@ import SidebarNav from "./SidebarNav";
 import ThemeToggle from "./ThemeToggle";
 import NotificationsBell from "./NotificationsBell";
 import { logoutAction } from "@/actions/auth";
+import WelcomePopup from "./WelcomePopup";
 
 interface ShellLayoutProps {
   children: React.ReactNode;
@@ -28,8 +29,19 @@ export default function ShellLayout({ children, session, userData }: ShellLayout
   const avatarUrl = userData?.avatar_url;
   const updatedTime = userData?.updated_at ? new Date(userData.updated_at).getTime() : Date.now();
 
+  const username = session?.username?.toLowerCase() || '';
+  const userMap: Record<string, string> = {
+    aviola: "/aviola.jpeg",
+    govejero: "/govejero.jpeg",
+    mlcravero: "/mlcravero.jpeg",
+    rricci: "/rricci.jpeg",
+    rruiz: "/rruiz.jpeg",
+  };
+  const popupImage = userMap[username];
+
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg-main)' }}>
+      {popupImage && <WelcomePopup id={`user_${username}`} imageUrl={popupImage} />}
       {/* Sidebar */}
       <aside className="glass-panel" style={{
         width: isCollapsed ? '80px' : '22rem',
