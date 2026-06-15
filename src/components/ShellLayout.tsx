@@ -41,7 +41,7 @@ export default function ShellLayout({ children, session, userData }: ShellLayout
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg-main)' }}>
-      {popupImage && <WelcomePopup id={`user_${username}`} imageUrl={popupImage} />}
+      {popupImage && <WelcomePopup id={`user_${username}`} imageUrl={`${popupImage}?v=${Date.now()}`} />}
       {/* Sidebar */}
       <aside className="glass-panel" style={{
         width: isCollapsed ? '80px' : '22rem',

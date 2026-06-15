@@ -26,7 +26,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <WelcomePopup id="login" imageUrl="/bio.jpeg" />
+      <WelcomePopup id="login" imageUrl={`/bio.jpeg?v=${Date.now()}`} />
       <div style={{
       width: "100%", maxWidth: "400px", padding: "2.5rem",
       background: "var(--glass-bg)", backdropFilter: "blur(16px)",
