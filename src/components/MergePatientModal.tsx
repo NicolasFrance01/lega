@@ -219,7 +219,6 @@ export default function MergePatientModal({
             </div>
           )}
         </div>
-        </div>
       </div>
     </Portal>
   );
