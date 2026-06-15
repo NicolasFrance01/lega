@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import SidebarNav from "./SidebarNav";
 import ThemeToggle from "./ThemeToggle";
@@ -18,7 +18,18 @@ interface ShellLayoutProps {
 export default function ShellLayout({ children, session, userData }: ShellLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const isPortal = pathname?.startsWith('/resultado');
+
+  const username = userData?.username?.toLowerCase() || session?.username?.toLowerCase() || '';
+  const userMap: Record<string, string> = {
+    aviola: aviolaImg.src,
+    govejero: govejeroImg.src,
+    mlcravero: mlcraveroImg.src,
+    rricci: rricciImg.src,
+    rruiz: rruizImg.src,
+  };
+  const popupImage = username ? userMap[username] : null;
 
   if (isPortal) {
     return <>{children}</>;
@@ -29,19 +40,9 @@ export default function ShellLayout({ children, session, userData }: ShellLayout
   const avatarUrl = userData?.avatar_url;
   const updatedTime = userData?.updated_at ? new Date(userData.updated_at).getTime() : Date.now();
 
-  const username = session?.username?.toLowerCase() || '';
-  const userMap: Record<string, string> = {
-    aviola: "/aviola.jpeg",
-    govejero: "/govejero.jpeg",
-    mlcravero: "/mlcravero.jpeg",
-    rricci: "/rricci.jpeg",
-    rruiz: "/rruiz.jpeg",
-  };
-  const popupImage = userMap[username];
-
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg-main)' }}>
-      {popupImage && <WelcomePopup id={`user_${username}`} imageUrl={`${popupImage}?v=${Date.now()}`} />}
+      {popupImage && <WelcomePopup id={`user_${username}`} imageUrl={popupImage} />}
       {/* Sidebar */}
       <aside className="glass-panel" style={{
         width: isCollapsed ? '80px' : '22rem',
