@@ -8,6 +8,11 @@ import ThemeToggle from "./ThemeToggle";
 import NotificationsBell from "./NotificationsBell";
 import { logoutAction } from "@/actions/auth";
 import WelcomePopup from "./WelcomePopup";
+import aviolaImg from "../../public/aviola.jpeg";
+import govejeroImg from "../../public/govejero.jpeg";
+import mlcraveroImg from "../../public/mlcravero.jpeg";
+import rricciImg from "../../public/rricci.jpeg";
+import rruizImg from "../../public/rruiz.jpeg";
 
 interface ShellLayoutProps {
   children: React.ReactNode;
