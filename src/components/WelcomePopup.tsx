@@ -68,7 +68,7 @@ export default function WelcomePopup({ id, imageUrl }: WelcomePopupProps) {
         </button>
         <img 
           src={imageUrl} 
-          alt="Publicidad" 
+          alt="Aviso" 
           style={{
             width: "auto",
             height: "auto",
