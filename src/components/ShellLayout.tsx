@@ -7,12 +7,7 @@ import SidebarNav from "./SidebarNav";
 import ThemeToggle from "./ThemeToggle";
 import NotificationsBell from "./NotificationsBell";
 import { logoutAction } from "@/actions/auth";
-import WelcomePopup from "./WelcomePopup";
-import aviolaImg from "../../public/aviola.jpeg";
-import govejeroImg from "../../public/govejero.jpeg";
-import mlcraveroImg from "../../public/mlcravero.jpeg";
-import rricciImg from "../../public/rricci.jpeg";
-import rruizImg from "../../public/rruiz.jpeg";
+
 
 interface ShellLayoutProps {
   children: React.ReactNode;
@@ -27,14 +22,6 @@ export default function ShellLayout({ children, session, userData }: ShellLayout
   const isPortal = pathname?.startsWith('/resultado');
 
   const username = userData?.username?.toLowerCase() || session?.username?.toLowerCase() || '';
-  const userMap: Record<string, string> = {
-    aviola: aviolaImg.src,
-    govejero: govejeroImg.src,
-    mlcravero: mlcraveroImg.src,
-    rricci: rricciImg.src,
-    rruiz: rruizImg.src,
-  };
-  const popupImage = username ? userMap[username] : null;
 
   if (isPortal) {
     return <>{children}</>;
@@ -47,7 +34,7 @@ export default function ShellLayout({ children, session, userData }: ShellLayout
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg-main)' }}>
-      {popupImage && <WelcomePopup id={`user_${username}`} imageUrl={popupImage} />}
+
       {/* Sidebar */}
       <aside className="glass-panel" style={{
         width: isCollapsed ? '80px' : '22rem',
