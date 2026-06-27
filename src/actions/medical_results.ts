@@ -234,7 +234,7 @@ export async function markAsNotified(id: string) {
     // Mark all files from the same appointment/analysis as notified
     await pool.query(`
       UPDATE medical_results 
-      SET notified_at = NOW() 
+      SET notified_at = NOW() AT TIME ZONE 'America/Argentina/Buenos_Aires'
       WHERE appointment_id = $1 AND (analysis_id = $2 OR (analysis_id IS NULL AND $2 IS NULL))
     `, [details.appointment_id, details.analysis_id]);
     
@@ -245,6 +245,26 @@ export async function markAsNotified(id: string) {
 
     return { success: true };
   } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function markAllPendingAsNotified() {
+  const session = await getSession() as any;
+  if (!session) throw new Error("No autorizado");
+  try {
+    const res = await pool.query(`
+      UPDATE medical_results 
+      SET notified_at = NOW() AT TIME ZONE 'America/Argentina/Buenos_Aires'
+      WHERE notified_at IS NULL
+    `);
+    await logAction("NOTIFIED_ALL_PENDING", {
+      count: res.rowCount,
+      by: session.full_name || session.username
+    });
+    return { success: true, count: res.rowCount };
+  } catch (error: any) {
+    console.error("Error marking all pending as notified:", error);
     return { error: error.message };
   }
 }

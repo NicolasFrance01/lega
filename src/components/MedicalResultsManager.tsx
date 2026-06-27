@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Search, User, Calendar, FileText, Plus, Send, CheckCircle, Clock, Trash2, Eye, Download, MessageSquare, FilePlus2, X } from "lucide-react";
-import { searchPatients, getPatientAppointments, uploadMedicalResult, getAllMedicalResults, markAsNotified, deleteMedicalResult } from "@/actions/medical_results";
+import { searchPatients, getPatientAppointments, uploadMedicalResult, getAllMedicalResults, markAsNotified, markAllPendingAsNotified, deleteMedicalResult } from "@/actions/medical_results";
 import Portal from "./Portal";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -27,6 +27,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
   const [pageInput, setPageInput] = useState("1");
   const [editingGroup, setEditingGroup] = useState<any>(null); // For EditResultModal
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [bulkNotifying, setBulkNotifying] = useState(false);
   
   useEffect(() => {
     loadAllResults();
@@ -35,6 +36,17 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
   async function loadAllResults() {
     const res = await getAllMedicalResults();
     if (res.data) setAllResults(res.data);
+  }
+
+  async function handleMarkAllPending() {
+    const pending = allResults.filter(r => !r.notified_at);
+    if (pending.length === 0) return;
+    if (!confirm(`¿Marcar ${pending.length} resultado${pending.length !== 1 ? 's' : ''} pendiente${pending.length !== 1 ? 's' : ''} como notificado${pending.length !== 1 ? 's' : ''}?`)) return;
+    setBulkNotifying(true);
+    const res = await markAllPendingAsNotified();
+    if (res.error) alert("Error: " + res.error);
+    await loadAllResults();
+    setBulkNotifying(false);
   }
 
   useEffect(() => {
@@ -394,6 +406,26 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
               <button onClick={() => { setStatusFilter('pendiente'); setCurrentPage(1); }} style={{ padding: '0.5rem 1rem', background: statusFilter === 'pendiente' ? '#dc2626' : 'transparent', color: statusFilter === 'pendiente' ? 'white' : 'var(--text-main)', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s' }}>Pendiente aviso</button>
               <button onClick={() => { setStatusFilter('notificado'); setCurrentPage(1); }} style={{ padding: '0.5rem 1rem', background: statusFilter === 'notificado' ? '#16a34a' : 'transparent', color: statusFilter === 'notificado' ? 'white' : 'var(--text-main)', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s' }}>Notificado</button>
             </div>
+            {statusFilter === 'pendiente' && filteredResults.length > 0 && currentUser?.role !== 'bioquimico' && (
+              <button
+                onClick={handleMarkAllPending}
+                disabled={bulkNotifying}
+                title="Marcar todos los pendientes visibles como notificados"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.5rem',
+                  padding: '0.5rem 1rem', borderRadius: '10px',
+                  background: bulkNotifying ? 'rgba(22,163,74,0.1)' : 'rgba(22,163,74,0.15)',
+                  color: '#16a34a', border: '1px solid rgba(22,163,74,0.3)',
+                  fontWeight: 800, fontSize: '0.82rem', cursor: bulkNotifying ? 'wait' : 'pointer',
+                  transition: 'all 0.2s', whiteSpace: 'nowrap'
+                }}
+                onMouseOver={(e) => { if (!bulkNotifying) e.currentTarget.style.background = 'rgba(22,163,74,0.25)'; }}
+                onMouseOut={(e) => { if (!bulkNotifying) e.currentTarget.style.background = 'rgba(22,163,74,0.15)'; }}
+              >
+                <CheckCircle size={15} />
+                {bulkNotifying ? 'Marcando...' : `Marcar todos como notificados (${filteredResults.filter(r => !r.notified_at).length})`}
+              </button>
+            )}
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', padding: '0.4rem 0.75rem', borderRadius: '12px' }}>
               <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={validPage === 1} style={{ border: 'none', background: 'none', cursor: 'pointer', opacity: validPage === 1 ? 0.3 : 1, color: 'var(--text-main)' }}>&lt;</button>
@@ -460,7 +492,7 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
               <tbody>
                 {currentItems.map((res: any) => (
                   <tr key={res.id} className="hoverable-row" style={{ borderBottom: '1px solid var(--glass-border)', fontSize: '0.85rem', color: 'var(--text-main)' }}>
-                    <td style={{ padding: '1rem', fontWeight: 600 }}>{format(new Date(res.created_at), "dd/MM/yyyy HH:mm")} hs</td>
+                    <td style={{ padding: '1rem', fontWeight: 600 }}>{format(new Date(new Date(res.created_at).getTime() - 3 * 60 * 60 * 1000), "dd/MM/yyyy HH:mm")} hs</td>
                     <td style={{ padding: '1rem' }}>
                       {res.report_id ? (
                         <span style={{ background: 'var(--primary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 900, fontSize: '0.8rem' }}>
@@ -504,10 +536,10 @@ export default function MedicalResultsManager({ currentUser }: { currentUser: an
                     </td>
                     <td style={{ padding: '1rem' }}>
                       <div style={{ fontWeight: 600 }}>{res.uploaded_by_name || 'Sistema'}</div>
-                      {res.notified_at ? (
-                        <div style={{ fontSize: '0.7rem', color: 'var(--success)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                          <CheckCircle size={10} /> Notificado {format(new Date(res.notified_at), "dd/MM HH:mm")}
-                        </div>
+                        {res.notified_at ? (
+                          <div style={{ fontSize: '0.7rem', color: 'var(--success)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                            <CheckCircle size={10} /> Notificado {format(new Date(new Date(res.notified_at).getTime() - 3 * 60 * 60 * 1000), "dd/MM HH:mm")}
+                          </div>
                       ) : (
                         <div style={{ fontSize: '0.7rem', color: 'var(--danger)', fontWeight: 700 }}>Pendiente aviso</div>
                       )}
