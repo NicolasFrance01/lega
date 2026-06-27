@@ -28,6 +28,10 @@ export default function TipoAnalisisInput({
   const [options, setOptions] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  // Track the last externally-provided defaultValue to detect real external changes
+  const lastExternalDefaultRef = useRef<string>(defaultValue || "");
+  // Track whether the user is currently interacting with this field
+  const isUserEditingRef = useRef(false);
 
   useEffect(() => {
     getTiposAnalisis().then(res => {
@@ -38,13 +42,20 @@ export default function TipoAnalisisInput({
   }, []);
 
   useEffect(() => {
-    setInputValue(defaultValue || "");
+    const incoming = defaultValue || "";
+    // Only reset the input if the external value genuinely changed (e.g., different appointment loaded)
+    // and the user is not actively editing the field.
+    if (incoming !== lastExternalDefaultRef.current && !isUserEditingRef.current) {
+      setInputValue(incoming);
+      lastExternalDefaultRef.current = incoming;
+    }
   }, [defaultValue]);
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setShowDropdown(false);
+        isUserEditingRef.current = false;
       }
     }
     document.addEventListener('mousedown', onClickOutside);
@@ -63,6 +74,8 @@ export default function TipoAnalisisInput({
 
   function selectOpt(opt: string) {
     setInputValue(opt);
+    lastExternalDefaultRef.current = opt;
+    isUserEditingRef.current = false;
     setShowDropdown(false);
     setHighlightIdx(-1);
     if (onChange) {
@@ -78,13 +91,14 @@ export default function TipoAnalisisInput({
         selectOpt(filteredOptions[highlightIdx]);
       } else {
         setShowDropdown(false);
+        isUserEditingRef.current = false;
       }
       return;
     }
     if (!showDropdown) { if (e.key === 'ArrowDown') setShowDropdown(true); return; }
     if (e.key === 'ArrowDown') { e.preventDefault(); setHighlightIdx(i => Math.min(i + 1, filteredOptions.length - 1)); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setHighlightIdx(i => Math.max(i - 1, 0)); }
-    else if (e.key === 'Escape') { setShowDropdown(false); }
+    else if (e.key === 'Escape') { setShowDropdown(false); isUserEditingRef.current = false; }
   }
 
   return (
@@ -94,13 +108,21 @@ export default function TipoAnalisisInput({
         type="text"
         value={inputValue}
         required={required}
-        onChange={e => { 
-          setInputValue(e.target.value); 
-          setShowDropdown(true); 
+        onChange={e => {
+          isUserEditingRef.current = true;
+          setInputValue(e.target.value);
+          setShowDropdown(true);
           setHighlightIdx(-1);
           if (onChange) onChange(e);
         }}
-        onFocus={() => setShowDropdown(true)}
+        onFocus={() => {
+          isUserEditingRef.current = true;
+          setShowDropdown(true);
+        }}
+        onBlur={() => {
+          // Small delay so dropdown clicks register first
+          setTimeout(() => { isUserEditingRef.current = false; }, 200);
+        }}
         onKeyDown={handleKeyDown}
         placeholder={placeholder || "Ej: SIBO, Rutina..."}
         autoComplete="off"

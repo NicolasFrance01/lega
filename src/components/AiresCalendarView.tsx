@@ -70,27 +70,42 @@ export default function AiresCalendarView({
     return blockedDays.find(b => b.fecha.slice(0, 10) === key) || null;
   }
 
+  // Resolve the effective aire test type from multiple possible sources
+  const resolveTestType = (apt: any): string | undefined => {
+    if (apt.aire_test_type) return apt.aire_test_type;
+    // Fall back to analyses array subtype or name
+    if (apt.analyses && apt.analyses.length > 0) {
+      const airTestNames = ['SIBO', 'LACTOSA', 'FRUCTUOSA', 'SIBO C/LACTULON', 'Aires'];
+      const airAnalysis = apt.analyses.find((a: any) => airTestNames.includes((a.subtype || a.name || '').toUpperCase()));
+      if (airAnalysis) return airAnalysis.subtype || airAnalysis.name;
+    }
+    return apt.analysis_type;
+  };
+
   const getTypeStyle = (type?: string, status?: string) => {
     let base = { border: '1px solid var(--glass-border)', borderLeft: '5px solid var(--glass-border)', background: 'var(--glass-bg)', opacity: 1 };
     if (status === 'CANCELADO') return { ...base, opacity: 0.5, background: 'rgba(0,0,0,0.1)', border: '1px solid var(--glass-border)', borderLeft: '5px solid #94a3b8' };
-    switch(type) {
-      case 'SIBO': base = { ...base, border: '1px solid #A855F7', borderLeft: '5px solid #A855F7', background: status === 'COMPLETADO' ? 'rgba(168,85,247,0.1)' : 'rgba(168,85,247,0.05)' }; break;
-      case 'SIBO c/Lactulon': base = { ...base, border: '1px solid #06B6D4', borderLeft: '5px solid #06B6D4', background: status === 'COMPLETADO' ? 'rgba(6,182,212,0.1)' : 'rgba(6,182,212,0.05)' }; break;
-      case 'Lactosa': base = { ...base, border: '1px solid #EC4899', borderLeft: '5px solid #EC4899', background: status === 'COMPLETADO' ? 'rgba(236,72,153,0.1)' : 'rgba(236,72,153,0.05)' }; break;
-      case 'Fructuosa': base = { ...base, border: '1px solid #F97316', borderLeft: '5px solid #F97316', background: status === 'COMPLETADO' ? 'rgba(249,115,22,0.1)' : 'rgba(249,115,22,0.05)' }; break;
+    const t = (type || '').toLowerCase();
+    if (t.includes('sibo') && t.includes('lactulon')) {
+      base = { ...base, border: '1px solid #06B6D4', borderLeft: '5px solid #06B6D4', background: status === 'COMPLETADO' ? 'rgba(6,182,212,0.1)' : 'rgba(6,182,212,0.05)' };
+    } else if (t.includes('sibo')) {
+      base = { ...base, border: '1px solid #A855F7', borderLeft: '5px solid #A855F7', background: status === 'COMPLETADO' ? 'rgba(168,85,247,0.1)' : 'rgba(168,85,247,0.05)' };
+    } else if (t.includes('lactosa')) {
+      base = { ...base, border: '1px solid #EC4899', borderLeft: '5px solid #EC4899', background: status === 'COMPLETADO' ? 'rgba(236,72,153,0.1)' : 'rgba(236,72,153,0.05)' };
+    } else if (t.includes('fructuosa')) {
+      base = { ...base, border: '1px solid #F97316', borderLeft: '5px solid #F97316', background: status === 'COMPLETADO' ? 'rgba(249,115,22,0.1)' : 'rgba(249,115,22,0.05)' };
     }
     if (status === 'COMPLETADO') { base.border = '1px solid var(--success)'; base.borderLeft = '5px solid var(--success)'; }
     return base;
   };
 
   const getBadgeColor = (type?: string) => {
-    switch(type) {
-      case 'SIBO': return '#A855F7';
-      case 'SIBO c/Lactulon': return '#06B6D4';
-      case 'Lactosa': return '#EC4899';
-      case 'Fructuosa': return '#78350F';
-      default: return 'var(--primary)';
-    }
+    const t = (type || '').toLowerCase();
+    if (t.includes('sibo') && t.includes('lactulon')) return '#06B6D4';
+    if (t.includes('sibo')) return '#A855F7';
+    if (t.includes('lactosa')) return '#EC4899';
+    if (t.includes('fructuosa')) return '#F97316';
+    return 'var(--primary)';
   };
 
   return (
@@ -244,7 +259,9 @@ export default function AiresCalendarView({
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto', flex: 1, maxHeight: '280px' }}>
-                    {dayAppts.filter(Boolean).map(apt => (
+                    {dayAppts.filter(Boolean).map(apt => {
+                      const effectiveType = resolveTestType(apt);
+                      return (
                       <div key={apt.id}
                         draggable={true}
                         onDragStart={(e) => {
@@ -253,12 +270,12 @@ export default function AiresCalendarView({
                           e.dataTransfer.effectAllowed = "move";
                         }}
                         style={{
-                          ...getTypeStyle(apt.aire_test_type, apt.status),
+                          ...getTypeStyle(effectiveType, apt.status),
                           padding: '0.65rem',
                           borderRadius: '8px',
                           boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
                           position: 'relative',
-                          borderLeft: apt?.status === 'COMPLETADO' ? '5px solid var(--success)' : `5px solid ${getBadgeColor(apt?.aire_test_type)}`,
+                          borderLeft: apt?.status === 'COMPLETADO' ? '5px solid var(--success)' : `5px solid ${getBadgeColor(effectiveType)}`,
                           background: apt?.status === 'COMPLETADO' ? 'rgba(16,185,129,0.12)' : undefined,
                           cursor: 'grab',
                           transition: 'all 0.2s ease',
@@ -268,7 +285,7 @@ export default function AiresCalendarView({
                         onClick={(e) => { e.stopPropagation(); setSelectedAp(apt); }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: getBadgeColor(apt?.aire_test_type), fontWeight: 800, fontSize: '0.75rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: getBadgeColor(effectiveType), fontWeight: 800, fontSize: '0.75rem' }}>
                             <Clock size={11} />
                             {format(new Date(apt?.appointment_date || new Date()), "HH:mm")}
                             {apt?.status === 'COMPLETADO' && <CheckCircle size={11} color="var(--success)" />}
@@ -305,12 +322,13 @@ export default function AiresCalendarView({
                         <p style={{ fontWeight: 800, fontSize: '0.9rem', lineHeight: 1.15, color: apt?.status === 'CANCELADO' ? 'var(--text-muted)' : 'var(--text-main)', margin: '0.1rem 0', textDecoration: apt?.status === 'CANCELADO' ? 'line-through' : 'none', opacity: apt?.status === 'CANCELADO' ? 0.6 : 1, wordBreak: 'break-word' }}>{apt?.name}</p>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.05rem' }}>
                           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, margin: 0 }}>
-                            {apt.aire_test_type || apt.analysis_type || (apt.analyses && apt.analyses.length > 0 ? apt.analyses[0].name : 'Prueba')}
-                          </p>
-                          {apt.observations && <MessageSquare size={10} color="var(--primary)" />}
-                        </div>
-                      </div>
-                    ))}
+                             {effectiveType || (apt.analyses && apt.analyses.length > 0 ? apt.analyses[0].name : 'Prueba')}
+                           </p>
+                           {apt.observations && <MessageSquare size={10} color="var(--primary)" />}
+                         </div>
+                       </div>
+                      );
+                    })}
                     {isFull && (
                       <div style={{ marginTop: 'auto', color: '#e11d48', display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.6rem', fontWeight: 800 }}>
                         <AlertCircle size={10} /> CUPO AGOTADO

@@ -155,11 +155,18 @@ export async function createIngreso(formData: FormData) {
 
     let aptId;
       if (existingId) {
+        // Check if this is a new ingreso from a calendar appointment (is_ingreso=FALSE)
+        // or editing an already-existing ingreso (is_ingreso=TRUE)
+        const existingAptInfo = await client.query("SELECT is_ingreso FROM appointments WHERE id = $1", [existingId]);
+        const wasAlreadyIngreso = existingAptInfo.rows[0]?.is_ingreso === true;
+        // If it was a scheduled appointment (not yet ingreso), mark it COMPLETADO
+        const newStatus = wasAlreadyIngreso ? 'CONFIRMAR ASISTENCIA' : 'COMPLETADO';
+
         // Update existing appointment — also update patient_id in case the linked patient changed
         await client.query(
           `UPDATE appointments SET
             patient_id = $1, analysis_type = $2, aire_test_type = $3, observations = $4,
-            status = 'CONFIRMAR ASISTENCIA',
+            status = $18,
             report_id = $5, result_date = NULLIF($6, '')::timestamp,
             coseguro = NULLIF($7, '')::numeric, particular_price = NULLIF($8, '')::numeric,
             payment_method = $9, professional_name = $10, is_ingreso = TRUE,
@@ -168,7 +175,7 @@ export async function createIngreso(formData: FormData) {
             coseguro_payment_method = NULLIF($15, ''), particular_payment_method = NULLIF($16, ''),
             payment_combined = $17
            WHERE id = $11`,
-          [patientId, analysis_type, aire_test_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, existingId, appointment_date, coseguro_agregado, factura_instante, coseguro_payment_method, particular_payment_method, payment_combined]
+          [patientId, analysis_type, aire_test_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, existingId, appointment_date, coseguro_agregado, factura_instante, coseguro_payment_method, particular_payment_method, payment_combined, newStatus]
         );
         aptId = existingId;
         // Clean old analyses and insert new ones
@@ -275,6 +282,8 @@ export async function createIngreso(formData: FormData) {
 
     revalidatePath("/ingresos");
     revalidatePath("/");
+    revalidatePath("/calendario-aire");
+    revalidatePath("/calendario");
     return { success: true };
   } catch (error: any) {
     await client.query('ROLLBACK');
