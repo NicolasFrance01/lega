@@ -15,6 +15,8 @@ export default function ResultadoPortal() {
   const [selectedResult, setSelectedResult] = useState<any>(null);
   const [selectedFileId, setSelectedFileId] = useState<number | null>(null);
   const [portalSearch, setPortalSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -93,13 +95,30 @@ export default function ResultadoPortal() {
   const filteredResults = results.filter((res: any) => {
     const s = portalSearch.toLowerCase();
     const dateStr = res.appointment_date ? format(new Date(res.appointment_date), "dd/MM/yyyy") : "";
-    return res.analysis_type?.toLowerCase().includes(s) || dateStr.includes(s) || res.report_id?.toLowerCase().includes(s);
+    const matchText = res.analysis_type?.toLowerCase().includes(s) || dateStr.includes(s) || res.report_id?.toLowerCase().includes(s);
+    if (!matchText) return false;
+    if (dateFrom || dateTo) {
+      const d = res.appointment_date ? new Date(res.appointment_date) : null;
+      if (!d) return false;
+      const dNorm = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      if (dateFrom) { const from = new Date(dateFrom); if (dNorm < from) return false; }
+      if (dateTo) { const to = new Date(dateTo); if (dNorm > to) return false; }
+    }
+    return true;
   });
 
   const filteredAppointments = appointments.filter((apt: any) => {
     const s = portalSearch.toLowerCase();
     const dateStr = format(new Date(apt.appointment_date), "dd/MM/yyyy");
-    return apt.analysis_type?.toLowerCase().includes(s) || dateStr.includes(s) || apt.report_id?.toLowerCase().includes(s);
+    const matchText = apt.analysis_type?.toLowerCase().includes(s) || dateStr.includes(s) || apt.report_id?.toLowerCase().includes(s);
+    if (!matchText) return false;
+    if (dateFrom || dateTo) {
+      const d = new Date(apt.appointment_date);
+      const dNorm = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      if (dateFrom) { const from = new Date(dateFrom); if (dNorm < from) return false; }
+      if (dateTo) { const to = new Date(dateTo); if (dNorm > to) return false; }
+    }
+    return true;
   });
 
   return (
@@ -150,15 +169,79 @@ export default function ResultadoPortal() {
         </div>
 
         {/* Filter Bar */}
-        <div style={{ position: 'relative', marginBottom: '2rem' }}>
-          <Search size={22} style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.3 }} />
-          <input 
-            type="text" 
-            placeholder="Buscar por fecha, análisis o informe..." 
-            value={portalSearch}
-            onChange={(e) => setPortalSearch(e.target.value)}
-            style={{ width: '100%', padding: '1.1rem 1.1rem 1.1rem 3.8rem', borderRadius: '20px', border: '1px solid #e2e8f0', background: 'white', outline: 'none', fontSize: '1.1rem', fontWeight: 500, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}
-          />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
+          {/* Text search */}
+          <div style={{ position: 'relative' }}>
+            <Search size={22} style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.3 }} />
+            <input 
+              type="text" 
+              placeholder="Buscar por fecha, análisis o informe..." 
+              value={portalSearch}
+              onChange={(e) => setPortalSearch(e.target.value)}
+              style={{ width: '100%', padding: '1.1rem 1.1rem 1.1rem 3.8rem', borderRadius: '20px', border: '1px solid #e2e8f0', background: 'white', outline: 'none', fontSize: '1.1rem', fontWeight: 500, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}
+            />
+          </div>
+
+          {/* Date filter row */}
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '0.6rem 1rem', boxShadow: '0 2px 4px rgba(0,0,0,0.04)', flex: '1', minWidth: '200px' }}>
+              <Calendar size={18} style={{ opacity: 0.4, flexShrink: 0 }} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>Desde</span>
+              <input
+                id="portal-date-from"
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                style={{ border: 'none', outline: 'none', fontSize: '0.95rem', fontWeight: 600, color: '#1e293b', background: 'transparent', flex: 1, minWidth: 0 }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '0.6rem 1rem', boxShadow: '0 2px 4px rgba(0,0,0,0.04)', flex: '1', minWidth: '200px' }}>
+              <Calendar size={18} style={{ opacity: 0.4, flexShrink: 0 }} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>Hasta</span>
+              <input
+                id="portal-date-to"
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                style={{ border: 'none', outline: 'none', fontSize: '0.95rem', fontWeight: 600, color: '#1e293b', background: 'transparent', flex: 1, minWidth: 0 }}
+              />
+            </div>
+            <button
+              id="portal-btn-this-week"
+              onClick={() => {
+                const today = new Date();
+                const day = today.getDay(); // 0=Sun
+                const monday = new Date(today);
+                monday.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+                const sunday = new Date(monday);
+                sunday.setDate(monday.getDate() + 6);
+                const fmt = (d: Date) => d.toISOString().slice(0, 10);
+                setDateFrom(fmt(monday));
+                setDateTo(fmt(sunday));
+              }}
+              style={{ padding: '0.65rem 1.1rem', borderRadius: '14px', border: '1px solid #e2e8f0', background: 'white', color: '#0ea5e9', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.04)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.4rem', transition: 'all 0.2s' }}
+              onMouseOver={(e) => { e.currentTarget.style.background = '#f0f9ff'; e.currentTarget.style.borderColor = '#0ea5e9'; }}
+              onMouseOut={(e) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.borderColor = '#e2e8f0'; }}
+            >
+              <Calendar size={15} /> Esta semana
+            </button>
+            {(dateFrom || dateTo) && (
+              <button
+                id="portal-btn-clear-dates"
+                onClick={() => { setDateFrom(''); setDateTo(''); }}
+                style={{ padding: '0.65rem 1.1rem', borderRadius: '14px', border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.4rem', transition: 'all 0.2s' }}
+                onMouseOver={(e) => { e.currentTarget.style.background = '#fee2e2'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = '#fef2f2'; }}
+              >
+                ✕ Limpiar fechas
+              </button>
+            )}
+            {(dateFrom || dateTo || portalSearch) && (
+              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>
+                {filteredResults.length} resultado{filteredResults.length !== 1 ? 's' : ''} encontrado{filteredResults.length !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
         </div>
 
         {activeTab === 'results' ? (
