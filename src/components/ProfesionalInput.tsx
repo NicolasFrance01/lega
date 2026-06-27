@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { getProfesionales } from "@/actions/listados";
+import { getProfesionales, createProfesional } from "@/actions/listados";
+import { Plus, Loader2 } from "lucide-react";
 
 interface Props {
   name?: string;
@@ -23,6 +24,7 @@ export default function ProfesionalInput({
   const [showDropdown, setShowDropdown] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState(-1);
   const [options, setOptions] = useState<string[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -64,18 +66,42 @@ export default function ProfesionalInput({
     setHighlightIdx(-1);
   }
 
+  async function handleAddNew() {
+    if (!inputValue.trim() || isAdding) return;
+    setIsAdding(true);
+    const nombre = inputValue.trim().toUpperCase();
+    const res = await createProfesional(nombre);
+    setIsAdding(false);
+    if (res.success) {
+      setOptions(prev => [...prev, nombre].sort());
+      selectOpt(nombre);
+    } else {
+      alert(res.error || "Error al agregar profesional");
+    }
+  }
+
+  const exactMatch = options.some(o => o.toLowerCase() === inputValue.trim().toLowerCase());
+  const showAddOption = inputValue.trim() !== '' && !exactMatch;
+  const totalOptionsCount = filteredOptions.length + (showAddOption ? 1 : 0);
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (highlightIdx >= 0 && filteredOptions[highlightIdx]) {
-        selectOpt(filteredOptions[highlightIdx]);
+      if (highlightIdx >= 0) {
+        if (showAddOption && highlightIdx === filteredOptions.length) {
+          handleAddNew();
+        } else if (filteredOptions[highlightIdx]) {
+          selectOpt(filteredOptions[highlightIdx]);
+        }
+      } else if (showAddOption) {
+        handleAddNew();
       } else {
         setShowDropdown(false);
       }
       return;
     }
     if (!showDropdown) { if (e.key === 'ArrowDown') setShowDropdown(true); return; }
-    if (e.key === 'ArrowDown') { e.preventDefault(); setHighlightIdx(i => Math.min(i + 1, filteredOptions.length - 1)); }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setHighlightIdx(i => Math.min(i + 1, totalOptionsCount - 1)); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setHighlightIdx(i => Math.max(i - 1, 0)); }
     else if (e.key === 'Escape') { setShowDropdown(false); }
   }
@@ -124,13 +150,35 @@ export default function ProfesionalInput({
                 fontSize: '0.85rem',
                 color: 'var(--text-main)',
                 background: idx === highlightIdx ? 'rgba(14, 165, 233, 0.15)' : 'transparent',
-                borderBottom: idx < filteredOptions.length - 1 ? '1px solid var(--glass-border)' : 'none',
+                borderBottom: (idx < filteredOptions.length - 1 || showAddOption) ? '1px solid var(--glass-border)' : 'none',
                 transition: 'background 0.1s',
               }}
             >
               {opt}
             </div>
           ))}
+          {showAddOption && (
+            <div
+              onMouseDown={e => { e.preventDefault(); handleAddNew(); }}
+              onMouseEnter={() => setHighlightIdx(filteredOptions.length)}
+              onMouseLeave={() => setHighlightIdx(-1)}
+              style={{
+                padding: '0.6rem 0.85rem',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                color: 'var(--primary)',
+                background: highlightIdx === filteredOptions.length ? 'rgba(14, 165, 233, 0.15)' : 'rgba(14, 165, 233, 0.05)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                transition: 'background 0.1s',
+              }}
+            >
+              {isAdding ? <Loader2 size={16} className="spin" /> : <Plus size={16} />}
+              {isAdding ? 'Agregando...' : `Agregar "${inputValue.toUpperCase()}"`}
+            </div>
+          )}
         </div>
       )}
     </div>

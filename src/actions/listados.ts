@@ -1014,7 +1014,7 @@ export async function getProfesionales() {
 export async function createProfesional(nombre: string) {
   try {
     const session = await getSession() as any;
-    if (!session || session.role !== 'admin') throw new Error("Sin permiso");
+    if (!session) throw new Error("No autenticado");
 
     const nombreUpper = nombre.trim().toUpperCase();
     await pool.query(
