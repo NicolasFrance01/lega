@@ -105,6 +105,10 @@ export default function ResultadoPortal() {
       if (dateTo) { const to = new Date(dateTo); if (dNorm > to) return false; }
     }
     return true;
+  }).sort((a: any, b: any) => {
+    const da = a.appointment_date ? new Date(a.appointment_date).getTime() : 0;
+    const db = b.appointment_date ? new Date(b.appointment_date).getTime() : 0;
+    return db - da; // newest first
   });
 
   const filteredAppointments = appointments.filter((apt: any) => {
@@ -119,7 +123,9 @@ export default function ResultadoPortal() {
       if (dateTo) { const to = new Date(dateTo); if (dNorm > to) return false; }
     }
     return true;
-  });
+  }).sort((a: any, b: any) =>
+    new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime() // newest first
+  );
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
