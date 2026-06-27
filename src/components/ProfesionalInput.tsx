@@ -121,7 +121,7 @@ export default function ProfesionalInput({
         style={style}
       />
 
-      {showDropdown && filteredOptions.length > 0 && (
+      {showDropdown && (filteredOptions.length > 0 || showAddOption) && (
         <div
           ref={dropdownRef}
           style={{
