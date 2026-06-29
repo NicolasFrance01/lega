@@ -13,20 +13,26 @@ import Portal from "./Portal";
 export default function EditAppointmentModal({ isOpen, onClose, ap, isAires }: { isOpen: boolean, onClose: () => void, ap: any, isAires?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [analysisType, setAnalysisType] = useState("");
-  const [analyses, setAnalyses] = useState<{ analysis_name: string, aire_test_subtype?: string }[]>([{ analysis_name: '', aire_test_subtype: '' }]);
+  const [analyses, setAnalyses] = useState<{ analysis_name: string, aire_test_subtype?: string, is_aire?: boolean }[]>([{ analysis_name: '', aire_test_subtype: '', is_aire: true }]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const router = useRouter();
 
   useEffect(() => {
     if (ap) {
       setAnalysisType(ap.analysis_type || "");
+      const airTestNames = ['SIBO', 'LACTOSA', 'FRUCTUOSA', 'SIBO C/LACTULON', 'AIRES'];
       if (ap.analyses && ap.analyses.length > 0) {
         setAnalyses(ap.analyses.map((a: any) => ({ 
             analysis_name: a.name || '', 
-            aire_test_subtype: a.subtype || '' 
+            aire_test_subtype: a.subtype || '',
+            is_aire: airTestNames.includes((a.name || '').toUpperCase()) || airTestNames.includes((a.subtype || '').toUpperCase())
         })));
       } else {
-        setAnalyses([{ analysis_name: ap.analysis_type || '', aire_test_subtype: ap.aire_test_type || '' }]);
+        setAnalyses([{ 
+            analysis_name: ap.analysis_type || '', 
+            aire_test_subtype: ap.aire_test_type || '',
+            is_aire: true 
+        }]);
       }
       setSelectedFiles([]); // Reset new files when opening a different appointment
     }
@@ -209,15 +215,13 @@ export default function EditAppointmentModal({ isOpen, onClose, ap, isAires }: {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {(() => {
-                const airTestNames = ['SIBO', 'LACTOSA', 'FRUCTUOSA', 'SIBO C/LACTULON', 'Aires'];
-                
-                // If in Aires mode, separate visible and hidden analyses
+                // If in Aires mode, separate visible and hidden analyses based on the initial flag
                 const visibleAnalyses = isAires 
-                  ? analyses.filter(a => airTestNames.includes(a.analysis_name))
+                  ? analyses.filter(a => a.is_aire !== false)
                   : analyses;
                 
                 const hiddenAnalyses = isAires
-                  ? analyses.filter(a => !airTestNames.includes(a.analysis_name))
+                  ? analyses.filter(a => a.is_aire === false)
                   : [];
 
                 return (
