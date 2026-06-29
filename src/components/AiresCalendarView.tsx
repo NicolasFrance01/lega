@@ -170,9 +170,10 @@ export default function AiresCalendarView({
 
           {daysGrid.map(day => {
             const dayAppts = (airesAppts || []).filter(a => a && a.appointment_date && isSameDay(new Date(a.appointment_date), day));
+            const activeDayAppts = dayAppts.filter(a => a.status !== 'CANCELADO');
             const isCurrentMonth = isSameMonth(day, monthStart);
             const isToday = isSameDay(day, new Date());
-            const isFull = dayAppts.length >= 4;
+            const isFull = activeDayAppts.length >= 4;
             const blocked = getBlockedInfo(day);
             const isBlocked = blocked !== null;
 
@@ -239,11 +240,11 @@ export default function AiresCalendarView({
                   ) : (
                     <span style={{
                       fontSize: '0.65rem', fontWeight: 700,
-                      background: isFull ? 'var(--danger)' : (dayAppts.length > 0 ? 'var(--primary)' : 'rgba(0,0,0,0.1)'),
-                      color: dayAppts.length > 0 ? 'white' : 'var(--text-muted)',
+                      background: isFull ? 'var(--danger)' : (activeDayAppts.length > 0 ? 'var(--primary)' : 'rgba(0,0,0,0.1)'),
+                      color: activeDayAppts.length > 0 ? 'white' : 'var(--text-muted)',
                       padding: '0.1rem 0.4rem', borderRadius: '4px',
                     }}>
-                      {dayAppts.length}/4
+                      {activeDayAppts.length}/4
                     </span>
                   )}
                 </div>
