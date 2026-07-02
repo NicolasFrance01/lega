@@ -244,12 +244,12 @@ function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setS
   const [appointmentDate, setAppointmentDate] = useState(defaultDate);
   
   const initialProfs = src?.professional_name ? src.professional_name.split(',').map((p:string) => p.trim()) : [""];
-  const [profKeys, setProfKeys] = useState(initialProfs.map((p: string, i: number) => ({ id: i, val: p })));
+  const [profKeys, setProfKeys] = useState<{id: number, val: string}[]>(initialProfs.map((p: string, i: number) => ({ id: i, val: p })));
 
   const addProfessional = () => setProfKeys([...profKeys, { id: Date.now(), val: "" }]);
   const removeProfessional = (idToRemove: number) => {
     if (profKeys.length > 1) {
-      setProfKeys(profKeys.filter(k => k.id !== idToRemove));
+      setProfKeys(profKeys.filter((k: {id: number, val: string}) => k.id !== idToRemove));
     }
   };
 
@@ -388,7 +388,7 @@ function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setS
             <button type="button" onClick={addProfessional} style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary)', background: 'rgba(14, 165, 233, 0.1)', border: 'none', padding: '0.2rem 0.6rem', borderRadius: '4px', cursor: 'pointer' }}>+ AGREGAR PROFESIONAL</button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {profKeys.map((k) => (
+            {profKeys.map((k: {id: number, val: string}) => (
               <div key={k.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
                   <ProfesionalInput name="professional_name" defaultValue={k.val} style={{ ...inputStyle, background: 'var(--glass-bg)' }} placeholder="Nombre del médico" />
