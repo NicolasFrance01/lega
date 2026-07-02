@@ -99,7 +99,8 @@ export async function createIngreso(formData: FormData) {
 
     const report_id = formData.get("report_id") as string;
     const result_date = formData.get("result_date") as string;
-    const professional_name = formData.get("professional_name") as string;
+    const professionalNames = formData.getAll("professional_name") as string[];
+    const professional_name = professionalNames.filter(p => p.trim() !== '').join(', ');
     const coseguro = formData.get("coseguro") as string;
     const particular_price = formData.get("particular_price") as string;
     const payment_method = formData.get("payment_method") as string;

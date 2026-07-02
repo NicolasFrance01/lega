@@ -242,6 +242,16 @@ function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setS
   const d = src?.appointment_date ? new Date(src.appointment_date) : new Date();
   const defaultDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const [appointmentDate, setAppointmentDate] = useState(defaultDate);
+  
+  const initialProfs = src?.professional_name ? src.professional_name.split(',').map((p:string) => p.trim()) : [""];
+  const [profKeys, setProfKeys] = useState(initialProfs.map((p, i) => ({ id: i, val: p })));
+
+  const addProfessional = () => setProfKeys([...profKeys, { id: Date.now(), val: "" }]);
+  const removeProfessional = (idToRemove: number) => {
+    if (profKeys.length > 1) {
+      setProfKeys(profKeys.filter(k => k.id !== idToRemove));
+    }
+  };
 
   const [coseguroVal, setCoseguroVal] = useState(src?.coseguro ? String(src.coseguro) : '');
   const [particularVal, setParticularVal] = useState(src?.particular_price ? String(src.particular_price) : '');
@@ -373,8 +383,22 @@ function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setS
         </div>
 
         <div style={{ gridColumn: 'span 2' }}>
-          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-main)' }}>Profesional</label>
-          <ProfesionalInput name="professional_name" defaultValue={src?.professional_name} style={inputStyle} placeholder="Nombre del médico" />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)' }}>Profesional(es)</label>
+            <button type="button" onClick={addProfessional} style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary)', background: 'rgba(14, 165, 233, 0.1)', border: 'none', padding: '0.2rem 0.6rem', borderRadius: '4px', cursor: 'pointer' }}>+ AGREGAR PROFESIONAL</button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {profKeys.map((k) => (
+              <div key={k.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <ProfesionalInput name="professional_name" defaultValue={k.val} style={{ ...inputStyle, background: 'var(--glass-bg)' }} placeholder="Nombre del médico" />
+                </div>
+                {profKeys.length > 1 && (
+                  <button type="button" onClick={() => removeProfessional(k.id)} style={{ padding: '0.5rem', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Payment section */}
