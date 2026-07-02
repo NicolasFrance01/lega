@@ -20,8 +20,11 @@ export default function ProfesionalInput({
   style,
   placeholder,
 }: Props) {
-  const parseValue = (v: string) =>
-    v ? v.split(',').map(s => s.trim()).filter(Boolean) : [];
+  const parseValue = (v: string) => {
+    if (!v) return [];
+    if (v.includes(' | ')) return v.split(' | ').map(s => s.trim()).filter(Boolean);
+    return [v.trim()];
+  };
 
   const [selected, setSelected] = useState<string[]>(parseValue(defaultValue));
   const [inputValue, setInputValue] = useState("");
@@ -124,7 +127,7 @@ export default function ProfesionalInput({
     }
   }
 
-  const joinedValue = selected.join(', ');
+  const joinedValue = selected.join(' | ');
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>

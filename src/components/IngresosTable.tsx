@@ -432,11 +432,15 @@ export default function IngresosTable({ ingresos, onEdit, onRefresh, period, use
                   {!isBioq && (
                     <td style={{ padding: '0.75rem 1rem' }}>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                        {(ing.health_insurance || 'PARTICULAR').split(',').map((os: string) => os.trim()).filter(Boolean).map((os: string) => (
-                          <span key={os} style={{ padding: '0.2rem 0.5rem', background: '#e0f2fe', color: '#0369a1', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                            {os}
-                          </span>
-                        ))}
+                        {(() => {
+                          const val = ing.health_insurance || 'PARTICULAR';
+                          const arr = val.includes(' | ') ? val.split(' | ') : [val];
+                          return arr.map((os: string) => os.trim()).filter(Boolean).map((os: string) => (
+                            <span key={os} style={{ padding: '0.2rem 0.5rem', background: '#e0f2fe', color: '#0369a1', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                              {os}
+                            </span>
+                          ));
+                        })()}
                       </div>
                     </td>
                   )}
