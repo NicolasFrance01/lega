@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { getProfesionales, createProfesional } from "@/actions/listados";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, X } from "lucide-react";
 
 interface Props {
   name?: string;
@@ -20,7 +20,11 @@ export default function ProfesionalInput({
   style,
   placeholder,
 }: Props) {
-  const [inputValue, setInputValue] = useState(defaultValue || "");
+  const parseValue = (v: string) =>
+    v ? v.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+  const [selected, setSelected] = useState<string[]>(parseValue(defaultValue));
+  const [inputValue, setInputValue] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState(-1);
   const [options, setOptions] = useState<string[]>([]);
@@ -37,7 +41,7 @@ export default function ProfesionalInput({
   }, []);
 
   useEffect(() => {
-    setInputValue(defaultValue || "");
+    setSelected(parseValue(defaultValue));
   }, [defaultValue]);
 
   useEffect(() => {
@@ -57,13 +61,22 @@ export default function ProfesionalInput({
   }, [highlightIdx]);
 
   const filteredOptions = options.filter(opt =>
+    !selected.includes(opt) &&
     (inputValue.trim() === '' || opt.toLowerCase().includes(inputValue.toLowerCase()))
   );
 
-  function selectOpt(opt: string) {
-    setInputValue(opt);
+  function add(opt: string) {
+    const trimmed = opt.trim();
+    if (trimmed && !selected.includes(trimmed)) {
+      setSelected(prev => [...prev, trimmed]);
+    }
+    setInputValue("");
     setShowDropdown(false);
     setHighlightIdx(-1);
+  }
+
+  function remove(opt: string) {
+    setSelected(prev => prev.filter(o => o !== opt));
   }
 
   async function handleAddNew() {
@@ -74,7 +87,7 @@ export default function ProfesionalInput({
     setIsAdding(false);
     if (res.success) {
       setOptions(prev => [...prev, nombre].sort());
-      selectOpt(nombre);
+      add(nombre);
     } else {
       alert(res.error || "Error al agregar profesional");
     }
@@ -91,10 +104,12 @@ export default function ProfesionalInput({
         if (showAddOption && highlightIdx === filteredOptions.length) {
           handleAddNew();
         } else if (filteredOptions[highlightIdx]) {
-          selectOpt(filteredOptions[highlightIdx]);
+          add(filteredOptions[highlightIdx]);
         }
       } else if (showAddOption) {
         handleAddNew();
+      } else if (inputValue.trim()) {
+        add(inputValue.trim());
       } else {
         setShowDropdown(false);
       }
@@ -104,22 +119,78 @@ export default function ProfesionalInput({
     if (e.key === 'ArrowDown') { e.preventDefault(); setHighlightIdx(i => Math.min(i + 1, totalOptionsCount - 1)); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setHighlightIdx(i => Math.max(i - 1, 0)); }
     else if (e.key === 'Escape') { setShowDropdown(false); }
+    else if (e.key === 'Backspace' && inputValue === '' && selected.length > 0) {
+      setSelected(prev => prev.slice(0, -1));
+    }
   }
+
+  const joinedValue = selected.join(', ');
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
-      <input
-        name={name}
-        type="text"
-        value={inputValue}
-        onChange={e => { setInputValue(e.target.value); setShowDropdown(true); setHighlightIdx(-1); }}
-        onFocus={() => setShowDropdown(true)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder || "Nombre del médico..."}
-        autoComplete="off"
+      <input type="hidden" name={name} value={joinedValue} />
+
+      <div
+        onClick={() => { setShowDropdown(true); (containerRef.current?.querySelector('input[type=text]') as HTMLInputElement)?.focus(); }}
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '0.35rem',
+          alignItems: 'center',
+          padding: '0.4rem 0.6rem',
+          background: style?.background ?? 'var(--glass-bg)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: '8px',
+          cursor: 'text',
+          minHeight: '42px',
+          ...(className ? {} : style),
+        }}
         className={className}
-        style={style}
-      />
+      >
+        {selected.map(opt => (
+          <span
+            key={opt}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.3rem',
+              background: 'rgba(14, 165, 233, 0.15)',
+              color: 'var(--primary)',
+              border: '1px solid rgba(14, 165, 233, 0.35)',
+              borderRadius: '20px',
+              padding: '0.15rem 0.55rem 0.15rem 0.65rem',
+              fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap',
+            }}
+          >
+            {opt}
+            <button
+              type="button"
+              onMouseDown={e => { e.preventDefault(); e.stopPropagation(); remove(opt); }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}
+            >
+              <X size={11} />
+            </button>
+          </span>
+        ))}
+
+        <input
+          type="text"
+          value={inputValue}
+          onChange={e => { setInputValue(e.target.value); setShowDropdown(true); setHighlightIdx(-1); }}
+          onFocus={() => setShowDropdown(true)}
+          onKeyDown={handleKeyDown}
+          placeholder={selected.length === 0 ? (placeholder ?? 'Nombre del médico...') : 'Agregar otro...'}
+          autoComplete="off"
+          style={{
+            border: 'none',
+            outline: 'none',
+            background: 'transparent',
+            color: 'var(--text-main)',
+            fontSize: '0.9rem',
+            flex: 1,
+            minWidth: '140px',
+            padding: '0.2rem 0',
+          }}
+        />
+      </div>
 
       {showDropdown && (filteredOptions.length > 0 || showAddOption) && (
         <div
@@ -141,7 +212,7 @@ export default function ProfesionalInput({
           {filteredOptions.map((opt, idx) => (
             <div
               key={opt}
-              onMouseDown={e => { e.preventDefault(); selectOpt(opt); }}
+              onMouseDown={e => { e.preventDefault(); add(opt); }}
               onMouseEnter={() => setHighlightIdx(idx)}
               onMouseLeave={() => setHighlightIdx(-1)}
               style={{
