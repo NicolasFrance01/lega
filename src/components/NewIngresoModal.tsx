@@ -244,7 +244,7 @@ function IngresoForm({ mode, nextReportId, selectedPatient, editingIngreso, setS
   const [appointmentDate, setAppointmentDate] = useState(defaultDate);
   
   const initialProfs = src?.professional_name ? src.professional_name.split(',').map((p:string) => p.trim()) : [""];
-  const [profKeys, setProfKeys] = useState(initialProfs.map((p, i) => ({ id: i, val: p })));
+  const [profKeys, setProfKeys] = useState(initialProfs.map((p: string, i: number) => ({ id: i, val: p })));
 
   const addProfessional = () => setProfKeys([...profKeys, { id: Date.now(), val: "" }]);
   const removeProfessional = (idToRemove: number) => {
