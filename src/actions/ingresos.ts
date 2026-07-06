@@ -158,10 +158,14 @@ export async function createIngreso(formData: FormData) {
       if (existingId) {
         // Check if this is a new ingreso from a calendar appointment (is_ingreso=FALSE)
         // or editing an already-existing ingreso (is_ingreso=TRUE)
-        const existingAptInfo = await client.query("SELECT is_ingreso FROM appointments WHERE id = $1", [existingId]);
+        const existingAptInfo = await client.query("SELECT is_ingreso, status FROM appointments WHERE id = $1", [existingId]);
         const wasAlreadyIngreso = existingAptInfo.rows[0]?.is_ingreso === true;
-        // If it was a scheduled appointment (not yet ingreso), mark it COMPLETADO
-        const newStatus = wasAlreadyIngreso ? 'CONFIRMAR ASISTENCIA' : 'COMPLETADO';
+        const currentStatus = existingAptInfo.rows[0]?.status;
+        
+        // If it was already an ingreso, keep its status, unless it was 'CONFIRMAR ASISTENCIA', then make it 'COMPLETADO'
+        const newStatus = (wasAlreadyIngreso && currentStatus && currentStatus !== 'CONFIRMAR ASISTENCIA') 
+                          ? currentStatus 
+                          : 'COMPLETADO';
 
         // Update existing appointment — also update patient_id in case the linked patient changed
         await client.query(
@@ -188,7 +192,7 @@ export async function createIngreso(formData: FormData) {
            (patient_id, appointment_date, analysis_type, aire_test_type, observations, status,
             report_id, result_date, coseguro, particular_price, payment_method, professional_name, is_ingreso,
             coseguro_agregado, factura_instante, coseguro_payment_method, particular_payment_method, payment_combined)
-           VALUES ($1, $2, $3, $4, $5, 'CONFIRMAR ASISTENCIA', $6, NULLIF($7, '')::timestamp, NULLIF($8, '')::numeric, NULLIF($9, '')::numeric, $10, $11, TRUE, $12, $13, NULLIF($14,''), NULLIF($15,''), $16)
+           VALUES ($1, $2, $3, $4, $5, 'COMPLETADO', $6, NULLIF($7, '')::timestamp, NULLIF($8, '')::numeric, NULLIF($9, '')::numeric, $10, $11, TRUE, $12, $13, NULLIF($14,''), NULLIF($15,''), $16)
            RETURNING id`,
           [patientId, appointment_date || new Date().toISOString(), analysis_type, aire_test_type, observations, report_id, result_date, coseguro, particular_price, payment_method, professional_name, coseguro_agregado, factura_instante, coseguro_payment_method, particular_payment_method, payment_combined]
         );
