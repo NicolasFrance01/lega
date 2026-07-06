@@ -93,7 +93,7 @@ export async function createAppointment(formData: FormData) {
     if (airTestNames.includes(analysis_type?.toUpperCase() || "")) {
       const targetDateStr = appointment_date.split('T')[0];
       const countRes = await client.query(
-        "SELECT COUNT(*) FROM appointments WHERE UPPER(analysis_type) = ANY($1::text[]) AND DATE(appointment_date) = $2",
+        "SELECT COUNT(*) FROM appointments WHERE UPPER(analysis_type) = ANY($1::text[]) AND DATE(appointment_date) = $2 AND (status IS NULL OR status != 'CANCELADO')",
         [airTestNames, targetDateStr]
       );
       if (parseInt(countRes.rows[0].count) >= 4) {
@@ -233,7 +233,7 @@ export async function updateAppointment(formData: FormData) {
     if (airTestNames.includes(analysis_type?.toUpperCase() || "")) {
       const targetDateStr = appointment_date.split('T')[0];
       const countRes = await client.query(
-        "SELECT COUNT(*) FROM appointments WHERE UPPER(analysis_type) = ANY($1::text[]) AND DATE(appointment_date) = $2 AND id != $3",
+        "SELECT COUNT(*) FROM appointments WHERE UPPER(analysis_type) = ANY($1::text[]) AND DATE(appointment_date) = $2 AND id != $3 AND (status IS NULL OR status != 'CANCELADO')",
         [airTestNames, targetDateStr, id]
       );
       if (parseInt(countRes.rows[0].count) >= 4) {
@@ -333,7 +333,7 @@ export async function moveAppointment(appointmentId: string, newDate: string, re
     if (airTestNames.includes(apt?.analysis_type?.toUpperCase() || "")) {
       const targetDateStr = newDate.split('T')[0];
       const countRes = await pool.query(
-        "SELECT COUNT(*) FROM appointments WHERE UPPER(analysis_type) = ANY($1::text[]) AND DATE(appointment_date) = $2 AND id != $3",
+        "SELECT COUNT(*) FROM appointments WHERE UPPER(analysis_type) = ANY($1::text[]) AND DATE(appointment_date) = $2 AND id != $3 AND (status IS NULL OR status != 'CANCELADO')",
         [airTestNames, targetDateStr, appointmentId]
       );
       if (parseInt(countRes.rows[0].count) >= 4) {
