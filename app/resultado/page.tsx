@@ -331,8 +331,22 @@ export default function ResultadoPortal() {
                       )}
                       
                       {selectedFileId && (
-                        <div style={{ marginBottom: '1.5rem', width: '100%', height: '500px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
-                          <iframe src={`/api/medical-result/file/${selectedFileId}`} style={{ width: '100%', height: '100%', border: 'none' }} title="Visor de Resultados" />
+                        <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                          <a 
+                            href={`/api/medical-result/file/${selectedFileId}`} 
+                            target="_blank"
+                            style={{ 
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', 
+                              padding: '0.85rem', background: 'var(--primary)', color: 'white', 
+                              borderRadius: '12px', fontWeight: 800, textDecoration: 'none',
+                              boxShadow: '0 4px 10px rgba(14, 165, 233, 0.3)', transition: 'all 0.2s'
+                            }}
+                          >
+                            <ExternalLink size={20} /> Abrir Archivo en Pantalla Completa (Zoom y Multipágina)
+                          </a>
+                          <div style={{ width: '100%', height: '500px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                            <iframe src={`/api/medical-result/file/${selectedFileId}`} style={{ width: '100%', height: '100%', border: 'none' }} title="Visor de Resultados" />
+                          </div>
                         </div>
                       )}
                       <div style={{ padding: '1.25rem 0', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
