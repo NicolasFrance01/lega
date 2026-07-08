@@ -99,6 +99,7 @@ export async function uploadMedicalResult(formData: FormData) {
     });
     
     revalidatePath("/resumen-medico");
+    revalidatePath("/resultado");
     return { success: true };
   } catch (error: any) {
     await client.query('ROLLBACK');
@@ -112,7 +113,7 @@ export async function uploadMedicalResult(formData: FormData) {
 export async function getPatientResults(dni: string) {
   try {
     const res = await pool.query(`
-      SELECT mr.id, mr.result_type, mr.content, mr.filename, mr.notes, mr.created_at, mr.notified_at, mr.analysis_id,
+      SELECT mr.id, mr.appointment_id, mr.result_type, mr.content, mr.filename, mr.notes, mr.created_at, mr.notified_at, mr.analysis_id,
              a.appointment_date, a.report_id,
              COALESCE(aa.analysis_name, a.analysis_type) as analysis_type,
              u.full_name as uploaded_by_name
@@ -195,7 +196,7 @@ export async function getAllMedicalResults() {
       LEFT JOIN appointment_analyses aa ON mr.analysis_id = aa.id
       LEFT JOIN users u ON mr.uploaded_by = u.id
       ORDER BY mr.created_at DESC
-      LIMIT 100
+      LIMIT 2000
     `);
     const grouped = new Map();
     for (const row of res.rows) {
@@ -303,6 +304,7 @@ export async function deleteMedicalResult(resultId: string) {
 
     await client.query('COMMIT');
     revalidatePath("/resumen-medico");
+    revalidatePath("/resultado");
     return { success: true };
   } catch (error: any) {
     await client.query('ROLLBACK');
